@@ -1,0 +1,4 @@
+Summarize the following civic complaint about garbage collection in 1-2 short sentences. Keep only the essential facts: what the problem is and where it is happening, if a location is mentioned. Do not add opinions, recommendations, or information that is not in the complaint. Respond with only the summary text, no preamble.
+
+Complaint:
+{complaint_text}

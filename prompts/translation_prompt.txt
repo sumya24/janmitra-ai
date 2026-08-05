@@ -1,0 +1,4 @@
+Translate the following text from {source_language} to {target_language}. Preserve the original meaning exactly. Respond with only the translated text, no preamble or explanation.
+
+Text:
+{text}
