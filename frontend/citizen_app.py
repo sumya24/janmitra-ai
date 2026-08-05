@@ -1,11 +1,17 @@
 """Streamlit app for citizens to report and track garbage collection complaints."""
 
 import logging
+import sys
+from pathlib import Path
 
 import requests
 import streamlit as st
 
-from backend.config import settings
+# Ensure the project root is importable regardless of how this script is launched
+# (e.g. plain `streamlit run frontend/citizen_app.py` does not add it automatically).
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from backend.config import settings  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
