@@ -1,6 +1,8 @@
 """FastAPI application entry point for JanMitra AI."""
 
 import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -15,16 +17,16 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="JanMitra AI", version="0.1.0")
 
-
-@app.on_event("startup")
-def on_startup() -> None:
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     """Initialize the database on application startup."""
     init_db()
     logger.info("JanMitra AI backend started")
+    yield
 
 
+app = FastAPI(title="JanMitra AI", version="0.1.0", lifespan=lifespan)
 app.include_router(complaints.router)
 app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_FOLDER), name="uploads")
 
