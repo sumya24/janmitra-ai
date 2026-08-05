@@ -76,12 +76,14 @@ class ComplaintAgent:
         if not original_text:
             raise ValueError("Complaint text is empty.")
 
-        translated_text = self._translation.to_english(original_text, language_code)
-        # Clean up obvious typos in the canonical English text before it's stored, so a
-        # mistake like "ara" for "area" doesn't get mistranslated afresh on every future
-        # read into a worker's chosen display language. Best-effort: falls back to the
-        # untouched text on failure rather than blocking complaint submission.
-        translated_text = self._normalization.normalize(translated_text)
+        # Clean up obvious spelling/typing mistakes in the citizen's own language before
+        # translating, so a typo (in Marathi, Hindi, or English) doesn't produce a bad
+        # English translation that then propagates into every future re-translation for
+        # workers. `original_text` in storage stays exactly what the citizen wrote; only
+        # this working copy, used as translation input, is normalized. Best-effort: falls
+        # back to the untouched text on failure rather than blocking complaint submission.
+        normalized_text = self._normalization.normalize(original_text, language_code)
+        translated_text = self._translation.to_english(normalized_text, language_code)
         summary = self._summary.summarize(translated_text)
 
         complaint = Complaint(
