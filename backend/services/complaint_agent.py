@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from backend.config import to_bcp47
 from backend.models import Complaint
+from backend.services.normalization_service import NormalizationService
 from backend.services.sarvam_client import SarvamClient
 from backend.services.summary_service import SummaryService
 from backend.services.translation_service import TranslationService
@@ -16,8 +17,9 @@ logger = logging.getLogger(__name__)
 class ComplaintAgent:
     """Receives a citizen complaint (voice or text) and stores it as a processed record.
 
-    Responsibilities: transcribe audio if needed, translate to English, generate a
-    summary, and persist the resulting complaint to the database.
+    Responsibilities: transcribe audio if needed, translate to English, clean up
+    obvious spelling mistakes, generate a summary, and persist the resulting
+    complaint to the database.
     """
 
     def __init__(
@@ -25,11 +27,13 @@ class ComplaintAgent:
         sarvam_client: SarvamClient | None = None,
         translation_service: TranslationService | None = None,
         summary_service: SummaryService | None = None,
+        normalization_service: NormalizationService | None = None,
     ) -> None:
         """Initialize the agent, creating default service instances if none are given."""
         self._sarvam = sarvam_client or SarvamClient()
         self._translation = translation_service or TranslationService(self._sarvam)
         self._summary = summary_service or SummaryService()
+        self._normalization = normalization_service or NormalizationService()
 
     def create_complaint(
         self,
@@ -73,6 +77,11 @@ class ComplaintAgent:
             raise ValueError("Complaint text is empty.")
 
         translated_text = self._translation.to_english(original_text, language_code)
+        # Clean up obvious typos in the canonical English text before it's stored, so a
+        # mistake like "ara" for "area" doesn't get mistranslated afresh on every future
+        # read into a worker's chosen display language. Best-effort: falls back to the
+        # untouched text on failure rather than blocking complaint submission.
+        translated_text = self._normalization.normalize(translated_text)
         summary = self._summary.summarize(translated_text)
 
         complaint = Complaint(
