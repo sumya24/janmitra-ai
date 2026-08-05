@@ -1,10 +1,11 @@
-"""Spelling cleanup for complaint text, run once on the canonical English text.
+"""Spelling cleanup for complaint text, run in the citizen's own language before translation.
 
-Citizens can type or speak with typos (e.g. "ara" for "area"). Sarvam's translate
-endpoint is literal and doesn't correct spelling, so an uncorrected typo in the
-stored English text would get mistranslated afresh every time a worker views the
-complaint in their own language. Cleaning the text up once, right after it's
-translated to English, fixes it for every future read.
+Citizens can type or speak with typos in any of the supported languages (e.g. "ara" for
+"area" in English, or an equivalent slip in Marathi/Hindi script). Sarvam's translate
+endpoint is literal and doesn't correct spelling, so an uncorrected typo would produce a
+bad English translation that then gets re-mistranslated on every future read into a
+worker's chosen display language. Cleaning the text up once, in its original language
+before it's ever translated, fixes it at the source regardless of which language was used.
 """
 
 import logging
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class NormalizationService:
-    """Corrects obvious spelling/typing mistakes in English complaint text via Sarvam's chat API."""
+    """Corrects obvious spelling/typing mistakes in complaint text via Sarvam's chat API."""
 
     def __init__(self) -> None:
         """Initialize the underlying SarvamAI client, if an API key is configured."""
@@ -27,29 +28,31 @@ class NormalizationService:
         else:
             logger.warning("LLM_API_KEY is not set; text normalization will be skipped.")
 
-    def normalize(self, english_text: str) -> str:
-        """Return a spelling-corrected version of English complaint text.
+    def normalize(self, text: str, language_code: str) -> str:
+        """Return a spelling-corrected version of complaint text, in the same language.
 
         This is a quality enhancement, not a critical step: any failure (missing API
         key, empty model response, network error) falls back to the original text
         unchanged rather than raising, so it never blocks complaint submission.
 
         Args:
-            english_text: Complaint text already translated to English.
+            text: Complaint text as the citizen wrote or spoke it.
+            language_code: Short language code the text is in, e.g. "mr", "hi", "en".
 
         Returns:
-            The spelling-corrected text, or the original text if normalization
-            could not be performed.
+            The spelling-corrected text in the same language, or the original text
+            if normalization could not be performed.
         """
         if self._client is None:
-            return english_text
+            return text
 
         try:
+            language_name = settings.SUPPORTED_LANGUAGES.get(language_code, {}).get("name", language_code)
             prompt_template = get_prompt("normalize_prompt.txt")
-            prompt = prompt_template.format(complaint_text=english_text)
-            system_prompt = get_prompt("system_prompt.txt")
+            prompt = prompt_template.format(complaint_text=text, language_name=language_name)
+            system_prompt = get_prompt("normalize_system_prompt.txt")
 
-            logger.info("Text normalization started")
+            logger.info("Text normalization started (language=%s)", language_code)
             response = self._client.chat.completions(
                 model=settings.LLM_MODEL,
                 messages=[
@@ -66,9 +69,9 @@ class NormalizationService:
                     "Text normalization returned no content (finish_reason=%s); using original text.",
                     choice.finish_reason,
                 )
-                return english_text
+                return text
             logger.info("Text normalization completed")
             return content.strip()
         except Exception as exc:
             logger.warning("Text normalization failed, using original text unchanged: %s", exc, exc_info=True)
-            return english_text
+            return text

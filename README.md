@@ -13,24 +13,28 @@ There is no authentication yet — a single hardcoded citizen and a single hardc
 ## Architecture
 
 ```
-Citizen (Streamlit)                Worker (Streamlit)
-      │                                   │
-      │  speak / type + optional photo    │  view translated complaints
-      ▼                                   ▼
-              FastAPI Backend
-                    │
-      ┌─────────────┼──────────────┬───────────────┐
-      ▼             ▼              ▼               ▼
-  Sarvam STT   Sarvam Translate   Sarvam Chat    Sarvam Chat
- (voice→text)  (→ English,       Completion     Completion
-                on-read →        (spelling      (short summary)
-                worker's lang)   cleanup)
+Citizen (Streamlit)                             Worker (Streamlit)
+      │                                                │
+      │  speak / type + optional photo                 │  view translated complaints
+      ▼                                                ▼
+                       FastAPI Backend
+                             │
+      ┌──────────────┬───────┴────────┬────────────────┐
+      ▼              ▼                ▼                ▼
+  Sarvam STT   Sarvam Chat       Sarvam Translate   Sarvam Chat
+ (voice→text,  Completion        (citizen's lang    Completion
+  citizen's    (spelling         → English;         (short
+  language)    cleanup, in       on-read →           summary)
+               citizen's         worker's lang)
+               language)
       │
       ▼
   SQLite (complaints table)
 ```
 
-All AI calls (speech-to-text, translation, spelling cleanup, and summary generation) go through the **Sarvam AI** SDK — one vendor for everything in this milestone. Direct function calls from FastAPI to Sarvam are used; there is no agent framework, queue, or orchestration layer yet.
+All AI calls (speech-to-text, spelling cleanup, translation, and summary generation) go through the **Sarvam AI** SDK — one vendor for everything in this milestone. Direct function calls from FastAPI to Sarvam are used; there is no agent framework, queue, or orchestration layer yet.
+
+Spelling cleanup runs on the citizen's original text, in whatever language they used (Marathi, Hindi, or English) — *before* translation to English, not after. A typo in the citizen's own script would otherwise produce a bad English translation that then gets re-mistranslated on every future read into a worker's chosen display language; fixing it at the source, in the original language, avoids that regardless of which of the three languages was used. The citizen's own `original_text` record is never altered — only the working copy fed into translation is normalized.
 
 ## Tech Stack
 

@@ -24,10 +24,27 @@ def test_normalize_returns_stripped_model_output(monkeypatch):
     )
 
     service = NormalizationService()
-    result = service.normalize("there is the garbage so please check the ara of rukadi")
+    result = service.normalize("there is the garbage so please check the ara of rukadi", "en")
 
     assert result == "There is garbage near my village, please check the area of Rukadi."
     fake_client.chat.completions.assert_called_once()
+
+
+def test_normalize_works_for_non_english_language(monkeypatch):
+    """normalize() should also handle Marathi/Hindi input, not just English."""
+    monkeypatch.setattr("backend.services.normalization_service.settings.LLM_API_KEY", "fake-key")
+    fake_client = Mock()
+    fake_client.chat.completions.return_value = _fake_chat_response("कचरा उचलला नाही.")
+    monkeypatch.setattr(
+        "backend.services.normalization_service.SarvamAI", lambda api_subscription_key: fake_client
+    )
+
+    service = NormalizationService()
+    result = service.normalize("कचरा उचलला नाहि", "mr")
+
+    assert result == "कचरा उचलला नाही."
+    _, kwargs = fake_client.chat.completions.call_args
+    assert "Marathi" in kwargs["messages"][1]["content"]
 
 
 def test_normalize_without_api_key_returns_original_text(monkeypatch):
@@ -35,7 +52,7 @@ def test_normalize_without_api_key_returns_original_text(monkeypatch):
     monkeypatch.setattr("backend.services.normalization_service.settings.LLM_API_KEY", "")
 
     service = NormalizationService()
-    result = service.normalize("check the ara of rukadi")
+    result = service.normalize("check the ara of rukadi", "en")
 
     assert result == "check the ara of rukadi"
 
@@ -50,7 +67,7 @@ def test_normalize_empty_model_response_returns_original_text(monkeypatch):
     )
 
     service = NormalizationService()
-    result = service.normalize("check the ara of rukadi")
+    result = service.normalize("check the ara of rukadi", "en")
 
     assert result == "check the ara of rukadi"
 
@@ -65,6 +82,6 @@ def test_normalize_swallows_unexpected_errors(monkeypatch):
     )
 
     service = NormalizationService()
-    result = service.normalize("check the ara of rukadi")
+    result = service.normalize("check the ara of rukadi", "en")
 
     assert result == "check the ara of rukadi"
