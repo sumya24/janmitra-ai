@@ -1,4 +1,9 @@
-"""API endpoints for creating, listing, and updating complaints."""
+"""API endpoints for creating, listing, and updating complaints.
+
+Access is scoped by the authenticated user's role (see backend/deps.py):
+citizens only ever see their own complaints, workers only see their own
+ward's complaints, and super admins see everything.
+"""
 
 import logging
 import uuid
@@ -10,7 +15,8 @@ from sqlalchemy.orm import Session
 
 from backend.config import settings
 from backend.database import get_db
-from backend.models import Complaint
+from backend.deps import get_current_user, require_role
+from backend.models import Complaint, User
 from backend.services.complaint_agent import ComplaintAgent
 from backend.services.sarvam_client import AIServiceError
 from backend.services.translation_service import TranslationService
@@ -34,6 +40,7 @@ class ComplaintResponse(BaseModel):
     summary: str
     photo_path: str | None
     status: str
+    ward: str | None
     created_at: str
 
     model_config = ConfigDict(from_attributes=True)
@@ -106,20 +113,26 @@ def _to_response(complaint: Complaint, display_language: str | None) -> Complain
         summary=complaint.summary,
         photo_path=complaint.photo_path,
         status=complaint.status,
+        ward=complaint.ward,
         created_at=complaint.created_at.isoformat(),
     )
 
 
 @router.post("", response_model=ComplaintResponse)
 def create_complaint(
-    citizen_id: str = Form(...),
     language: str = Form(...),
     text: str | None = Form(None),
+    ward: str | None = Form(None),
     photo: UploadFile | None = File(None),
     audio: UploadFile | None = File(None),
     db: Session = Depends(get_db),
+    citizen: User = Depends(require_role("citizen")),
 ) -> ComplaintResponse:
-    """Create a new complaint from typed text or a voice recording, with an optional photo."""
+    """Create a new complaint from typed text or a voice recording, with an optional photo.
+
+    The citizen is taken from the authenticated session — there is no way to
+    submit a complaint on someone else's behalf.
+    """
     if language not in settings.SUPPORTED_LANGUAGES:
         raise HTTPException(status_code=400, detail=f"Unsupported language: {language}")
     if not text and not audio:
@@ -131,7 +144,7 @@ def create_complaint(
     try:
         complaint = _agent.create_complaint(
             db=db,
-            citizen_id=citizen_id,
+            citizen_id=str(citizen.id),
             language_code=language,
             text=text,
             audio_bytes=audio_bytes,
@@ -142,26 +155,49 @@ def create_complaint(
     except AIServiceError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
+    if ward is not None and ward.strip():
+        complaint.ward = ward.strip()
+        db.commit()
+        db.refresh(complaint)
+
     return _to_response(complaint, display_language=None)
 
 
 @router.get("", response_model=list[ComplaintResponse])
 def list_complaints(
-    lang: str | None = None, db: Session = Depends(get_db)
+    lang: str | None = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ) -> list[ComplaintResponse]:
-    """List all complaints, optionally translating display text into `lang` on read."""
+    """List complaints visible to the current user, translated into `lang` on read.
+
+    Citizens see only their own complaints; workers see only their ward's
+    complaints; super admins see every complaint. Defaults to the user's own
+    preferred language if `lang` is not given.
+    """
     if lang is not None and lang not in settings.SUPPORTED_LANGUAGES:
         raise HTTPException(status_code=400, detail=f"Unsupported language: {lang}")
+    display_language = lang or current_user.preferred_language
 
-    complaints = db.query(Complaint).order_by(Complaint.created_at.desc()).all()
-    return [_to_response(c, display_language=lang) for c in complaints]
+    query = db.query(Complaint)
+    if current_user.role == "citizen":
+        query = query.filter(Complaint.citizen_id == str(current_user.id))
+    elif current_user.role == "worker":
+        query = query.filter(Complaint.ward == current_user.ward)
+    # admins see everything: no filter
+
+    complaints = query.order_by(Complaint.created_at.desc()).all()
+    return [_to_response(c, display_language=display_language) for c in complaints]
 
 
 @router.patch("/{complaint_id}", response_model=ComplaintResponse)
 def update_status(
-    complaint_id: int, body: StatusUpdateRequest, db: Session = Depends(get_db)
+    complaint_id: int,
+    body: StatusUpdateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("worker", "admin")),
 ) -> ComplaintResponse:
-    """Update a complaint's status (e.g. mark it "resolved")."""
+    """Update a complaint's status (e.g. mark it "resolved"). Workers and admins only."""
     if body.status not in ("open", "resolved"):
         raise HTTPException(status_code=400, detail="Status must be 'open' or 'resolved'.")
 
@@ -169,8 +205,11 @@ def update_status(
     if complaint is None:
         raise HTTPException(status_code=404, detail="Complaint not found.")
 
+    if current_user.role == "worker" and complaint.ward != current_user.ward:
+        raise HTTPException(status_code=403, detail="This complaint is outside your ward.")
+
     complaint.status = body.status
     db.commit()
     db.refresh(complaint)
-    logger.info("Complaint %s status updated to %s", complaint_id, body.status)
+    logger.info("Complaint %s status updated to %s by user %s", complaint_id, body.status, current_user.id)
     return _to_response(complaint, display_language=None)

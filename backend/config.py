@@ -41,12 +41,24 @@ class Settings:
     # Base URL the Streamlit frontends use to reach the FastAPI backend
     BACKEND_URL: str = os.getenv("BACKEND_URL", "http://localhost:8000")
 
+    # Origins allowed to call the API from a browser (the React dev server, etc.)
+    CORS_ORIGINS: list[str] = [
+        origin.strip()
+        for origin in os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
+        if origin.strip()
+    ]
+
     # Prompts directory
     PROMPTS_DIR: Path = BASE_DIR / "prompts"
 
-    # Hardcoded identities (no auth in Milestone 1)
+    # Hardcoded identities (kept only for the legacy Streamlit frontends, which
+    # predate real auth and are superseded by the React app + JWT login below)
     HARDCODED_CITIZEN_ID: str = "citizen_001"
     HARDCODED_WORKER_ID: str = "worker_001"
+
+    # Auth (JWT, HS256, implemented with the stdlib only — see services/auth_service.py)
+    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "")
+    JWT_EXPIRE_MINUTES: int = int(os.getenv("JWT_EXPIRE_MINUTES", "1440"))  # 24h
 
     # Supported languages: short code -> (display name, Sarvam BCP-47 code)
     SUPPORTED_LANGUAGES: dict[str, dict[str, str]] = {

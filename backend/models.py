@@ -33,6 +33,41 @@ class Complaint(Base):
     summary: Mapped[str] = mapped_column(Text, nullable=False)
     photo_path: Mapped[str | None] = mapped_column(String(512), nullable=True)
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="open")
+    ward: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
+    )
+
+
+class User(Base):
+    """A JanMitra AI account: a citizen, a worker, or a super admin.
+
+    Citizens self-register (see routes/auth.py). Workers are only ever created by
+    a super admin (see routes/admin.py) — there is deliberately no way for anyone
+    to sign up as a worker or as a super admin; the first super admin account is
+    seeded directly into the database when the system is set up.
+
+    Attributes:
+        id: Primary key.
+        phone: Login identifier, unique.
+        password_hash: Bcrypt hash of the password — the plaintext is never stored.
+        full_name: Display name.
+        role: One of "citizen", "worker", "admin".
+        preferred_language: Short language code, e.g. "mr", used across the app
+            and changeable anytime from account settings.
+        ward: The area a worker is responsible for. Unused for citizens/admins.
+        created_at: UTC timestamp of account creation.
+    """
+
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    phone: Mapped[str] = mapped_column(String(20), unique=True, nullable=False, index=True)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    full_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    role: Mapped[str] = mapped_column(String(16), nullable=False)
+    preferred_language: Mapped[str] = mapped_column(String(8), nullable=False, default="en")
+    ward: Mapped[str | None] = mapped_column(String(120), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
     )
