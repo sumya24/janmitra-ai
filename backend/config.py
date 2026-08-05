@@ -24,7 +24,7 @@ class Settings:
     # LLM used for complaint summary generation (Sarvam's chat completion API by default,
     # so this can reuse SARVAM_API_KEY if LLM_API_KEY is left unset)
     LLM_API_KEY: str = os.getenv("LLM_API_KEY") or os.getenv("SARVAM_API_KEY", "")
-    LLM_MODEL: str = os.getenv("LLM_MODEL", "sarvam-30b")
+    LLM_MODEL: str = os.getenv("LLM_MODEL", "sarvam-105b")
 
     # File storage
     UPLOAD_FOLDER: str = os.getenv("UPLOAD_FOLDER", str(BASE_DIR / "uploads"))

@@ -37,7 +37,7 @@ All AI calls (speech-to-text, translation, and summary generation) go through th
 - **Frontend:** Streamlit (separate citizen and worker apps)
 - **Backend:** FastAPI
 - **Database:** SQLite (via SQLAlchemy)
-- **AI:** Sarvam AI — `saaras:v3` for speech-to-text, `sarvam-translate:v1` for translation, `sarvam-30b` for chat-completion-based summaries
+- **AI:** Sarvam AI — `saaras:v3` for speech-to-text, `sarvam-translate:v1` for translation, `sarvam-105b` for chat-completion-based summaries
 - **Storage:** Local filesystem for photos
 
 ## Project Structure
@@ -87,7 +87,7 @@ janmitra-ai/
    | `SARVAM_API_KEY` | Your Sarvam AI subscription key (used for STT and translation) |
    | `SARVAM_BASE_URL` | Sarvam API base URL (defaults to `https://api.sarvam.ai`) |
    | `LLM_API_KEY` | Key used for summary generation via Sarvam's chat completion API. Leave blank to reuse `SARVAM_API_KEY`. |
-   | `LLM_MODEL` | Chat model used for summaries (defaults to `sarvam-30b`) |
+   | `LLM_MODEL` | Chat model used for summaries (defaults to `sarvam-105b`) |
    | `UPLOAD_FOLDER` | Local folder for stored complaint photos (defaults to `uploads`) |
    | `DATABASE_URL` | SQLite connection string |
    | `BACKEND_URL` | URL the Streamlit apps use to reach the FastAPI backend |
