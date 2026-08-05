@@ -6,7 +6,7 @@ A civic complaint app where a citizen can report a problem (starting with garbag
 
 ## Milestone 1 — Working Product
 
-This is the first milestone: a citizen can speak a complaint in Marathi, Hindi, or English; the app transcribes, translates it to English for storage, and generates a short summary; a worker sees the complaint translated into their own chosen language and can mark it resolved; the citizen sees the updated status.
+This is the first milestone: a citizen can speak a complaint in Marathi, Hindi, or English; the app transcribes, translates it to English for storage, cleans up obvious spelling mistakes, and generates a short summary; a worker sees the complaint translated into their own chosen language and can mark it resolved; the citizen sees the updated status.
 
 There is no authentication yet — a single hardcoded citizen and a single hardcoded worker are used. See `future_work.md` for what's deliberately out of scope for this milestone.
 
@@ -19,18 +19,18 @@ Citizen (Streamlit)                Worker (Streamlit)
       ▼                                   ▼
               FastAPI Backend
                     │
-      ┌─────────────┼──────────────┐
-      ▼             ▼              ▼
-  Sarvam STT   Sarvam Translate   Sarvam Chat
- (voice→text)  (→ English,       Completion
-                on-read →        (short summary)
-                worker's lang)
+      ┌─────────────┼──────────────┬───────────────┐
+      ▼             ▼              ▼               ▼
+  Sarvam STT   Sarvam Translate   Sarvam Chat    Sarvam Chat
+ (voice→text)  (→ English,       Completion     Completion
+                on-read →        (spelling      (short summary)
+                worker's lang)   cleanup)
       │
       ▼
   SQLite (complaints table)
 ```
 
-All AI calls (speech-to-text, translation, and summary generation) go through the **Sarvam AI** SDK — one vendor for everything in this milestone. Direct function calls from FastAPI to Sarvam are used; there is no agent framework, queue, or orchestration layer yet.
+All AI calls (speech-to-text, translation, spelling cleanup, and summary generation) go through the **Sarvam AI** SDK — one vendor for everything in this milestone. Direct function calls from FastAPI to Sarvam are used; there is no agent framework, queue, or orchestration layer yet.
 
 ## Tech Stack
 
@@ -51,10 +51,11 @@ janmitra-ai/
 │   ├── database.py             # Engine/session setup
 │   ├── routes/complaints.py    # POST/GET/PATCH /complaints
 │   └── services/
-│       ├── sarvam_client.py        # STT + translation via Sarvam SDK
-│       ├── translation_service.py  # Language-code mapping + translate calls
-│       ├── summary_service.py      # Summary via Sarvam chat completion
-│       └── complaint_agent.py      # Orchestrates the full pipeline + storage
+│       ├── sarvam_client.py         # STT + translation via Sarvam SDK
+│       ├── translation_service.py   # Language-code mapping + translate calls
+│       ├── normalization_service.py # Spelling cleanup via Sarvam chat completion
+│       ├── summary_service.py       # Summary via Sarvam chat completion
+│       └── complaint_agent.py       # Orchestrates the full pipeline + storage
 ├── frontend/
 │   ├── citizen_app.py          # Citizen-facing Streamlit app
 │   └── worker_app.py           # Worker-facing Streamlit app

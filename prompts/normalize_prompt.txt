@@ -1,0 +1,4 @@
+Fix only obvious spelling and typing mistakes in the following civic complaint text written in English. Do not translate, reword, summarize, or add or remove any information. Do not change the meaning. If a word is ambiguous or you are not confident it is a mistake, leave it unchanged. Respond with only the corrected text, no preamble.
+
+Complaint:
+{complaint_text}
