@@ -137,7 +137,7 @@ janmitra-ai/
 pytest tests/ -v
 ```
 
-Tests mock all external AI calls (Sarvam STT, translation, and summary) so they run without any API keys configured.
+Tests mock all external AI calls (Sarvam STT, translation, and summary) so they run without any API keys configured, with one exception: `tests/test_ai_limits.py` has two live-API tests that are skipped by default and only run with `RUN_LIVE_AI_TESTS=1 pytest tests/test_ai_limits.py -v` (needs a real `LLM_API_KEY`). See [`docs/ai_pipeline_limits.md`](docs/ai_pipeline_limits.md) for measured, not guessed, real-world limits of the STT/normalization/summary pipeline — including a documented 30-second hard cap on speech-to-text and known latency variance in the LLM steps.
 
 ## Screenshots
 
