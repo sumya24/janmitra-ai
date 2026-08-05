@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import SettingsModal from "./SettingsModal";
+import ThemeToggle from "./ThemeToggle";
 import "./TopBar.css";
 
 const ROLE_LABEL: Record<string, string> = { citizen: "Citizen", worker: "Worker", admin: "Super Admin" };
@@ -34,6 +35,7 @@ export default function TopBar({ title = "JanMitra AI", subtitle = "Municipal Gr
             <div>{user.full_name}</div>
             <span className="role-pill">{ROLE_LABEL[user.role]}</span>
           </div>
+          <ThemeToggle className="icon-btn" />
           <button className="icon-btn" aria-label="Settings" onClick={() => setShowSettings(true)}>
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
               <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" strokeWidth="1.8" />

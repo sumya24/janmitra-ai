@@ -28,8 +28,14 @@ Nothing in this file should be implemented until its milestone arrives.
 
 ### Fast follow on the React rebuild specifically
 
-- Voice input (STT) isn't wired into the citizen complaint form yet — text
-  only for now, though the backend already supports audio uploads
+- ~~Voice input (STT) isn't wired into the citizen complaint form~~ — done:
+  a Type/Speak toggle in `CitizenDashboard.tsx` records a voice note via the
+  browser `MediaRecorder` API (`lib/useAudioRecorder.ts`) and uploads it on
+  the existing `audio` field, with inline errors for a denied/missing mic.
+- ~~Manual theme (light/dark) switcher~~ — done: `lib/theme.tsx` +
+  `components/ThemeToggle.tsx`, a System → Light → Dark cycle persisted to
+  localStorage, surfaced on the landing nav, login/signup, and every
+  dashboard's top bar.
 - A couple of native browser controls (file input, language `<select>`)
   aren't custom-styled to match the rest of the design yet
 - Playwright coverage for a *successful* complaint submission (translated,

@@ -1,4 +1,5 @@
-.authwrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
+.authwrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 40px 20px; position: relative; }
+.authwrap .theme-toggle { position: absolute; top: 20px; right: 20px; }
 .authcard { width: 100%; max-width: 420px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 30px 30px 26px; box-shadow: var(--shadow); }
 .authtabs { display: flex; background: var(--surface-2); border-radius: 10px; padding: 4px; margin-bottom: 22px; }
 .authtab {

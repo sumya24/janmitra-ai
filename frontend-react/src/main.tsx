@@ -5,15 +5,18 @@ import "./styles/global.css";
 import App from "./App.tsx";
 import { AuthProvider } from "./lib/auth";
 import { UiLangProvider } from "./lib/uiLang";
+import { ThemeProvider } from "./lib/theme";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <BrowserRouter>
-      <UiLangProvider>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </UiLangProvider>
-    </BrowserRouter>
+    <ThemeProvider>
+      <BrowserRouter>
+        <UiLangProvider>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </UiLangProvider>
+      </BrowserRouter>
+    </ThemeProvider>
   </StrictMode>
 );
