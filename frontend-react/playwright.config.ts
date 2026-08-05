@@ -14,7 +14,14 @@ export default defineConfig({
       name: "chromium",
       use: {
         ...devices["Desktop Chrome"],
-        launchOptions: { executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" },
+        // Fake mic device + auto-accept the permission prompt, so voice-recording
+        // tests can exercise MediaRecorder without a real microphone or a human
+        // clicking "Allow".
+        permissions: ["microphone"],
+        launchOptions: {
+          executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+          args: ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"],
+        },
       },
     },
   ],

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useUiLang } from "../lib/uiLang";
 import { SUPPORTED_LANGUAGES, t } from "../lib/i18n";
+import ThemeToggle from "../components/ThemeToggle";
 import "./Landing.css";
 
 export default function Landing() {
@@ -17,6 +18,7 @@ export default function Landing() {
           <Link to="/" className="lang-badge">
             {SUPPORTED_LANGUAGES[lang].name}
           </Link>
+          <ThemeToggle className="theme-toggle" />
           <Link to="/login" className="btn btn-ghost btn-sm">
             {t(lang, "landing.login")}
           </Link>

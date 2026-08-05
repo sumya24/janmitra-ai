@@ -4,6 +4,7 @@ import { useUiLang } from "../lib/uiLang";
 import { useAuth } from "../lib/auth";
 import { t } from "../lib/i18n";
 import { api, ApiError } from "../lib/api";
+import ThemeToggle from "../components/ThemeToggle";
 import "./Auth.css";
 
 export default function Login() {
@@ -41,6 +42,7 @@ export default function Login() {
 
   return (
     <div className="authwrap">
+      <ThemeToggle className="theme-toggle" />
       <div className="authcard">
         <div className="authtabs">
           <span className="authtab active">{t(lang, "auth.tab.login") || "Log in"}</span>

@@ -9,10 +9,13 @@ now wired to the real, authenticated backend.
 - A language gate (Marathi/Hindi/English) shown before anything else
 - A public landing page, with Log in / Sign up in the corner
 - Sign-up (citizen accounts only — see below) and login
-- Citizen dashboard: submit a complaint (text), view your own complaints
+- Citizen dashboard: submit a complaint by typing or recording your voice,
+  view your own complaints
 - Worker dashboard: view your ward's queue, mark complaints resolved
 - Super Admin dashboard: create worker accounts, see workload per worker
 - A Settings panel (change your name / preferred language, log out)
+- A theme toggle (System / Light / Dark) on the landing nav, login/signup,
+  and every dashboard's top bar — persisted to `localStorage`
 
 **On roles:** there is no role picker anywhere in this app, on purpose.
 Sign-up always creates a citizen account. Worker accounts can only be

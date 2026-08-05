@@ -3,6 +3,7 @@ import TopBar from "../components/TopBar";
 import { useAuth } from "../lib/auth";
 import { SUPPORTED_LANGUAGES, type LangCode } from "../lib/i18n";
 import { api, ApiError, type Complaint } from "../lib/api";
+import { useAudioRecorder } from "../lib/useAudioRecorder";
 
 export default function CitizenDashboard() {
   const { user, token } = useAuth();
@@ -11,6 +12,7 @@ export default function CitizenDashboard() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [inputMode, setInputMode] = useState<"text" | "voice">("text");
   const [language, setLanguage] = useState<LangCode>((user?.preferred_language as LangCode) || "en");
   const [text, setText] = useState("");
   const [ward, setWard] = useState("");
@@ -18,6 +20,7 @@ export default function CitizenDashboard() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const recorder = useAudioRecorder();
 
   async function loadComplaints() {
     if (!token) return;
@@ -42,15 +45,25 @@ export default function CitizenDashboard() {
     e.preventDefault();
     setSubmitError(null);
     setSubmitSuccess(false);
-    if (!text.trim()) {
+
+    if (inputMode === "text" && !text.trim()) {
       setSubmitError("Please describe the problem before submitting.");
+      return;
+    }
+    if (inputMode === "voice" && !recorder.audioBlob) {
+      setSubmitError("Please record your complaint before submitting.");
       return;
     }
     if (!token) return;
 
     const form = new FormData();
     form.append("language", language);
-    form.append("text", text.trim());
+    if (inputMode === "text") {
+      form.append("text", text.trim());
+    } else if (recorder.audioBlob) {
+      const extension = recorder.audioBlob.type.includes("mp4") ? "m4a" : recorder.audioBlob.type.includes("ogg") ? "ogg" : "webm";
+      form.append("audio", recorder.audioBlob, `complaint.${extension}`);
+    }
     if (ward.trim()) form.append("ward", ward.trim());
     if (photo) form.append("photo", photo);
 
@@ -60,6 +73,7 @@ export default function CitizenDashboard() {
       setText("");
       setWard("");
       setPhoto(null);
+      recorder.reset();
       setSubmitSuccess(true);
       await loadComplaints();
     } catch (err) {
@@ -67,6 +81,12 @@ export default function CitizenDashboard() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function formatSeconds(total: number): string {
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    return `${m}:${String(s).padStart(2, "0")}`;
   }
 
   const openCount = complaints.filter((c) => c.status === "open").length;
@@ -101,10 +121,78 @@ export default function CitizenDashboard() {
               ))}
             </select>
           </div>
+
           <div className="field">
-            <label htmlFor="complaint-text">Describe the problem</label>
-            <textarea id="complaint-text" rows={3} value={text} onChange={(e) => setText(e.target.value)} placeholder="e.g. Garbage not collected near my house for 3 days" />
+            <label>Describe the problem</label>
+            <div className="langpills" style={{ marginBottom: 10 }}>
+              <button
+                type="button"
+                className={`langpill ${inputMode === "text" ? "active" : ""}`}
+                onClick={() => setInputMode("text")}
+              >
+                ✏️ Type
+              </button>
+              <button
+                type="button"
+                className={`langpill ${inputMode === "voice" ? "active" : ""}`}
+                onClick={() => setInputMode("voice")}
+              >
+                🎙️ Speak
+              </button>
+            </div>
+
+            {inputMode === "text" && (
+              <textarea
+                id="complaint-text"
+                rows={3}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="e.g. Garbage not collected near my house for 3 days"
+              />
+            )}
+
+            {inputMode === "voice" && (
+              <div style={{ border: "1px solid var(--line)", borderRadius: 10, padding: 14, background: "var(--paper)" }}>
+                {recorder.error && <div className="banner-error" style={{ marginBottom: 10 }}>{recorder.error}</div>}
+
+                {!recorder.isRecording && !recorder.audioUrl && (
+                  <button type="button" className="btn btn-primary btn-sm" onClick={recorder.start}>
+                    🎙️ Start recording
+                  </button>
+                )}
+
+                {recorder.isRecording && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <span
+                      style={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: "50%",
+                        background: "var(--status-critical)",
+                        display: "inline-block",
+                      }}
+                    />
+                    <span className="mono" style={{ fontSize: 13 }}>{formatSeconds(recorder.seconds)}</span>
+                    <button type="button" className="btn btn-primary btn-sm" onClick={recorder.stop}>
+                      ⏹ Stop
+                    </button>
+                  </div>
+                )}
+
+                {!recorder.isRecording && recorder.audioUrl && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    <audio controls src={recorder.audioUrl} style={{ width: "100%" }} />
+                    <div>
+                      <button type="button" className="btn btn-ghost btn-sm" onClick={recorder.reset}>
+                        🔁 Record again
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
+
           <div className="field">
             <label htmlFor="complaint-ward">Area / ward (optional)</label>
             <input id="complaint-ward" type="text" value={ward} onChange={(e) => setWard(e.target.value)} placeholder="e.g. Ward 14 — Rukadi Road" />
