@@ -1,0 +1,14 @@
+.authwrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
+.authcard { width: 100%; max-width: 420px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 30px 30px 26px; box-shadow: var(--shadow); }
+.authtabs { display: flex; background: var(--surface-2); border-radius: 10px; padding: 4px; margin-bottom: 22px; }
+.authtab {
+  flex: 1; border: none; background: transparent; padding: 9px; border-radius: 7px; font-size: 13.5px;
+  font-weight: 700; color: var(--ink-2); text-align: center; text-decoration: none; display: block;
+}
+.authtab.active { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.lang-lock { display: flex; align-items: center; justify-content: space-between; background: var(--surface-2); border-radius: 8px; padding: 8px 12px; font-size: 12px; color: var(--ink-2); margin-bottom: 14px; }
+.lang-lock button { background: none; border: none; color: var(--accent); font-weight: 700; font-size: 12px; }
+.worker-note { font-size: 11.5px; color: var(--ink-2); background: var(--status-progress-bg); border-radius: 8px; padding: 10px 12px; line-height: 1.45; margin-bottom: 14px; }
+.switchline { text-align: center; font-size: 12.5px; color: var(--ink-2); margin-top: 14px; }
+.switchline a { color: var(--accent); font-weight: 700; text-decoration: none; }
+.authcard .btn.full { width: 100%; justify-content: center; padding: 11px; font-size: 14px; }
