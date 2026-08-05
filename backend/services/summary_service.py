@@ -42,15 +42,29 @@ class SummaryService:
             prompt = prompt_template.format(complaint_text=english_text)
             system_prompt = get_prompt("system_prompt.txt")
 
+            # sarvam-105b is a reasoning model: with the default reasoning effort it can
+            # burn through the entire max_tokens budget on internal reasoning_content and
+            # never emit a final answer. "low" keeps enough budget free for the actual
+            # 1-2 sentence summary this prompt asks for.
             response = self._client.chat.completions(
                 model=settings.LLM_MODEL,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt},
                 ],
-                max_tokens=150,
+                max_tokens=settings.LLM_MAX_TOKENS,
+                reasoning_effort="low",
             )
-            summary = response.choices[0].message.content.strip()
+            choice = response.choices[0]
+            content = choice.message.content
+            if not content or not content.strip():
+                logger.error(
+                    "Summary generation returned no content (finish_reason=%s); "
+                    "the model likely ran out of tokens before producing a final answer.",
+                    choice.finish_reason,
+                )
+                raise AIServiceError("Summary service returned an empty response. Please try again.")
+            summary = content.strip()
             logger.info("Summary generation completed")
             return summary
         except AIServiceError:
