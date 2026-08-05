@@ -28,7 +28,17 @@ class Settings:
     # sarvam-105b is a reasoning model: it spends tokens on internal reasoning_content
     # before emitting the final answer, so this needs much more headroom than a plain
     # 1-2 sentence summary would suggest, or the response gets cut off with empty content.
-    LLM_MAX_TOKENS: int = int(os.getenv("LLM_MAX_TOKENS", "1024"))
+    # reasoning_effort="low" (set at each call site) reduces this on average but is not a
+    # hard cap; 1024 was verified to still fail (finish_reason=length) on realistic,
+    # slightly longer complaint text, while 4096 reliably completes.
+    LLM_MAX_TOKENS: int = int(os.getenv("LLM_MAX_TOKENS", "4096"))
+    # The SarvamAI SDK defaults to a 60s read timeout, which a reasoning model can
+    # legitimately exceed on longer/harder inputs even at reasoning_effort="low". No
+    # value here is guaranteed sufficient for every possible complaint (there's no fixed
+    # cap that scales with an unbounded reasoning length) — this just gives slow-but-
+    # otherwise-successful calls more room before the client gives up, on top of the
+    # non-blocking fallback behavior in NormalizationService and ComplaintAgent.
+    LLM_TIMEOUT_SECONDS: float = float(os.getenv("LLM_TIMEOUT_SECONDS", "120"))
 
     # File storage
     UPLOAD_FOLDER: str = os.getenv("UPLOAD_FOLDER", str(BASE_DIR / "uploads"))

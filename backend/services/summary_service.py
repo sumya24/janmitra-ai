@@ -17,7 +17,7 @@ class SummaryService:
         """Initialize the underlying SarvamAI client, if an API key is configured."""
         self._client: SarvamAI | None = None
         if settings.LLM_API_KEY:
-            self._client = SarvamAI(api_subscription_key=settings.LLM_API_KEY)
+            self._client = SarvamAI(api_subscription_key=settings.LLM_API_KEY, timeout=settings.LLM_TIMEOUT_SECONDS)
         else:
             logger.warning("LLM_API_KEY is not set; summary generation will fail until configured.")
 
