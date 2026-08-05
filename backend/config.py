@@ -25,6 +25,10 @@ class Settings:
     # so this can reuse SARVAM_API_KEY if LLM_API_KEY is left unset)
     LLM_API_KEY: str = os.getenv("LLM_API_KEY") or os.getenv("SARVAM_API_KEY", "")
     LLM_MODEL: str = os.getenv("LLM_MODEL", "sarvam-105b")
+    # sarvam-105b is a reasoning model: it spends tokens on internal reasoning_content
+    # before emitting the final answer, so this needs much more headroom than a plain
+    # 1-2 sentence summary would suggest, or the response gets cut off with empty content.
+    LLM_MAX_TOKENS: int = int(os.getenv("LLM_MAX_TOKENS", "1024"))
 
     # File storage
     UPLOAD_FOLDER: str = os.getenv("UPLOAD_FOLDER", str(BASE_DIR / "uploads"))
