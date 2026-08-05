@@ -1,0 +1,26 @@
+.landingnav {
+  display: flex; align-items: center; justify-content: space-between; padding: 16px 32px;
+  border-bottom: 1px solid var(--line);
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.seal {
+  width: 38px; height: 38px; border-radius: 50%; background: var(--primary); color: var(--primary-ink);
+  border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center;
+  font-family: "Big Shoulders", sans-serif; font-weight: 700; font-size: 15px;
+}
+.brand-word { font-size: 22px; color: var(--ink); }
+.navactions { display: flex; align-items: center; gap: 10px; }
+.navactions .lang-badge {
+  font-size: 11px; font-weight: 700; color: var(--ink-2); border: 1px solid var(--line);
+  padding: 5px 10px; border-radius: 20px; text-decoration: none;
+}
+.hero {
+  max-width: 1080px; margin: 0 auto; padding: 64px 32px 40px;
+  display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 46px; align-items: center;
+}
+@media (max-width: 860px) { .hero { grid-template-columns: 1fr; padding-top: 40px; } }
+.eyebrow { font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-bottom: 12px; }
+.hero-copy h1 { font-size: 42px; line-height: 1.06; }
+.hero-copy p.lede { color: var(--ink-2); font-size: 15.5px; margin: 18px 0 26px; max-width: 46ch; }
+.hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; }
+.hero-ctas a { text-decoration: none; }

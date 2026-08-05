@@ -1,0 +1,143 @@
+@font-face {
+  font-family: "Big Shoulders";
+  font-style: normal;
+  font-weight: 400;
+  src: url("/fonts/BigShoulders-Regular.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Big Shoulders";
+  font-style: normal;
+  font-weight: 700;
+  src: url("/fonts/BigShoulders-Bold.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Instrument Sans";
+  font-style: normal;
+  font-weight: 400;
+  src: url("/fonts/InstrumentSans-Regular.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Instrument Sans";
+  font-style: italic;
+  font-weight: 400;
+  src: url("/fonts/InstrumentSans-Italic.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Instrument Sans";
+  font-style: normal;
+  font-weight: 700;
+  src: url("/fonts/InstrumentSans-Bold.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400;
+  src: url("/fonts/JetBrainsMono-Regular.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 700;
+  src: url("/fonts/JetBrainsMono-Bold.ttf") format("truetype");
+  font-display: swap;
+}
+
+:root {
+  --paper: #EEF1EC;
+  --surface: #FFFFFF;
+  --surface-2: #E4E8E0;
+  --ink: #1F2A28;
+  --ink-2: #5B665F;
+  --ink-3: #8A9389;
+  --line: #D7DCD2;
+  --primary: #1B3A3F;
+  --primary-ink: #F3F5F1;
+  --accent: #B5432B;
+  --accent-ink: #FBF1EC;
+  --status-open: #9A6205;
+  --status-open-bg: #FBF0DC;
+  --status-progress: #285170;
+  --status-progress-bg: #E4EDF3;
+  --status-resolved: #256242;
+  --status-resolved-bg: #E1F0E5;
+  --status-critical: #A02142;
+  --status-critical-bg: #FBE4EA;
+  --shadow: 0 1px 2px rgba(20,30,26,0.06), 0 4px 16px rgba(20,30,26,0.05);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #141F1C; --surface: #1B2622; --surface-2: #24312B;
+    --ink: #E7EAE2; --ink-2: #9BA79E; --ink-3: #6C7A72; --line: #2B3733;
+    --primary: #6FA9AE; --primary-ink: #0E1A18;
+    --accent: #E28361; --accent-ink: #2B140D;
+    --status-open: #E0A94A; --status-open-bg: #34290F;
+    --status-progress: #7FB3D1; --status-progress-bg: #16262E;
+    --status-resolved: #6BBE8B; --status-resolved-bg: #12271A;
+    --status-critical: #E27E97; --status-critical-bg: #301019;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Instrument Sans", "Segoe UI", Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+a { color: inherit; }
+button { font-family: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+.devanagari { font-family: "Noto Sans Devanagari", "Nirmala UI", "Kohinoor Devanagari", "Segoe UI", sans-serif; }
+.mono { font-family: "JetBrains Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+
+.display { font-family: "Big Shoulders", sans-serif; font-weight: 700; }
+
+.btn {
+  border: none; border-radius: 8px; padding: 10px 18px; font-size: 13.5px; font-weight: 700;
+  display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
+}
+.btn-primary { background: var(--accent); color: var(--accent-ink); }
+.btn-primary:hover { filter: brightness(1.06); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.btn-ghost:hover { background: var(--surface-2); }
+.btn-sm { padding: 7px 13px; font-size: 12px; }
+
+.status { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 20px; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+.status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.status.open { background: var(--status-open-bg); color: var(--status-open); }
+.status.resolved { background: var(--status-resolved-bg); color: var(--status-resolved); }
+
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 12px; font-weight: 700; color: var(--ink-2); margin-bottom: 6px; }
+.field input, .field select, .field textarea {
+  width: 100%; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+  border-radius: 8px; padding: 10px 12px; font-size: 14px; font-family: inherit;
+}
+.field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+.field.has-error input, .field.has-error textarea { border-color: var(--status-critical); }
+.field-error { color: var(--status-critical); font-size: 11.5px; margin-top: 5px; }
+
+.banner-error {
+  background: var(--status-critical-bg); color: var(--status-critical); border-radius: 8px;
+  padding: 10px 14px; font-size: 13px; margin-bottom: 14px;
+}
+
+.langpills { display: flex; gap: 6px; }
+.langpill {
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink-2);
+  padding: 6px 13px; border-radius: 20px; font-size: 12.5px; font-weight: 600;
+}
+.langpill.active { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); }
