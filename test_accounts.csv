@@ -1,0 +1,4 @@
+Role,Full Name,Phone,Password,Ward,Notes
+Admin,Anjali Kulkarni,9999999999,adminpass123,,Super admin — can add workers
+Worker,Ramesh Kadam,9964614524,workerpass123,Ward 14 — Rukadi Road,
+Citizen,Smoke Test,9785964770,smoketest123,,Has test complaints already submitted

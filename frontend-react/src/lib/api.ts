@@ -93,6 +93,8 @@ export const api = {
   listComplaints: (token: string, lang?: string) =>
     request<Complaint[]>(`/complaints${lang ? `?lang=${lang}` : ""}`, { token }),
 
+  listWards: (token: string) => request<string[]>("/complaints/wards", { token }),
+
   createComplaint: (token: string, form: FormData) =>
     request<Complaint>("/complaints", { method: "POST", token, formData: form }),
 

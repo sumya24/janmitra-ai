@@ -12,8 +12,12 @@ const ADMIN_PASSWORD = "adminpass123";
 test.beforeAll(() => {
   // Simulates how a real deployment provisions its first Super Admin: seeded
   // directly into the database, never through sign-up.
+  //
+  // The python3 binary name isn't universal — Windows installs from python.org
+  // only register "python", not "python3" — so pick per-platform.
+  const pythonBin = process.platform === "win32" ? "python" : "python3";
   execSync(
-    `python3 scripts/seed_admin.py --phone ${ADMIN_PHONE} --password ${ADMIN_PASSWORD} --name "Anjali Kulkarni"`,
+    `${pythonBin} scripts/seed_admin.py --phone ${ADMIN_PHONE} --password ${ADMIN_PASSWORD} --name "Anjali Kulkarni"`,
     { cwd: REPO_ROOT, stdio: "pipe" }
   );
 });

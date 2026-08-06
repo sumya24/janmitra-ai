@@ -6,7 +6,10 @@ export default defineConfig({
   workers: 1,
   reporter: "list",
   use: {
-    baseURL: "http://127.0.0.1:5173",
+    // Use "localhost" rather than the literal 127.0.0.1: on some setups (notably seen
+    // on Windows) the dev server ends up reachable only via the IPv6 loopback that
+    // "localhost" resolves to, and a hardcoded IPv4 address fails to connect.
+    baseURL: "http://localhost:5173",
     trace: "retain-on-failure",
   },
   projects: [
@@ -19,7 +22,11 @@ export default defineConfig({
         // clicking "Allow".
         permissions: ["microphone"],
         launchOptions: {
-          executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+          // Only override the browser binary if PLAYWRIGHT_CHROMIUM_PATH is set (e.g. a
+          // sandboxed CI image with a pre-installed build at a fixed path). Locally, leave
+          // it undefined so Playwright launches the browser it installed via
+          // `npx playwright install`, which works on any OS.
+          executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined,
           args: ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"],
         },
       },
