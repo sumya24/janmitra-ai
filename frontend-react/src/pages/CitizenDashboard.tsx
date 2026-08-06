@@ -16,6 +16,7 @@ export default function CitizenDashboard() {
   const [language, setLanguage] = useState<LangCode>((user?.preferred_language as LangCode) || "en");
   const [text, setText] = useState("");
   const [ward, setWard] = useState("");
+  const [wards, setWards] = useState<string[]>([]);
   const [photo, setPhoto] = useState<File | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -41,6 +42,14 @@ export default function CitizenDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, viewLang]);
 
+  useEffect(() => {
+    if (!token) return;
+    // Populate the ward dropdown from real ward names (i.e. wards that actually
+    // have a worker assigned) so a citizen can never type a typo or a ward that
+    // doesn't route anywhere.
+    api.listWards(token).then(setWards).catch(() => setWards([]));
+  }, [token]);
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setSubmitError(null);
@@ -52,6 +61,12 @@ export default function CitizenDashboard() {
     }
     if (inputMode === "voice" && !recorder.audioBlob) {
       setSubmitError("Please record your complaint before submitting.");
+      return;
+    }
+    // Only enforce a ward choice when there are real wards to choose from — if
+    // none are set up yet, don't block a citizen from reporting a problem at all.
+    if (wards.length > 0 && !ward) {
+      setSubmitError("Please select the area so your complaint reaches the right team.");
       return;
     }
     if (!token) return;
@@ -194,8 +209,31 @@ export default function CitizenDashboard() {
           </div>
 
           <div className="field">
-            <label htmlFor="complaint-ward">Area / ward (optional)</label>
-            <input id="complaint-ward" type="text" value={ward} onChange={(e) => setWard(e.target.value)} placeholder="e.g. Ward 14 — Rukadi Road" />
+            <label htmlFor="complaint-ward">Area / ward{wards.length === 0 ? " (optional)" : ""}</label>
+            {wards.length > 0 ? (
+              <>
+                <select id="complaint-ward" value={ward} onChange={(e) => setWard(e.target.value)} required>
+                  <option value="" disabled>
+                    Select the area
+                  </option>
+                  {wards.map((w) => (
+                    <option key={w} value={w}>
+                      {w}
+                    </option>
+                  ))}
+                </select>
+                <p style={{ fontSize: 11, color: "var(--ink-2)", marginTop: 4 }}>
+                  This determines which team's queue your complaint lands in.
+                </p>
+              </>
+            ) : (
+              <>
+                <input id="complaint-ward" type="text" value={ward} onChange={(e) => setWard(e.target.value)} placeholder="e.g. Ward 14 — Rukadi Road" />
+                <p style={{ fontSize: 11, color: "var(--ink-2)", marginTop: 4 }}>
+                  No areas are set up yet, so this won't reach anyone's queue until an admin adds a worker for it.
+                </p>
+              </>
+            )}
           </div>
           <div className="field">
             <label htmlFor="complaint-photo">Attach a photo (optional)</label>

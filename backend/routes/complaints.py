@@ -118,6 +118,22 @@ def _to_response(complaint: Complaint, display_language: str | None) -> Complain
     )
 
 
+@router.get("/wards", response_model=list[str])
+def list_wards(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> list[str]:
+    """List every ward that has a worker assigned to it.
+
+    Backs the ward picker on the citizen's complaint form: a complaint can only
+    ever reach a worker if its ward exactly matches a worker's ward, so the
+    dropdown only ever offers wards that actually have someone staffing them —
+    it's impossible to pick a name that doesn't route anywhere.
+    """
+    rows = db.query(User.ward).filter(User.role == "worker", User.ward.isnot(None)).distinct().all()
+    return sorted({row[0] for row in rows if row[0]})
+
+
 @router.post("", response_model=ComplaintResponse)
 def create_complaint(
     language: str = Form(...),
