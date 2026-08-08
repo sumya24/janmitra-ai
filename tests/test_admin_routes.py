@@ -107,11 +107,11 @@ def test_list_workers_reports_open_and_resolved_counts(client, make_admin, make_
     db = db_session()
     db.add(Complaint(
         citizen_id="1", original_text="a", original_language="en", translated_text="a",
-        summary="a", ward="Ward 14", status="open",
+        summary="a", ward="Ward 14", status="assigned", assigned_worker_id=worker["id"],
     ))
     db.add(Complaint(
         citizen_id="1", original_text="b", original_language="en", translated_text="b",
-        summary="b", ward="Ward 14", status="resolved",
+        summary="b", ward="Ward 14", status="resolved", assigned_worker_id=worker["id"],
     ))
     db.commit()
     db.close()

@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { api, type UserProfile } from "./api";
+import { useUiLang } from "./uiLang";
+import type { LangCode } from "./i18n";
 
 interface AuthState {
   token: string | null;
@@ -27,6 +29,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  // The account's saved preferred_language is the source of truth for UI language once
+  // logged in — synced into uiLang below so dashboards/TopBar/complaint display all follow it
+  // automatically, with no separate action needed after logging in or loading a session.
+  const { setLang } = useUiLang();
 
   useEffect(() => {
     if (!token) {
@@ -35,7 +41,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     api
       .me(token)
-      .then(setUser)
+      .then((profile) => {
+        setUser(profile);
+        setLang(profile.preferred_language as LangCode);
+      })
       .catch(() => {
         // Stored token is invalid or expired — clear it rather than get stuck.
         localStorage.removeItem(TOKEN_KEY);
@@ -43,12 +52,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
       })
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   function setSession(newToken: string, newUser: UserProfile) {
     localStorage.setItem(TOKEN_KEY, newToken);
     setToken(newToken);
     setUser(newUser);
+    setLang(newUser.preferred_language as LangCode);
     setIsLoggingOut(false);
   }
 

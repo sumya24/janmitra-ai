@@ -59,6 +59,8 @@ export interface AuthResponse {
   user: UserProfile;
 }
 
+export type ComplaintStatus = "pending" | "assigned" | "accepted" | "resolved";
+
 export interface Complaint {
   id: number;
   citizen_id: string;
@@ -67,9 +69,16 @@ export interface Complaint {
   translated_text: string;
   display_text: string;
   summary: string;
+  display_summary: string;
   photo_path: string | null;
-  status: "open" | "resolved";
+  status: ComplaintStatus;
   ward: string | null;
+  assigned_worker_name: string | null;
+  // Only populated once the assigned worker has accepted (or resolved) — see backend/routes/complaints.py.
+  assigned_worker_phone: string | null;
+  rejection_count: number;
+  feedback_rating: number | null;
+  feedback_comment: string | null;
   created_at: string;
 }
 
@@ -98,8 +107,17 @@ export const api = {
   createComplaint: (token: string, form: FormData) =>
     request<Complaint>("/complaints", { method: "POST", token, formData: form }),
 
-  updateComplaintStatus: (token: string, id: number, status: "open" | "resolved") =>
-    request<Complaint>(`/complaints/${id}`, { method: "PATCH", token, body: { status } }),
+  acceptComplaint: (token: string, id: number) =>
+    request<Complaint>(`/complaints/${id}/accept`, { method: "POST", token }),
+
+  rejectComplaint: (token: string, id: number) =>
+    request<Complaint>(`/complaints/${id}/reject`, { method: "POST", token }),
+
+  resolveComplaint: (token: string, id: number) =>
+    request<Complaint>(`/complaints/${id}/resolve`, { method: "POST", token }),
+
+  submitFeedback: (token: string, id: number, body: { rating: number; comment?: string }) =>
+    request<Complaint>(`/complaints/${id}/feedback`, { method: "POST", token, body }),
 
   createWorker: (
     token: string,

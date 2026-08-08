@@ -1,0 +1,86 @@
+[
+  {
+    "ward": "Ward 22 — Kothrud, Pune",
+    "citizen_phone": "7142605009",
+    "citizen_password": "citizenpass123",
+    "citizen_lang": "mr",
+    "complaint_id": 23
+  },
+  {
+    "ward": "Ward 22 — Kothrud, Pune",
+    "citizen_phone": "7142605019",
+    "citizen_password": "citizenpass123",
+    "citizen_lang": "mr",
+    "complaint_id": 24
+  },
+  {
+    "ward": "Ward 8 — Civil Lines, Kanpur",
+    "citizen_phone": "7142605109",
+    "citizen_password": "citizenpass123",
+    "citizen_lang": "hi",
+    "complaint_id": 25
+  },
+  {
+    "ward": "Ward 8 — Civil Lines, Kanpur",
+    "citizen_phone": "7142605119",
+    "citizen_password": "citizenpass123",
+    "citizen_lang": "hi",
+    "complaint_id": 26
+  },
+  {
+    "ward": "Ward 5 — Saheed Nagar, Bhubaneswar",
+    "citizen_phone": "7142605209",
+    "citizen_password": "citizenpass123",
+    "citizen_lang": "or",
+    "complaint_id": 27
+  },
+  {
+    "ward": "Ward 5 — Saheed Nagar, Bhubaneswar",
+    "citizen_phone": "7142605219",
+    "citizen_password": "citizenpass123",
+    "citizen_lang": "or",
+    "complaint_id": 28
+  },
+  {
+    "ward": "Ward 11 — Navrangpura, Ahmedabad",
+    "citizen_phone": "7142605309",
+    "citizen_password": "citizenpass123",
+    "citizen_lang": "gu",
+    "complaint_id": 29
+  },
+  {
+    "ward": "Ward 11 — Navrangpura, Ahmedabad",
+    "citizen_phone": "7142605319",
+    "citizen_password": "citizenpass123",
+    "citizen_lang": "gu",
+    "complaint_id": 30
+  },
+  {
+    "ward": "Ward 6 — Salt Lake, Kolkata",
+    "citizen_phone": "7142605409",
+    "citizen_password": "citizenpass123",
+    "citizen_lang": "bn",
+    "complaint_id": 31
+  },
+  {
+    "ward": "Ward 6 — Salt Lake, Kolkata",
+    "citizen_phone": "7142605419",
+    "citizen_password": "citizenpass123",
+    "citizen_lang": "bn",
+    "complaint_id": 32
+  },
+  {
+    "ward": "Ward 3 — Indiranagar, Bengaluru",
+    "citizen_phone": "7142605509",
+    "citizen_password": "citizenpass123",
+    "citizen_lang": "en",
+    "complaint_id": 33
+  },
+  {
+    "ward": "Ward 3 — Indiranagar, Bengaluru",
+    "citizen_phone": "7142605519",
+    "citizen_password": "citizenpass123",
+    "citizen_lang": "en",
+    "complaint_id": 34
+  }
+]

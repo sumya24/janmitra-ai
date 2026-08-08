@@ -2,10 +2,13 @@ import { useEffect, useState } from "react";
 import TopBar from "../components/TopBar";
 import AddWorkerModal from "../components/AddWorkerModal";
 import { useAuth } from "../lib/auth";
+import { useUiLang } from "../lib/uiLang";
+import { t } from "../lib/i18n";
 import { api, ApiError, type WorkerSummary } from "../lib/api";
 
 export default function AdminDashboard() {
   const { token } = useAuth();
+  const { lang } = useUiLang();
   const [workers, setWorkers] = useState<WorkerSummary[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -18,7 +21,7 @@ export default function AdminDashboard() {
     try {
       setWorkers(await api.listWorkers(token));
     } catch (err) {
-      setLoadError(err instanceof ApiError ? err.message : "Could not load workers.");
+      setLoadError(err instanceof ApiError ? err.message : t(lang, "admin.errLoadFailed"));
     } finally {
       setLoading(false);
     }
@@ -38,46 +41,52 @@ export default function AdminDashboard() {
       <div className="page">
         <div className="page-head">
           <div>
-            <h1 className="page-title display">Municipal Oversight</h1>
-            <p className="page-sub">All wards</p>
+            <h1 className="page-title display">{t(lang, "admin.title")}</h1>
+            <p className="page-sub">{t(lang, "admin.subtitle")}</p>
           </div>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 30 }}>
           <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12, padding: "16px 18px" }}>
-            <div style={{ fontSize: 11, color: "var(--ink-2)", textTransform: "uppercase", fontWeight: 700 }}>Workers</div>
+            <div style={{ fontSize: 11, color: "var(--ink-2)", textTransform: "uppercase", fontWeight: 700 }}>{t(lang, "admin.workersStat")}</div>
             <div className="display" style={{ fontSize: 32, marginTop: 8 }}>{workers.length}</div>
           </div>
           <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12, padding: "16px 18px" }}>
-            <div style={{ fontSize: 11, color: "var(--ink-2)", textTransform: "uppercase", fontWeight: 700 }}>Open complaints</div>
+            <div style={{ fontSize: 11, color: "var(--ink-2)", textTransform: "uppercase", fontWeight: 700 }}>{t(lang, "admin.openComplaintsStat")}</div>
             <div className="display" style={{ fontSize: 32, marginTop: 8, color: "var(--status-open)" }}>{totalOpen}</div>
           </div>
           <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12, padding: "16px 18px" }}>
-            <div style={{ fontSize: 11, color: "var(--ink-2)", textTransform: "uppercase", fontWeight: 700 }}>Resolved</div>
+            <div style={{ fontSize: 11, color: "var(--ink-2)", textTransform: "uppercase", fontWeight: 700 }}>{t(lang, "admin.resolvedStat")}</div>
             <div className="display" style={{ fontSize: 32, marginTop: 8, color: "var(--status-resolved)" }}>{totalResolved}</div>
           </div>
         </div>
 
         <div className="section-label" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span>Workers</span>
+          <span>{t(lang, "admin.workersSection")}</span>
           <button className="btn btn-primary btn-sm" onClick={() => setShowAddWorker(true)}>
-            + Add worker
+            {t(lang, "admin.addWorker")}
           </button>
         </div>
         <p style={{ fontSize: 12, color: "var(--ink-2)", marginTop: -4, marginBottom: 12 }}>
-          Worker accounts can only be created here by a Super Admin — there's no public sign-up for workers.
+          {t(lang, "admin.addWorkerNote")}
         </p>
 
         {loadError && <div className="banner-error">{loadError}</div>}
-        {loading && <p style={{ color: "var(--ink-2)" }}>Loading…</p>}
-        {!loading && workers.length === 0 && <p style={{ color: "var(--ink-2)" }}>No workers yet — add the first one.</p>}
+        {loading && <p style={{ color: "var(--ink-2)" }}>{t(lang, "admin.loading")}</p>}
+        {!loading && workers.length === 0 && <p style={{ color: "var(--ink-2)" }}>{t(lang, "admin.noWorkers")}</p>}
 
         {!loading && workers.length > 0 && (
           <div style={{ overflowX: "auto", border: "1px solid var(--line)", borderRadius: 12, background: "var(--surface)" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 480 }}>
               <thead>
                 <tr>
-                  {["Worker", "Ward", "Open", "Resolved", "Language"].map((h) => (
+                  {[
+                    t(lang, "admin.colWorker"),
+                    t(lang, "admin.colWard"),
+                    t(lang, "admin.colOpen"),
+                    t(lang, "admin.colResolved"),
+                    t(lang, "admin.colLanguage"),
+                  ].map((h) => (
                     <th key={h} style={{ textAlign: "left", fontSize: 10.5, textTransform: "uppercase", color: "var(--ink-3)", fontWeight: 700, padding: "12px 16px", borderBottom: "1px solid var(--line)" }}>
                       {h}
                     </th>

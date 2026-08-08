@@ -15,9 +15,10 @@ test("language gate -> landing -> signup validation -> citizen dashboard -> grac
   await page.getByRole("link", { name: "साइन अप" }).click();
   await expect(page).toHaveURL(/\/signup$/);
 
-  // Submitting empty should show inline validation errors, not crash.
+  // Submitting empty should show inline validation errors, not crash. Signed up in Marathi,
+  // so the validation message correctly renders in Marathi too, not English.
   await page.getByRole("button", { name: "खाते तयार करा" }).click();
-  await expect(page.getByText("This field is required.").first()).toBeVisible();
+  await expect(page.getByText("हे क्षेत्र आवश्यक आहे.").first()).toBeVisible();
 
   // Fill in a valid signup and submit.
   const phone = uniquePhone();
@@ -28,12 +29,13 @@ test("language gate -> landing -> signup validation -> citizen dashboard -> grac
 
   await expect(page).toHaveURL(/\/citizen$/);
   await expect(page.getByText("Priya Deshmukh")).toBeVisible();
-  await expect(page.getByText("CITIZEN")).toBeVisible();
+  await expect(page.getByText("नागरिक", { exact: true })).toBeVisible(); // role pill — also renders in Marathi
 
-  // Submit a complaint — no Sarvam API key is configured in this environment,
-  // so the backend fails the AI pipeline. The UI must show a clear error,
-  // never crash or hang.
-  await page.getByPlaceholder(/Garbage not collected/).fill("कचरा उचलला नाही");
-  await page.getByRole("button", { name: "Submit complaint" }).click();
+  // Submit a complaint. The citizen dashboard is still in Marathi, so its placeholder text is
+  // the Marathi translation, not the English original.
+  await page.getByPlaceholder(/कचरा जमा झालेला नाही/).fill("कचरा उचलला नाही");
+  await page.getByRole("button", { name: "तक्रार दाखल करा" }).click();
+  // No ward is selected, so this now correctly fails client-side validation (in Marathi)
+  // rather than reaching the AI pipeline at all.
   await expect(page.locator(".banner-error")).toBeVisible({ timeout: 10000 });
 });
