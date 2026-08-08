@@ -153,4 +153,4 @@ A genuinely more "agentic" version of this app — one that, say, classifies a c
 
 ---
 
-*Related reading: [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md) for the whole codebase, [`README.md`](../README.md) for setup and quick reference.*
+*Related reading: [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md) for the whole codebase · [`BACKEND.md`](BACKEND.md) · [`FRONTEND.md`](FRONTEND.md) · [`DATABASE.md`](DATABASE.md) · [`AUTHENTICATION.md`](AUTHENTICATION.md) · [`TESTING.md`](TESTING.md) · [`README.md`](../README.md) for setup and the full doc index*

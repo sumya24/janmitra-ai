@@ -6,11 +6,20 @@ A civic complaint app where a citizen can report a problem (starting with garbag
 
 ## 📚 Full documentation
 
-This README is a quick reference and setup guide. For the real depth:
+This README is a quick reference and setup guide. Everything else — the actual depth, written so it makes sense whether or not you already write code, and detailed enough to explain confidently in an interview — lives in `docs/`. **Start with `PROJECT_OVERVIEW.md`** for the big picture, then go to whichever specific doc covers what you're trying to understand:
 
-- **[`docs/PROJECT_OVERVIEW.md`](docs/PROJECT_OVERVIEW.md)** — a complete, beginner-friendly walkthrough of the whole codebase: every backend and frontend file explained, the database schema, how authentication works, how a complaint moves through its lifecycle, with diagrams. Written so it makes sense whether or not you write code.
-- **[`docs/AI_AGENT.md`](docs/AI_AGENT.md)** — a deep dive specifically on the AI pipeline: how speech-to-text, spelling cleanup, translation, and summarization actually work, and the real limits found by testing against the live Sarvam API (not guessed) — including a hard 30-second cap on voice recordings and why the AI steps are all designed to fail gracefully instead of blocking a complaint.
-- **[`future_work.md`](future_work.md)** — what's deliberately out of scope so far.
+| If you want to understand... | Read this |
+|---|---|
+| The big picture: what this app is, how its pieces fit together, every file's purpose, with diagrams | **[`docs/PROJECT_OVERVIEW.md`](docs/PROJECT_OVERVIEW.md)** |
+| The backend: FastAPI, why it was chosen, how routes/services/models are layered, CORS | **[`docs/BACKEND.md`](docs/BACKEND.md)** |
+| The frontend: React, why it was chosen, component structure, state management, routing | **[`docs/FRONTEND.md`](docs/FRONTEND.md)** |
+| The database: SQLAlchemy, schema design, caching, why SQLite (and its real limits) | **[`docs/DATABASE.md`](docs/DATABASE.md)** |
+| Login, passwords, JWTs, and roles — what a JWT actually is and why this project hand-rolled its own | **[`docs/AUTHENTICATION.md`](docs/AUTHENTICATION.md)** |
+| The AI pipeline: speech-to-text, translation, summarization, and the real limits measured against the live Sarvam API | **[`docs/AI_AGENT.md`](docs/AI_AGENT.md)** |
+| Testing strategy: pytest, mocking, property-based tests, Playwright end-to-end tests | **[`docs/TESTING.md`](docs/TESTING.md)** |
+| What's deliberately out of scope so far | **[`future_work.md`](future_work.md)** |
+
+Every doc in `docs/` ends with a **"Likely interview questions about this part of the project"** section — real questions with real, specific answers grounded in this actual codebase, not generic advice.
 
 ## Current status
 
