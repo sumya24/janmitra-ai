@@ -6,12 +6,23 @@ import { uniquePhone } from "./helpers";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../..");
-const ADMIN_PHONE = "9999999999";
+// A fixed phone here would silently reuse whatever account already has that number across every
+// run all session (including manual testing against the same dev db) — its preferred_language
+// can drift from whatever it was first seeded with, which then changes what language the UI
+// renders in and breaks assertions that expect English. A unique phone per run guarantees a
+// fresh account seeded fresh every time.
+const ADMIN_PHONE = uniquePhone();
 const ADMIN_PASSWORD = "adminpass123";
+// A fixed ward name here would create a fresh duplicate "Ramesh Kadam" on the same ward every
+// time this spec runs — harmless to the test itself, but confusing for real manual testing
+// later (a citizen's complaint can get correctly reassigned to a *different* same-named
+// duplicate after a rejection, and look on screen like nothing happened).
+const WARD = `Ward 14 — Rukadi Road ${Date.now()}`;
 
 test.beforeAll(() => {
   // Simulates how a real deployment provisions its first Super Admin: seeded
-  // directly into the database, never through sign-up.
+  // directly into the database, never through sign-up. --language defaults to "en" in
+  // seed_admin.py, which the assertions below rely on.
   //
   // The python3 binary name isn't universal — Windows installs from python.org
   // only register "python", not "python3" — so pick per-platform.
@@ -36,11 +47,16 @@ test("super admin creates a worker, who can then log in and see their (empty) qu
   await page.getByLabel("Full name").fill("Ramesh Kadam");
   await page.getByLabel("Phone number").fill(workerPhone);
   await page.getByLabel("Temporary password").fill("workerpass123");
-  await page.getByLabel("Assign to ward").fill("Ward 14 — Rukadi Road");
+  await page.getByLabel("Assign to ward").fill(WARD);
+  // The modal defaults to Marathi — pick English explicitly so the worker's dashboard (and the
+  // assertions below) render in the language this test actually checks.
+  await page.getByRole("button", { name: "English", exact: true }).click();
   await page.getByRole("button", { name: "Add worker", exact: true }).click();
 
-  await expect(page.getByText("Ramesh Kadam")).toBeVisible();
-  await expect(page.getByText("Ward 14 — Rukadi Road")).toBeVisible();
+  // .first(): "Ramesh Kadam" as a name is still reused each run (the ward isn't), so the name
+  // alone can still match older rows — .first() is the just-created one (table is newest-first).
+  await expect(page.getByText("Ramesh Kadam").first()).toBeVisible();
+  await expect(page.getByText(WARD)).toBeVisible();
 
   // Log out, then log in as the newly created worker.
   await page.getByLabel("Settings").click();
@@ -53,7 +69,7 @@ test("super admin creates a worker, who can then log in and see their (empty) qu
   await page.getByRole("button", { name: "Log in" }).click();
 
   await expect(page).toHaveURL(/\/worker$/);
-  await expect(page.getByText("Ward: Ward 14 — Rukadi Road")).toBeVisible();
+  await expect(page.getByText(`Ward: ${WARD}`)).toBeVisible();
   await expect(page.getByText("Nothing here.")).toBeVisible();
 });
 

@@ -1,0 +1,60 @@
+{
+  "admin_phone": "714223400",
+  "admin_password": "adminpass123",
+  "areas": [
+    {
+      "ward": "Ward 22 — Kothrud, Pune",
+      "worker_phone": "714223401",
+      "worker_password": "workerpass123",
+      "worker_lang": "mr",
+      "citizen_phone": "714223451",
+      "citizen_password": "citizenpass123",
+      "complaint_id": 17
+    },
+    {
+      "ward": "Ward 8 — Civil Lines, Kanpur",
+      "worker_phone": "714223402",
+      "worker_password": "workerpass123",
+      "worker_lang": "hi",
+      "citizen_phone": "714223452",
+      "citizen_password": "citizenpass123",
+      "complaint_id": 18
+    },
+    {
+      "ward": "Ward 5 — Saheed Nagar, Bhubaneswar",
+      "worker_phone": "714223403",
+      "worker_password": "workerpass123",
+      "worker_lang": "or",
+      "citizen_phone": "714223453",
+      "citizen_password": "citizenpass123",
+      "complaint_id": 19
+    },
+    {
+      "ward": "Ward 11 — Navrangpura, Ahmedabad",
+      "worker_phone": "714223404",
+      "worker_password": "workerpass123",
+      "worker_lang": "gu",
+      "citizen_phone": "714223454",
+      "citizen_password": "citizenpass123",
+      "complaint_id": 20
+    },
+    {
+      "ward": "Ward 6 — Salt Lake, Kolkata",
+      "worker_phone": "714223405",
+      "worker_password": "workerpass123",
+      "worker_lang": "bn",
+      "citizen_phone": "714223455",
+      "citizen_password": "citizenpass123",
+      "complaint_id": 21
+    },
+    {
+      "ward": "Ward 3 — Indiranagar, Bengaluru",
+      "worker_phone": "714223406",
+      "worker_password": "workerpass123",
+      "worker_lang": "en",
+      "citizen_phone": "714223456",
+      "citizen_password": "citizenpass123",
+      "complaint_id": 22
+    }
+  ]
+}

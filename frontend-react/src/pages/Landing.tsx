@@ -30,7 +30,7 @@ export default function Landing() {
 
       <div className="hero">
         <div className="hero-copy">
-          <div className="eyebrow">Municipal grievance redressal</div>
+          <div className="eyebrow">{t(lang, "topbar.subtitle")}</div>
           <h1 className="display">{t(lang, "hero.headline")}</h1>
           <p className="lede">{t(lang, "hero.sub")}</p>
           <div className="hero-ctas">

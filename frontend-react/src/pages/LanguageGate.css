@@ -12,7 +12,8 @@
   display: flex; align-items: center; justify-content: center; margin: 0 auto 22px;
   font-family: "Big Shoulders", sans-serif; font-weight: 700; font-size: 24px;
 }
-.gate-title { font-size: 26px; margin-bottom: 6px; }
+.gate-title { margin-bottom: 6px; }
+.gate-title-line { display: block; font-size: 19px; line-height: 1.35; }
 .gate-sub { color: var(--ink-2); font-size: 13px; margin-bottom: 28px; }
 .gate-options { display: flex; flex-direction: column; gap: 10px; }
 .gate-opt {

@@ -91,14 +91,16 @@ def list_workers(
 
     summaries = []
     for worker in workers:
+        # Counted by actual assignment now, not ward text match — accurate even when a ward has
+        # more than one worker (see assignment_service.py), unlike the old ward-only count.
         open_count = (
             db.query(Complaint)
-            .filter(Complaint.ward == worker.ward, Complaint.status == "open")
+            .filter(Complaint.assigned_worker_id == worker.id, Complaint.status.in_(["assigned", "accepted"]))
             .count()
         )
         resolved_count = (
             db.query(Complaint)
-            .filter(Complaint.ward == worker.ward, Complaint.status == "resolved")
+            .filter(Complaint.assigned_worker_id == worker.id, Complaint.status == "resolved")
             .count()
         )
         summaries.append(

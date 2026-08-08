@@ -8,5 +8,6 @@ uploads/*
 !uploads/.gitkeep
 .pytest_cache/
 .hypothesis/
+.history/
 *.egg-info/
 .DS_Store

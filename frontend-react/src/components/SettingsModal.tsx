@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useAuth } from "../lib/auth";
-import { SUPPORTED_LANGUAGES, type LangCode } from "../lib/i18n";
+import { useUiLang } from "../lib/uiLang";
+import { SUPPORTED_LANGUAGES, t, type LangCode } from "../lib/i18n";
 import { api, ApiError } from "../lib/api";
 
 export default function SettingsModal({ onClose, onLogout }: { onClose: () => void; onLogout: () => void }) {
   const { user, token, updateUser } = useAuth();
+  const { lang, setLang } = useUiLang();
   const [fullName, setFullName] = useState(user?.full_name ?? "");
   const [language, setLanguage] = useState<LangCode>((user?.preferred_language as LangCode) ?? "en");
   const [error, setError] = useState<string | null>(null);
@@ -17,9 +19,10 @@ export default function SettingsModal({ onClose, onLogout }: { onClose: () => vo
     try {
       const updated = await api.updateMe(token, { full_name: fullName.trim(), preferred_language: language });
       updateUser(updated);
+      setLang(language); // instant — dashboards/TopBar/complaint list follow immediately, no reload
       onClose();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not save changes. Please try again.");
+      setError(err instanceof ApiError ? err.message : t(lang, "settings.error"));
     } finally {
       setSaving(false);
     }
@@ -29,8 +32,8 @@ export default function SettingsModal({ onClose, onLogout }: { onClose: () => vo
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal">
         <div className="modal-head">
-          <h3 className="display">Profile &amp; settings</h3>
-          <button className="x" aria-label="Close" onClick={onClose}>
+          <h3 className="display">{t(lang, "settings.title")}</h3>
+          <button className="x" aria-label={t(lang, "common.close")} onClick={onClose}>
             ✕
           </button>
         </div>
@@ -38,15 +41,15 @@ export default function SettingsModal({ onClose, onLogout }: { onClose: () => vo
         {error && <div className="banner-error">{error}</div>}
 
         <div className="field">
-          <label htmlFor="settings-name">Full name</label>
+          <label htmlFor="settings-name">{t(lang, "settings.fullName")}</label>
           <input id="settings-name" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} />
         </div>
         <div className="field">
-          <label htmlFor="settings-phone">Phone number</label>
+          <label htmlFor="settings-phone">{t(lang, "settings.phone")}</label>
           <input id="settings-phone" type="tel" value={user?.phone ?? ""} disabled />
         </div>
         <div className="field">
-          <label id="settings-language-label">Preferred language</label>
+          <label id="settings-language-label">{t(lang, "settings.preferredLanguage")}</label>
           <div className="langpills">
             {(Object.keys(SUPPORTED_LANGUAGES) as LangCode[]).map((code) => (
               <button
@@ -61,15 +64,15 @@ export default function SettingsModal({ onClose, onLogout }: { onClose: () => vo
           </div>
         </div>
         <p style={{ fontSize: 11.5, color: "var(--ink-3)", marginTop: 10 }}>
-          This changes the language JanMitra AI shows you — complaint forms, notifications, everything.
+          {t(lang, "settings.languageHelp")}
         </p>
 
         <div className="modal-actions">
           <button className="btn btn-ghost" onClick={onLogout}>
-            Log out
+            {t(lang, "settings.logout")}
           </button>
           <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-            {saving ? "Saving…" : "Save changes"}
+            {saving ? t(lang, "settings.saving") : t(lang, "settings.save")}
           </button>
         </div>
       </div>

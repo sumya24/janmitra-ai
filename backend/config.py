@@ -65,6 +65,9 @@ class Settings:
         "mr": {"name": "Marathi", "bcp47": "mr-IN"},
         "hi": {"name": "Hindi", "bcp47": "hi-IN"},
         "en": {"name": "English", "bcp47": "en-IN"},
+        "or": {"name": "Odia", "bcp47": "od-IN"},
+        "gu": {"name": "Gujarati", "bcp47": "gu-IN"},
+        "bn": {"name": "Bengali", "bcp47": "bn-IN"},
     }
 
 

@@ -1,10 +1,12 @@
 import { useState, type FormEvent } from "react";
 import { useAuth } from "../lib/auth";
-import { SUPPORTED_LANGUAGES, type LangCode } from "../lib/i18n";
+import { useUiLang } from "../lib/uiLang";
+import { SUPPORTED_LANGUAGES, t, type LangCode } from "../lib/i18n";
 import { api, ApiError } from "../lib/api";
 
 export default function AddWorkerModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const { token } = useAuth();
+  const { lang } = useUiLang();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -39,7 +41,7 @@ export default function AddWorkerModal({ onClose, onCreated }: { onClose: () => 
       onCreated();
       onClose();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not create this worker account.");
+      setError(err instanceof ApiError ? err.message : t(lang, "addWorker.errFailed"));
     } finally {
       setSaving(false);
     }
@@ -49,41 +51,40 @@ export default function AddWorkerModal({ onClose, onCreated }: { onClose: () => 
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal">
         <div className="modal-head">
-          <h3 className="display">Add a worker</h3>
-          <button className="x" aria-label="Close" onClick={onClose}>
+          <h3 className="display">{t(lang, "addWorker.title")}</h3>
+          <button className="x" aria-label={t(lang, "common.close")} onClick={onClose}>
             ✕
           </button>
         </div>
         <div className="modal-note">
-          Only Super Admins can create worker accounts. Share the phone number and password with the worker so
-          they can log in.
+          {t(lang, "addWorker.note")}
         </div>
 
         {error && <div className="banner-error">{error}</div>}
 
         <form onSubmit={handleSubmit} noValidate>
           <div className={`field ${fieldErrors.fullName ? "has-error" : ""}`}>
-            <label htmlFor="worker-name">Full name</label>
-            <input id="worker-name" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="e.g. Sunita Pawar" />
-            {fieldErrors.fullName && <div className="field-error">This field is required.</div>}
+            <label htmlFor="worker-name">{t(lang, "addWorker.fullName")}</label>
+            <input id="worker-name" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder={t(lang, "addWorker.fullNamePlaceholder")} />
+            {fieldErrors.fullName && <div className="field-error">{t(lang, "common.fieldRequired")}</div>}
           </div>
           <div className={`field ${fieldErrors.phone ? "has-error" : ""}`}>
-            <label htmlFor="worker-phone">Phone number</label>
+            <label htmlFor="worker-phone">{t(lang, "addWorker.phone")}</label>
             <input id="worker-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98xxxxxxxx" />
-            {fieldErrors.phone && <div className="field-error">This field is required.</div>}
+            {fieldErrors.phone && <div className="field-error">{t(lang, "common.fieldRequired")}</div>}
           </div>
           <div className={`field ${fieldErrors.password ? "has-error" : ""}`}>
-            <label htmlFor="worker-password">Temporary password</label>
+            <label htmlFor="worker-password">{t(lang, "addWorker.tempPassword")}</label>
             <input id="worker-password" type="text" value={password} onChange={(e) => setPassword(e.target.value)} />
-            {fieldErrors.password && <div className="field-error">This field is required.</div>}
+            {fieldErrors.password && <div className="field-error">{t(lang, "common.fieldRequired")}</div>}
           </div>
           <div className={`field ${fieldErrors.ward ? "has-error" : ""}`}>
-            <label htmlFor="worker-ward">Assign to ward</label>
-            <input id="worker-ward" type="text" value={ward} onChange={(e) => setWard(e.target.value)} placeholder="e.g. Ward 14 — Rukadi Road" />
-            {fieldErrors.ward && <div className="field-error">This field is required.</div>}
+            <label htmlFor="worker-ward">{t(lang, "addWorker.ward")}</label>
+            <input id="worker-ward" type="text" value={ward} onChange={(e) => setWard(e.target.value)} placeholder={t(lang, "addWorker.wardPlaceholder")} />
+            {fieldErrors.ward && <div className="field-error">{t(lang, "common.fieldRequired")}</div>}
           </div>
           <div className="field">
-            <label id="worker-language-label">Preferred language</label>
+            <label id="worker-language-label">{t(lang, "addWorker.preferredLanguage")}</label>
             <div className="langpills">
               {(Object.keys(SUPPORTED_LANGUAGES) as LangCode[]).map((code) => (
                 <button
@@ -100,10 +101,10 @@ export default function AddWorkerModal({ onClose, onCreated }: { onClose: () => 
 
           <div className="modal-actions">
             <button type="button" className="btn btn-ghost" onClick={onClose}>
-              Cancel
+              {t(lang, "addWorker.cancel")}
             </button>
             <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? "Adding…" : "Add worker"}
+              {saving ? t(lang, "addWorker.submitting") : t(lang, "addWorker.submit")}
             </button>
           </div>
         </form>

@@ -34,7 +34,7 @@ export default function Login() {
       setSession(access_token, user);
       navigate(user.role === "citizen" ? "/citizen" : user.role === "worker" ? "/worker" : "/admin");
     } catch (err) {
-      setFormError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
+      setFormError(err instanceof ApiError ? err.message : t(lang, "common.somethingWrong"));
     } finally {
       setSubmitting(false);
     }
@@ -45,9 +45,9 @@ export default function Login() {
       <ThemeToggle className="theme-toggle" />
       <div className="authcard">
         <div className="authtabs">
-          <span className="authtab active">{t(lang, "auth.tab.login") || "Log in"}</span>
+          <span className="authtab active">{t(lang, "auth.tab.login")}</span>
           <Link to="/signup" className="authtab">
-            {t(lang, "auth.tab.signup") || "Sign up"}
+            {t(lang, "auth.tab.signup")}
           </Link>
         </div>
 
@@ -57,12 +57,12 @@ export default function Login() {
           <div className={`field ${fieldErrors.phone ? "has-error" : ""}`}>
             <label htmlFor="login-phone">{t(lang, "auth.field.phone")}</label>
             <input id="login-phone" type="tel" placeholder="98xxxxxxxx" value={phone} onChange={(e) => setPhone(e.target.value)} />
-            {fieldErrors.phone && <div className="field-error">This field is required.</div>}
+            {fieldErrors.phone && <div className="field-error">{t(lang, "common.fieldRequired")}</div>}
           </div>
           <div className={`field ${fieldErrors.password ? "has-error" : ""}`}>
             <label htmlFor="login-password">{t(lang, "auth.field.password")}</label>
             <input id="login-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-            {fieldErrors.password && <div className="field-error">This field is required.</div>}
+            {fieldErrors.password && <div className="field-error">{t(lang, "common.fieldRequired")}</div>}
           </div>
           <button type="submit" className="btn btn-primary full" disabled={submitting}>
             {submitting ? "…" : t(lang, "auth.login.button")}
