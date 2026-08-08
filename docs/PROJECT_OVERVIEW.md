@@ -40,6 +40,8 @@ Sarvam AI sits outside the box marked "this codebase" because it's a separate co
 
 ## 3. The database, explained
 
+> 📖 **Full deep dive** (why an ORM, schema design reasoning, the caching pattern, why SQLite and its real limits): **[`docs/DATABASE.md`](DATABASE.md)**
+
 Four tables, all defined in [`backend/models.py`](../backend/models.py). No migration framework exists for this project (see [§9](#9-a-known-limitation-no-database-migrations)) — the app creates whatever tables are missing on startup, but never alters an existing table, which matters if you're adding a new field yourself.
 
 - **`users`** — every account: citizens, workers, and admins all live in the same table, distinguished by a `role` column. Workers additionally have a `ward`; citizens and admins don't use that field.
@@ -58,6 +60,8 @@ A complaint is never manually set to a status by a citizen or worker clicking so
 ---
 
 ## 5. The backend (Python / FastAPI)
+
+> 📖 **Full deep dive** (why FastAPI, the routes/services/models layering explained, CORS, dependency injection): **[`docs/BACKEND.md`](BACKEND.md)**
 
 Everything under `backend/`. Read top to bottom and you're reading the request-handling stack from the outside in: entry point → routes → services → database.
 
@@ -86,6 +90,8 @@ Everything under `backend/`. Read top to bottom and you're reading the request-h
 
 ## 6. Authentication: how login actually works
 
+> 📖 **Full deep dive** (what a JWT actually is, why bcrypt, why this project hand-rolled JWTs instead of using a library, timing attacks): **[`docs/AUTHENTICATION.md`](AUTHENTICATION.md)**
+
 No sessions, no server-side login state — this app uses **JWTs** (JSON Web Tokens), a compact, signed piece of text the server hands the browser on login, which the browser then sends back on every subsequent request to prove who it is.
 
 1. You log in with a phone number and password. The backend checks your password against a stored **hash** (never the plaintext password itself — see `hash_password`/`verify_password` in `auth_service.py`) and, if it matches, creates a JWT containing your user ID and role, signed with a secret key only the backend knows.
@@ -98,6 +104,8 @@ If the JWT secret key isn't explicitly set (`JWT_SECRET_KEY` in `.env`), the app
 ---
 
 ## 7. The frontend (React + TypeScript)
+
+> 📖 **Full deep dive** (why React, why no Redux, routing/route-protection, the trickiest bug fixed in this codebase): **[`docs/FRONTEND.md`](FRONTEND.md)**
 
 Everything under `frontend-react/src/`. React apps are built from small, focused files — this one splits cleanly into **pages** (one per screen), **components** (reusable pieces used across pages), and **lib** (logic that isn't a visual thing at all: talking to the API, remembering who's logged in, etc.).
 
@@ -175,6 +183,8 @@ The very first Super Admin account for a fresh database is created by running `s
 
 ## 11. Testing
 
+> 📖 **Full deep dive** (the testing pyramid, why mocking is the default, property-based testing, a real debugging story): **[`docs/TESTING.md`](TESTING.md)**
+
 ```bash
 pytest tests/ -v                              # backend — mocks all external AI calls
 cd frontend-react && npx playwright test      # end-to-end, against real running dev servers
@@ -184,4 +194,4 @@ The end-to-end tests need both the backend and frontend dev servers actually run
 
 ---
 
-*Related reading: [`README.md`](../README.md) for setup, [`AI_AGENT.md`](AI_AGENT.md) for the AI pipeline deep dive.*
+*Related reading: [`README.md`](../README.md) for setup and the full doc index · [`BACKEND.md`](BACKEND.md) · [`FRONTEND.md`](FRONTEND.md) · [`DATABASE.md`](DATABASE.md) · [`AUTHENTICATION.md`](AUTHENTICATION.md) · [`AI_AGENT.md`](AI_AGENT.md) · [`TESTING.md`](TESTING.md)*
