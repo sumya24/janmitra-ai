@@ -1,79 +1,97 @@
 # JanMitra AI
 
-A civic complaint app where a citizen can report a problem (starting with garbage collection) by speaking in their own language. The app transcribes, translates, and routes the complaint to a worker — who sees it in their own language — without the citizen and worker ever needing to share a common language.
+A civic complaint app where a citizen can report a problem (starting with garbage collection) by speaking in their own language. The app transcribes, translates, and routes the complaint to the right worker — who sees it in their own language — without the citizen and worker ever needing to share a common language.
 
 **Why it matters:** In India, most civic apps assume citizen and worker share a language. This one doesn't have to.
 
-## Milestone 1 — Working Product
+## 📚 Full documentation
 
-This is the first milestone: a citizen can speak a complaint in Marathi, Hindi, or English; the app transcribes, translates it to English for storage, cleans up obvious spelling mistakes, and generates a short summary; a worker sees the complaint translated into their own chosen language and can mark it resolved; the citizen sees the updated status.
+This README is a quick reference and setup guide. For the real depth:
 
-There is no authentication yet — a single hardcoded citizen and a single hardcoded worker are used. See `future_work.md` for what's deliberately out of scope for this milestone.
+- **[`docs/PROJECT_OVERVIEW.md`](docs/PROJECT_OVERVIEW.md)** — a complete, beginner-friendly walkthrough of the whole codebase: every backend and frontend file explained, the database schema, how authentication works, how a complaint moves through its lifecycle, with diagrams. Written so it makes sense whether or not you write code.
+- **[`docs/AI_AGENT.md`](docs/AI_AGENT.md)** — a deep dive specifically on the AI pipeline: how speech-to-text, spelling cleanup, translation, and summarization actually work, and the real limits found by testing against the live Sarvam API (not guessed) — including a hard 30-second cap on voice recordings and why the AI steps are all designed to fail gracefully instead of blocking a complaint.
+- **[`future_work.md`](future_work.md)** — what's deliberately out of scope so far.
+
+## Current status
+
+Full citizen/worker/Super Admin roles with real JWT authentication, ward-scoped complaint assignment (with automatic reassignment on rejection), cached on-demand translation, and voice complaints that aren't capped at Sarvam's 30-second-per-request speech-to-text limit (recordings are chunked client-side and stitched back together). The UI supports 6 languages: English, Hindi, Marathi, Odia, Gujarati, Bengali.
+
+This replaced an earlier, simpler version (hardcoded single citizen/worker, no login, Streamlit-only frontend) — those Streamlit apps (`frontend/citizen_app.py`, `frontend/worker_app.py`) still exist in this repo for reference but are superseded by the React frontend below.
 
 ## Architecture
 
 ```
-Citizen (Streamlit)                             Worker (Streamlit)
-      │                                                │
-      │  speak / type + optional photo                 │  view translated complaints
-      ▼                                                ▼
-                       FastAPI Backend
-                             │
-      ┌──────────────┬───────┴────────┬────────────────┐
-      ▼              ▼                ▼                ▼
-  Sarvam STT   Sarvam Chat       Sarvam Translate   Sarvam Chat
- (voice→text,  Completion        (citizen's lang    Completion
-  citizen's    (spelling         → English;         (short
-  language)    cleanup, in       on-read →           summary)
-               citizen's         worker's lang)
-               language)
-      │
-      ▼
-  SQLite (complaints table)
+   Citizen / Worker / Admin (React + TypeScript SPA)
+                    │
+                    │  HTTPS, JWT bearer token
+                    ▼
+              FastAPI Backend
+                    │
+      ┌─────────────┼──────────────┐
+      ▼             ▼              ▼
+  SQLite       Sarvam AI       uploads/
+  Database     (external:      folder
+  (users,       STT, translate, (complaint
+  complaints,   chat completion) photos)
+  translations)
 ```
 
-All AI calls (speech-to-text, spelling cleanup, translation, and summary generation) go through the **Sarvam AI** SDK — one vendor for everything in this milestone. Direct function calls from FastAPI to Sarvam are used; there is no agent framework, queue, or orchestration layer yet.
+Full diagram + explanation: [`docs/PROJECT_OVERVIEW.md §2`](docs/PROJECT_OVERVIEW.md#2-system-architecture). Complaint lifecycle diagram: [`docs/PROJECT_OVERVIEW.md §4`](docs/PROJECT_OVERVIEW.md#4-how-a-complaint-moves-through-the-system). AI pipeline diagram: [`docs/AI_AGENT.md §2`](docs/AI_AGENT.md#2-the-pipeline-visually).
 
-Spelling cleanup runs on the citizen's original text, in whatever language they used (Marathi, Hindi, or English) — *before* translation to English, not after. A typo in the citizen's own script would otherwise produce a bad English translation that then gets re-mistranslated on every future read into a worker's chosen display language; fixing it at the source, in the original language, avoids that regardless of which of the three languages was used. The citizen's own `original_text` record is never altered — only the working copy fed into translation is normalized.
+All AI calls (speech-to-text, spelling cleanup, translation, summarization) go through the **Sarvam AI** SDK — one vendor for everything. Direct calls from FastAPI to Sarvam; no agent framework, queue, or orchestration layer. See [`docs/AI_AGENT.md`](docs/AI_AGENT.md) for exactly how, and what its real, measured limits are.
 
 ## Tech Stack
 
-- **Frontend:** Streamlit (separate citizen and worker apps)
-- **Backend:** FastAPI
-- **Database:** SQLite (via SQLAlchemy)
-- **AI:** Sarvam AI — `saaras:v3` for speech-to-text, `sarvam-translate:v1` for translation, `sarvam-105b` for chat-completion-based summaries
+- **Frontend:** React + TypeScript (Vite), plain CSS with light/dark/system theming — `frontend-react/`
+- **Backend:** FastAPI (Python)
+- **Auth:** JWT (HS256), implemented against the standard library directly — no third-party JWT package
+- **Database:** SQLite (via SQLAlchemy), no migration framework (see [`docs/PROJECT_OVERVIEW.md §9`](docs/PROJECT_OVERVIEW.md#9-a-known-limitation-no-database-migrations))
+- **AI:** Sarvam AI — `saaras:v3` (speech-to-text), `sarvam-translate:v1` (translation), `sarvam-105b` (chat-completion for spelling cleanup + summaries)
 - **Storage:** Local filesystem for photos
+- **Testing:** pytest (backend, all AI calls mocked) + Playwright (end-to-end, against real running dev servers) + Hypothesis (property-based tests for auth/token logic)
+- **Legacy:** `frontend/citizen_app.py` / `worker_app.py` — the original Streamlit frontend, superseded by `frontend-react/`, kept for reference
 
 ## Project Structure
 
 ```
 janmitra-ai/
 ├── backend/
-│   ├── config.py              # All settings, loaded from .env
-│   ├── main.py                # FastAPI app entry point
-│   ├── models.py               # SQLAlchemy Complaint model
-│   ├── database.py             # Engine/session setup
-│   ├── routes/complaints.py    # POST/GET/PATCH /complaints
+│   ├── config.py                    # All settings, loaded from .env
+│   ├── main.py                      # FastAPI app entry point
+│   ├── models.py                    # users, complaints, complaint_rejections, complaint_translations
+│   ├── database.py                  # Engine/session setup, init_db()
+│   ├── deps.py                      # JWT verification + role-checking dependencies
+│   ├── routes/
+│   │   ├── auth.py                  # Sign-up, login, profile
+│   │   ├── admin.py                 # Super-admin: create/list workers
+│   │   └── complaints.py            # Create/list/accept/reject/resolve/feedback, ward list
 │   └── services/
-│       ├── sarvam_client.py         # STT + translation via Sarvam SDK
+│       ├── sarvam_client.py         # STT + translation, direct Sarvam SDK calls
 │       ├── translation_service.py   # Language-code mapping + translate calls
-│       ├── normalization_service.py # Spelling cleanup via Sarvam chat completion
-│       ├── summary_service.py       # Summary via Sarvam chat completion
-│       └── complaint_agent.py       # Orchestrates the full pipeline + storage
-├── frontend/
-│   ├── citizen_app.py          # Citizen-facing Streamlit app
-│   └── worker_app.py           # Worker-facing Streamlit app
-├── prompts/                    # Prompt text, never hardcoded in code
-├── uploads/                    # Stored complaint photos
-├── tests/                      # pytest unit + API tests (mocked AI calls)
+│       ├── normalization_service.py # Spelling cleanup (best-effort, never blocks)
+│       ├── summary_service.py       # Short summary via Sarvam chat completion
+│       ├── complaint_agent.py       # Orchestrates the full AI pipeline + storage
+│       ├── complaint_translation_cache.py  # Caches per-language translations
+│       ├── assignment_service.py    # Ward-scoped worker assignment + reassignment
+│       └── auth_service.py          # Password hashing + JWT issuing/verification
+├── frontend-react/                  # Current frontend — see docs/PROJECT_OVERVIEW.md §7
+│   ├── src/pages/                   # One file per screen
+│   ├── src/components/              # Reusable UI pieces
+│   ├── src/lib/                     # API client, auth, i18n, audio recording, theming
+│   └── e2e/                         # Playwright end-to-end tests
+├── frontend/                        # Legacy Streamlit apps (superseded, kept for reference)
+├── prompts/                         # AI prompt text, never hardcoded in Python
+├── scripts/                         # One-off admin/seed/migration/i18n-build scripts
+├── docs/                            # Full documentation — see links at the top of this file
+├── uploads/                         # Stored complaint photos
+├── tests/                           # pytest (backend) — mocked AI calls
 ├── requirements.txt
-├── .env.example
-└── future_work.md              # Everything explicitly deferred to later milestones
+└── .env.example
 ```
 
 ## Setup
 
-1. **Clone and install dependencies**
+1. **Clone and install backend dependencies**
 
    ```bash
    git clone https://github.com/sumya24/janmitra-ai
@@ -81,7 +99,15 @@ janmitra-ai/
    pip install -r requirements.txt
    ```
 
-2. **Configure environment variables**
+2. **Install frontend dependencies**
+
+   ```bash
+   cd frontend-react
+   npm install
+   cd ..
+   ```
+
+3. **Configure environment variables**
 
    ```bash
    cp .env.example .env
@@ -91,61 +117,88 @@ janmitra-ai/
    |---|---|
    | `SARVAM_API_KEY` | Your Sarvam AI subscription key (used for STT and translation) |
    | `SARVAM_BASE_URL` | Sarvam API base URL (defaults to `https://api.sarvam.ai`) |
-   | `LLM_API_KEY` | Key used for summary generation via Sarvam's chat completion API. Leave blank to reuse `SARVAM_API_KEY`. |
-   | `LLM_MODEL` | Chat model used for summaries (defaults to `sarvam-105b`) |
+   | `LLM_API_KEY` | Key used for the chat-completion calls (normalize/summarize). Leave blank to reuse `SARVAM_API_KEY`. |
+   | `LLM_MODEL` | Chat model used (defaults to `sarvam-105b`) |
+   | `LLM_MAX_TOKENS` | Token budget per chat-completion call — see [`docs/AI_AGENT.md §4`](docs/AI_AGENT.md#4-why-every-step-is-best-effort-not-a-bigger-token-budget) for why this needs real headroom (4096, not a smaller "should be enough" number) |
    | `UPLOAD_FOLDER` | Local folder for stored complaint photos (defaults to `uploads`) |
    | `DATABASE_URL` | SQLite connection string |
-   | `BACKEND_URL` | URL the Streamlit apps use to reach the FastAPI backend |
+   | `BACKEND_URL` | Legacy — only used by the old Streamlit frontends |
+   | `CORS_ORIGINS` | Comma-separated browser origins allowed to call the API (defaults cover the Vite dev server) |
+   | `JWT_SECRET_KEY` | Secret used to sign login tokens. **Set this explicitly for any real deployment** — if left blank, a random key is generated per process, invalidating every session on restart |
+   | `JWT_EXPIRE_MINUTES` | How long a login session lasts (defaults to 1440 = 24h) |
 
    Get a Sarvam AI API key at [sarvam.ai](https://www.sarvam.ai/).
 
-3. **Run the backend**
+4. **Seed the first Super Admin account**
 
    ```bash
-   uvicorn backend.main:app --reload
+   python scripts/seed_admin.py
+   ```
+
+   This is the *only* way a Super Admin account ever gets created — there's no sign-up path for it. Safe to re-run; it checks for an existing account with the same phone number first.
+
+5. **Run the backend**
+
+   ```bash
+   python -m uvicorn backend.main:app --reload
    ```
 
    API docs available at `http://localhost:8000/docs`.
 
-4. **Run the frontends** (in separate terminals)
+6. **Run the frontend** (in a separate terminal)
 
    ```bash
-   streamlit run frontend/citizen_app.py --server.port 8501
-   streamlit run frontend/worker_app.py --server.port 8502
+   cd frontend-react
+   npm run dev
    ```
+
+   Open `http://localhost:5173`.
 
 ## Demo Workflow
 
-1. Open the citizen app, choose **Marathi**, and either record or type a complaint (e.g. "कचरा उचलला नाही" — "Garbage has not been collected").
-2. Optionally attach a photo.
-3. Submit — the backend transcribes (if voice), translates to English, and generates a summary.
-4. Open the worker app, choose **Hindi**, and see the same complaint translated into Hindi along with its summary.
-5. Click **Mark Resolved** on the worker app.
-6. Refresh the citizen app — the complaint now shows **Resolved**.
+1. Open the app, pick a UI language, and sign up as a citizen (phone + password).
+2. Log in as the Super Admin you seeded, and create a worker account for a specific ward.
+3. Log back in as the citizen, pick that same ward, and either record or type a complaint (e.g. "कचरा उचलला नाही" — "Garbage has not been collected").
+4. Submit — the backend transcribes (if voice), cleans up spelling, translates to English, and generates a summary. The complaint is immediately assigned to the worker you created in that ward.
+5. Log in as that worker, see the complaint (translated into the worker's own preferred language), and **Accept** it — this unlocks the worker's phone number for the citizen.
+6. Mark it **Resolved**.
+7. Log back in as the citizen — the complaint now shows **Resolved**, with a step-by-step tracker, and a 1-5★ feedback form appears.
 
 ## API Endpoints
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/complaints` | Create a complaint from typed text or a voice recording, with an optional photo |
-| `GET` | `/complaints?lang=hi` | List complaints, translating the display text into `lang` on read |
-| `PATCH` | `/complaints/{id}` | Update a complaint's status (`open` or `resolved`) |
+| Method | Endpoint | Who | Description |
+|---|---|---|---|
+| `POST` | `/auth/signup` | Anyone | Create a citizen account and log in immediately |
+| `POST` | `/auth/login` | Anyone | Log in with phone + password, any role |
+| `GET` | `/auth/me` | Authenticated | Current user's profile |
+| `PATCH` | `/auth/me` | Authenticated | Update your own display name / preferred language |
+| `POST` | `/admin/workers` | Admin | Create a worker account for a ward |
+| `GET` | `/admin/workers` | Admin | List every worker with open/resolved complaint counts |
+| `GET` | `/complaints/wards` | Authenticated | List wards that currently have a worker (backs the ward picker) |
+| `POST` | `/complaints` | Citizen | Create a complaint from typed text or (possibly chunked) voice, with an optional photo |
+| `GET` | `/complaints?lang=hi` | Authenticated | List complaints visible to you, translated into `lang` on read (scoped by role — see [`docs/PROJECT_OVERVIEW.md §4`](docs/PROJECT_OVERVIEW.md#4-how-a-complaint-moves-through-the-system)) |
+| `POST` | `/complaints/{id}/accept` | Worker | Accept a complaint assigned to you |
+| `POST` | `/complaints/{id}/reject` | Worker | Reject it — reassigns to the next eligible worker in the ward |
+| `POST` | `/complaints/{id}/resolve` | Worker | Mark an accepted complaint resolved |
+| `POST` | `/complaints/{id}/feedback` | Citizen | Leave a 1-5★ rating (+ optional comment) on your own resolved complaint |
 
 ## Testing
 
 ```bash
+# Backend — mocks all external AI calls, no API keys needed
 pytest tests/ -v
+
+# End-to-end — needs both dev servers actually running first (see Setup above)
+cd frontend-react
+npx playwright test
 ```
 
-Tests mock all external AI calls (Sarvam STT, translation, and summary) so they run without any API keys configured.
+## Known limitations
 
-## Screenshots
-
-_Screenshots will be added here once the app has been run against a live Sarvam AI key._
+- **No database migrations** — adding a column to an existing table needs a manual one-off script. See [`docs/PROJECT_OVERVIEW.md §9`](docs/PROJECT_OVERVIEW.md#9-a-known-limitation-no-database-migrations).
+- **AI steps have real, measured limits** — a 30-second-per-request cap on voice input (worked around via chunking) and unpredictable reliability on longer text inputs. Full detail, with real numbers: [`docs/AI_AGENT.md`](docs/AI_AGENT.md).
+- **`LLM_TIMEOUT_SECONDS` isn't currently wired up** — it's documented in `.env.example` but nothing in the code reads it yet; the Sarvam SDK's default (60s) applies instead. See [`docs/AI_AGENT.md §5`](docs/AI_AGENT.md#5-real-measured-limits-not-guessed).
 
 ## Roadmap
 
-See `future_work.md` for the full list. In short:
-
-- **Milestone 2:** real auth, PostgreSQL, photo analysis, category/priority detection, live status updates, maps
-- **Milestone 3:** multi-agent orchestration, queues, Docker/AWS deployment, observability tooling
+See [`future_work.md`](future_work.md) for the full list.

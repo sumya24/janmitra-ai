@@ -18,11 +18,26 @@ Nothing in this file should be implemented until its milestone arrives.
 - PostgreSQL (replace SQLite)
 - Vision analysis of complaint photos
 - Category detection, priority detection, structured JSON output from the LLM
-- Retry logic and smarter error recovery for AI calls
-- Live status updates (polling/websockets), maps
-- Accept / reject / reassignment workflow for workers
-- Ward assignment for citizens (currently a free-text field per complaint,
-  not tied to an address/geography)
+  (see `docs/AI_AGENT.md §6` for a scoped-out sketch of this as an agentic
+  next step, reusing the existing pipeline)
+- ~~Retry logic and smarter error recovery for AI calls~~ — partially done:
+  voice complaints retry a failed speech-to-text chunk once before falling
+  back to an explicit gap marker (`ComplaintAgent._transcribe_chunks`); text
+  cleanup/summarization use a different strategy (best-effort fallback
+  instead of retry, since their failures aren't reliably transient — see
+  `docs/AI_AGENT.md §4`). Sarvam translation calls still have no retry.
+- Live status updates (polling/websockets), maps — partially done: the
+  citizen dashboard short-polls for status changes every 8s while anything
+  is still in flight; no websockets/SSE yet, and no maps.
+- ~~Accept / reject / reassignment workflow for workers~~ — done:
+  `backend/services/assignment_service.py`, full pending → assigned →
+  accepted → resolved lifecycle with automatic reassignment to the next
+  eligible worker in the ward on rejection. See `docs/PROJECT_OVERVIEW.md §4`.
+- ~~Ward assignment for citizens (currently a free-text field per complaint,
+  not tied to an address/geography)~~ — done: a dropdown backed by
+  `GET /complaints/wards` (real wards that actually have a worker), falling
+  back to free text only if no wards are set up yet. Still not tied to a
+  real address/geography lookup.
 - Password reset flow, phone number verification (OTP), rate limiting on
   login/signup
 
@@ -38,11 +53,10 @@ Nothing in this file should be implemented until its milestone arrives.
   dashboard's top bar.
 - A couple of native browser controls (file input, language `<select>`)
   aren't custom-styled to match the rest of the design yet
-- Playwright coverage for a *successful* complaint submission (translated,
-  summarized, appears in a worker's queue) needs either a real
-  `SARVAM_API_KEY` in the test environment or a backend test-mode that
-  swaps in a mocked `ComplaintAgent` — today's e2e tests correctly assert
-  the graceful-failure path instead, since no key is configured here
+- ~~Playwright coverage for a *successful* complaint submission~~ — done:
+  `e2e/complaint-tracking.spec.ts` runs the full lifecycle (real AI
+  submission → assign → reject → reassign → accept → resolve → feedback)
+  against a real `SARVAM_API_KEY`, ~20s for the AI call alone.
 
 ## Milestone 3 — Production Product
 

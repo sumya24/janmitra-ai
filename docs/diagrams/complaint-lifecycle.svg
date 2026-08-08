@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 480" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <rect x="0" y="0" width="980" height="480" fill="#ffffff"/>
+
+  <text x="490" y="32" text-anchor="middle" font-size="20" font-weight="700" fill="#14213d">A complaint's life after it's stored</text>
+  <text x="490" y="52" text-anchor="middle" font-size="12.5" fill="#6b7280">assignment_service.py decides every status change below — a citizen or worker never sets status directly</text>
+
+  <!-- pending -->
+  <rect x="30" y="110" width="170" height="90" rx="10" fill="#f3f4f6" stroke="#6b7280" stroke-width="1.5"/>
+  <text x="115" y="140" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2937">pending</text>
+  <text x="115" y="158" text-anchor="middle" font-size="9.5" fill="#4b5563">no eligible worker</text>
+  <text x="115" y="171" text-anchor="middle" font-size="9.5" fill="#4b5563">in this ward yet</text>
+  <text x="115" y="186" text-anchor="middle" font-size="9" fill="#6b7280">(no ward, or all rejected)</text>
+
+  <!-- assigned -->
+  <path d="M 200 155 L 245 155" stroke="#374151" stroke-width="2" fill="none" marker-end="url(#a1)"/>
+  <text x="222" y="145" text-anchor="middle" font-size="9" fill="#374151">worker added</text>
+  <rect x="247" y="110" width="170" height="90" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+  <text x="332" y="140" text-anchor="middle" font-size="13" font-weight="700" fill="#78350f">assigned</text>
+  <text x="332" y="158" text-anchor="middle" font-size="9.5" fill="#92400e">a specific worker</text>
+  <text x="332" y="171" text-anchor="middle" font-size="9.5" fill="#92400e">must accept/reject</text>
+
+  <!-- accepted -->
+  <path d="M 417 155 L 462 155" stroke="#374151" stroke-width="2" fill="none" marker-end="url(#a1)"/>
+  <text x="440" y="145" text-anchor="middle" font-size="9" fill="#374151">accept</text>
+  <rect x="464" y="110" width="170" height="90" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="549" y="140" text-anchor="middle" font-size="13" font-weight="700" fill="#1e3a8a">accepted</text>
+  <text x="549" y="158" text-anchor="middle" font-size="9.5" fill="#1e40af">worker's phone</text>
+  <text x="549" y="171" text-anchor="middle" font-size="9.5" fill="#1e40af">unlocks for citizen now</text>
+
+  <!-- resolved -->
+  <path d="M 634 155 L 679 155" stroke="#374151" stroke-width="2" fill="none" marker-end="url(#a1)"/>
+  <text x="656" y="145" text-anchor="middle" font-size="9" fill="#374151">resolve</text>
+  <rect x="681" y="110" width="170" height="90" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="766" y="140" text-anchor="middle" font-size="13" font-weight="700" fill="#14532d">resolved</text>
+  <text x="766" y="158" text-anchor="middle" font-size="9.5" fill="#166534">citizen can leave</text>
+  <text x="766" y="171" text-anchor="middle" font-size="9.5" fill="#166534">1-5★ feedback</text>
+
+  <!-- reject loop -->
+  <path d="M 332 200 C 332 260, 200 260, 130 210" stroke="#dc2626" stroke-width="1.8" fill="none" marker-end="url(#a2)"/>
+  <text x="230" y="248" text-anchor="middle" font-size="10" font-weight="600" fill="#991b1b">reject</text>
+  <text x="230" y="262" text-anchor="middle" font-size="9" fill="#b91c1c">(recorded in complaint_rejections</text>
+  <text x="230" y="274" text-anchor="middle" font-size="9" fill="#b91c1c">so this worker is never offered it again)</text>
+
+  <!-- reassign box -->
+  <rect x="30" y="290" width="387" height="80" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="1.5"/>
+  <text x="223" y="313" text-anchor="middle" font-size="11.5" font-weight="700" fill="#7f1d1d">assign_next_worker() runs again</text>
+  <text x="223" y="332" text-anchor="middle" font-size="10" fill="#991b1b">Another worker left in this ward who hasn't</text>
+  <text x="223" y="347" text-anchor="middle" font-size="10" fill="#991b1b">rejected it yet? → back to "assigned," offered to them.</text>
+  <text x="223" y="362" text-anchor="middle" font-size="10" fill="#991b1b">Nobody left? → stays "pending" until a new worker joins.</text>
+
+  <path d="M 223 290 L 223 260 L 118 200" stroke="#dc2626" stroke-width="1.5" fill="none" marker-end="url(#a2)" stroke-dasharray="4,3"/>
+  <path d="M 260 290 L 260 240 L 332 210" stroke="#dc2626" stroke-width="1.5" fill="none" marker-end="url(#a2)" stroke-dasharray="4,3"/>
+
+  <!-- right side note -->
+  <rect x="450" y="290" width="401" height="80" rx="10" fill="#eef2ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="650" y="313" text-anchor="middle" font-size="11.5" font-weight="700" fill="#312e81">Why not just delete a rejected complaint?</text>
+  <text x="650" y="332" text-anchor="middle" font-size="10" fill="#3730a3">A citizen's report should never disappear because one worker</text>
+  <text x="650" y="347" text-anchor="middle" font-size="10" fill="#3730a3">said no — it keeps circulating to every eligible worker in the</text>
+  <text x="650" y="362" text-anchor="middle" font-size="10" fill="#3730a3">ward until someone takes it, or honestly has nowhere left to go.</text>
+
+  <!-- worker counting note -->
+  <rect x="30" y="395" width="820" height="65" rx="10" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="50" y="418" font-size="11" font-weight="700" fill="#374151">How a worker's dashboard counts "open" vs "resolved"</text>
+  <text x="50" y="436" font-size="10" fill="#4b5563">By assigned_worker_id, not by matching ward text — so if a ward ever has more than one worker, each one's count reflects only</text>
+  <text x="50" y="450" font-size="10" fill="#4b5563">complaints actually assigned to them, never complaints just sitting in the same ward assigned to a colleague.</text>
+
+  <defs>
+    <marker id="a1" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#374151"/></marker>
+    <marker id="a2" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#dc2626"/></marker>
+  </defs>
+</svg>
