@@ -3,15 +3,11 @@
   display: flex; align-items: center; justify-content: center; padding: 40px 20px;
   background:
     radial-gradient(circle at 15% 20%, color-mix(in srgb, var(--primary) 10%, transparent), transparent 45%),
-    radial-gradient(circle at 85% 80%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 45%),
+    radial-gradient(circle at 85% 80%, color-mix(in srgb, var(--accent-fg) 10%, transparent), transparent 45%),
     var(--paper);
 }
 .gate-card { max-width: 480px; width: 100%; text-align: center; }
-.gate-seal {
-  width: 64px; height: 64px; border-radius: 50%; background: var(--primary); color: var(--primary-ink);
-  display: flex; align-items: center; justify-content: center; margin: 0 auto 22px;
-  font-family: "Big Shoulders", sans-serif; font-weight: 700; font-size: 24px;
-}
+.gate-seal { width: 64px; height: 64px; object-fit: contain; display: block; margin: 0 auto 22px; }
 .gate-title { margin-bottom: 6px; }
 .gate-title-line { display: block; font-size: 19px; line-height: 1.35; }
 .gate-sub { color: var(--ink-2); font-size: 13px; margin-bottom: 28px; }
