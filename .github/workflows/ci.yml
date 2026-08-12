@@ -52,6 +52,13 @@ jobs:
       # package -- is on sys.path. Bare `pytest` doesn't reliably do this and fails CI with
       # "ModuleNotFoundError: No module named 'backend'" even though `backend/__init__.py`
       # exists, since there's no installed package or pytest.ini pythonpath config to cover it.
+      #
+      # Expect exactly 1 skip here: test_ask_janmitra.py::test_low_relevance_results_are_rejected_tfidf
+      # self-skips because it needs the LEGACY TF-IDF index (data/rag_knowledge_base/embeddings/),
+      # which only gets built by `build_rag_embeddings.py --legacy-tfidf` -- a comparison-only flag
+      # kept so the old-vs-new retrieval threshold comparison in docs/ask_janmitra_rag_architecture.md
+      # stays reproducible, not part of the real ChromaDB retrieval path this CI job builds above.
+      # If the skip count here ever changes, something else broke -- don't assume it's this one.
       - name: Run backend tests
         run: python -m pytest tests/ -v
 
