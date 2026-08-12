@@ -1,0 +1,290 @@
+[
+  {
+    "question_id": "Q_WASTE_A_EN",
+    "language": "en",
+    "question_text": "In Odisha, how many days does the Citizen's Charter allow for lifting municipal solid waste from a road or street?",
+    "expected_record_ids": ["OD_STATEWIDE_WASTE_SOLID_WASTE_LIFTING"],
+    "expected_answer_gist": "3 days process time limit, per the HUDD Citizen's Charter. The designated officer is the Sanitary Inspector; complaints can be lodged online or manually with locality/ward and a phone number.",
+    "expects_citation": true,
+    "notes": "VERIFIED-anchored."
+  },
+  {
+    "question_id": "Q_WASTE_A_HI",
+    "language": "hi",
+    "question_text": "ओडिशा में, सिटीजन चार्टर के अनुसार सड़क या गली से नगरपालिका ठोस कचरा उठाने में कितने दिन लगते हैं?",
+    "expected_record_ids": ["OD_STATEWIDE_WASTE_SOLID_WASTE_LIFTING"],
+    "expected_answer_gist": "3 days process time limit, per the HUDD Citizen's Charter. The designated officer is the Sanitary Inspector; complaints can be lodged online or manually with locality/ward and a phone number.",
+    "expects_citation": true,
+    "notes": "VERIFIED-anchored. Hand-translated by the project author, not machine/API-translated or independently reviewed by a Hindi speaker -- treat as best-effort, not production-grade."
+  },
+  {
+    "question_id": "Q_WASTE_A_MR",
+    "language": "mr",
+    "question_text": "ओडिशामध्ये, नागरिक सनदेनुसार रस्त्यावरून किंवा गल्लीतून महानगरपालिकेचा घनकचरा उचलण्यासाठी किती दिवस लागतात?",
+    "expected_record_ids": ["OD_STATEWIDE_WASTE_SOLID_WASTE_LIFTING"],
+    "expected_answer_gist": "3 days process time limit, per the HUDD Citizen's Charter. The designated officer is the Sanitary Inspector; complaints can be lodged online or manually with locality/ward and a phone number.",
+    "expects_citation": true,
+    "notes": "VERIFIED-anchored. Hand-translated by the project author, not machine/API-translated or independently reviewed by a Marathi speaker -- treat as best-effort, not production-grade."
+  },
+  {
+    "question_id": "Q_WASTE_A_OR",
+    "language": "or",
+    "question_text": "ଓଡ଼ିଶାରେ, ନାଗରିକ ଚାର୍ଟର ଅନୁଯାୟୀ ରାସ୍ତା କିମ୍ବା ଗଳିରୁ ପୌର କଠିନ ଆବର୍ଜନା ଉଠାଇବାକୁ କେତେ ଦିନ ଲାଗେ?",
+    "expected_record_ids": ["OD_STATEWIDE_WASTE_SOLID_WASTE_LIFTING"],
+    "expected_answer_gist": "3 days process time limit, per the HUDD Citizen's Charter. The designated officer is the Sanitary Inspector; complaints can be lodged online or manually with locality/ward and a phone number.",
+    "expects_citation": true,
+    "notes": "VERIFIED-anchored. Hand-translated by the project author, not machine/API-translated or independently reviewed by an Odia speaker -- treat as best-effort, not production-grade."
+  },
+  {
+    "question_id": "Q_WASTE_B_EN",
+    "language": "en",
+    "question_text": "What is the toll-free number to report an uncollected-garbage complaint in Mohali, and how is the complaint tracked?",
+    "expected_record_ids": ["PB_MOHALI_WASTE_SOLID_WASTE"],
+    "expected_answer_gist": "Toll-free 1800-137-0007 (Municipal Corporation, S.A.S. Nagar), or the MC CRAMAT mobile app, or the state-wide 1800-1800-0172. A unique Complaint ID is generated and sent by SMS, used to track status and confirm resolution.",
+    "expects_citation": true,
+    "notes": "VERIFIED-anchored."
+  },
+  {
+    "question_id": "Q_WASTE_B_HI",
+    "language": "hi",
+    "question_text": "मोहाली में कचरा न उठाए जाने की शिकायत दर्ज करने के लिए टोल-फ्री नंबर क्या है, और शिकायत को कैसे ट्रैक किया जाता है?",
+    "expected_record_ids": ["PB_MOHALI_WASTE_SOLID_WASTE"],
+    "expected_answer_gist": "Toll-free 1800-137-0007 (Municipal Corporation, S.A.S. Nagar), or the MC CRAMAT mobile app, or the state-wide 1800-1800-0172. A unique Complaint ID is generated and sent by SMS, used to track status and confirm resolution.",
+    "expects_citation": true,
+    "notes": "VERIFIED-anchored. Hand-translated, best-effort (see Q_WASTE_A_HI note)."
+  },
+  {
+    "question_id": "Q_WASTE_B_MR",
+    "language": "mr",
+    "question_text": "मोहालीमध्ये कचरा न उचलल्याची तक्रार नोंदवण्यासाठी टोल-फ्री क्रमांक कोणता आहे, आणि तक्रारीचा मागोवा कसा घेतला जातो?",
+    "expected_record_ids": ["PB_MOHALI_WASTE_SOLID_WASTE"],
+    "expected_answer_gist": "Toll-free 1800-137-0007 (Municipal Corporation, S.A.S. Nagar), or the MC CRAMAT mobile app, or the state-wide 1800-1800-0172. A unique Complaint ID is generated and sent by SMS, used to track status and confirm resolution.",
+    "expects_citation": true,
+    "notes": "VERIFIED-anchored. Hand-translated, best-effort (see Q_WASTE_A_MR note)."
+  },
+  {
+    "question_id": "Q_WASTE_B_OR",
+    "language": "or",
+    "question_text": "ମୋହାଲିରେ ଆବର୍ଜନା ନ ଉଠିବା ସମ୍ବନ୍ଧୀୟ ଅଭିଯୋଗ ଦାଖଲ କରିବାକୁ ଟୋଲ-ଫ୍ରି ନମ୍ବର କ'ଣ, ଏବଂ ଅଭିଯୋଗକୁ କିପରି ଟ୍ରାକ୍ କରାଯାଏ?",
+    "expected_record_ids": ["PB_MOHALI_WASTE_SOLID_WASTE"],
+    "expected_answer_gist": "Toll-free 1800-137-0007 (Municipal Corporation, S.A.S. Nagar), or the MC CRAMAT mobile app, or the state-wide 1800-1800-0172. A unique Complaint ID is generated and sent by SMS, used to track status and confirm resolution.",
+    "expects_citation": true,
+    "notes": "VERIFIED-anchored. Hand-translated, best-effort (see Q_WASTE_A_OR note)."
+  },
+  {
+    "question_id": "Q_WATER_A_EN",
+    "language": "en",
+    "question_text": "Under the Punjab Right to Service Act 2011, within how many hours must a water pipeline leak or sewerage blockage be fixed in Mohali?",
+    "expected_record_ids": ["PB_MOHALI_WATER_SUPPLY_SEWERAGE"],
+    "expected_answer_gist": "24 hours, per the statutory Right to Service Act 2011 limit (Service No. 84). The Citizen Charter's own service standard and the internal grievance system separately state 3 days for the same complaint type -- both figures are real but different, and should not be conflated.",
+    "expects_citation": true,
+    "notes": "VERIFIED-anchored. Good test of whether the model correctly distinguishes the RTS Act statutory figure from the Citizen Charter service-standard figure rather than picking one at random."
+  },
+  {
+    "question_id": "Q_WATER_A_HI",
+    "language": "hi",
+    "question_text": "पंजाब सेवा का अधिकार अधिनियम 2011 के अंतर्गत, मोहाली में पानी की पाइपलाइन के रिसाव या सीवरेज ब्लॉकेज को कितने घंटों के भीतर ठीक किया जाना चाहिए?",
+    "expected_record_ids": ["PB_MOHALI_WATER_SUPPLY_SEWERAGE"],
+    "expected_answer_gist": "24 hours, per the statutory Right to Service Act 2011 limit (Service No. 84). The Citizen Charter's own service standard and the internal grievance system separately state 3 days for the same complaint type -- both figures are real but different, and should not be conflated.",
+    "expects_citation": true,
+    "notes": "VERIFIED-anchored. Hand-translated, best-effort (see Q_WASTE_A_HI note)."
+  },
+  {
+    "question_id": "Q_WATER_A_MR",
+    "language": "mr",
+    "question_text": "पंजाब सेवा हक्क कायदा 2011 अंतर्गत, मोहालीमध्ये पाण्याच्या पाइपलाइनची गळती किंवा सांडपाणी अडथळा किती तासांच्या आत दुरुस्त करणे आवश्यक आहे?",
+    "expected_record_ids": ["PB_MOHALI_WATER_SUPPLY_SEWERAGE"],
+    "expected_answer_gist": "24 hours, per the statutory Right to Service Act 2011 limit (Service No. 84). The Citizen Charter's own service standard and the internal grievance system separately state 3 days for the same complaint type -- both figures are real but different, and should not be conflated.",
+    "expects_citation": true,
+    "notes": "VERIFIED-anchored. Hand-translated, best-effort (see Q_WASTE_A_MR note)."
+  },
+  {
+    "question_id": "Q_WATER_A_OR",
+    "language": "or",
+    "question_text": "ପଞ୍ଜାବ ସେବା ଅଧିକାର ଅଧିନିୟମ 2011 ଅନୁଯାୟୀ, ମୋହାଲିରେ ପାଣି ପାଇପଲାଇନ ଲିକେଜ୍ କିମ୍ବା ନାଳ ଅବରୋଧକୁ କେତେ ଘଣ୍ଟା ମଧ୍ୟରେ ଠିକ୍ କରାଯିବା ଉଚିତ୍?",
+    "expected_record_ids": ["PB_MOHALI_WATER_SUPPLY_SEWERAGE"],
+    "expected_answer_gist": "24 hours, per the statutory Right to Service Act 2011 limit (Service No. 84). The Citizen Charter's own service standard and the internal grievance system separately state 3 days for the same complaint type -- both figures are real but different, and should not be conflated.",
+    "expects_citation": true,
+    "notes": "VERIFIED-anchored. Hand-translated, best-effort (see Q_WASTE_A_OR note)."
+  },
+  {
+    "question_id": "Q_WATER_B_EN",
+    "language": "en",
+    "question_text": "In Odisha, who repairs a broken hand pump tube well, and what is the process time limit?",
+    "expected_record_ids": ["OD_STATEWIDE_WATER_TUBE_WELL_REPAIR"],
+    "expected_answer_gist": "The Junior Engineer, Tube Wells (PHEO) handles it. 7 days for minor repair, 14 days for major repair, per the HUDD Citizen's Charter. No documents are required -- visit the circle/division/section office and collect a request receipt.",
+    "expects_citation": true,
+    "notes": "VERIFIED-anchored."
+  },
+  {
+    "question_id": "Q_WATER_B_HI",
+    "language": "hi",
+    "question_text": "ओडिशा में, खराब हैंड पंप ट्यूबवेल की मरम्मत कौन करता है, और इसकी प्रक्रिया समय सीमा क्या है?",
+    "expected_record_ids": ["OD_STATEWIDE_WATER_TUBE_WELL_REPAIR"],
+    "expected_answer_gist": "The Junior Engineer, Tube Wells (PHEO) handles it. 7 days for minor repair, 14 days for major repair, per the HUDD Citizen's Charter. No documents are required -- visit the circle/division/section office and collect a request receipt.",
+    "expects_citation": true,
+    "notes": "VERIFIED-anchored. Hand-translated, best-effort (see Q_WASTE_A_HI note)."
+  },
+  {
+    "question_id": "Q_WATER_B_MR",
+    "language": "mr",
+    "question_text": "ओडिशामध्ये, बिघडलेल्या हँड पंप ट्यूबवेलची दुरुस्ती कोण करते, आणि त्याची प्रक्रिया वेळ मर्यादा किती आहे?",
+    "expected_record_ids": ["OD_STATEWIDE_WATER_TUBE_WELL_REPAIR"],
+    "expected_answer_gist": "The Junior Engineer, Tube Wells (PHEO) handles it. 7 days for minor repair, 14 days for major repair, per the HUDD Citizen's Charter. No documents are required -- visit the circle/division/section office and collect a request receipt.",
+    "expects_citation": true,
+    "notes": "VERIFIED-anchored. Hand-translated, best-effort (see Q_WASTE_A_MR note)."
+  },
+  {
+    "question_id": "Q_WATER_B_OR",
+    "language": "or",
+    "question_text": "ଓଡ଼ିଶାରେ, ଖରାପ ହୋଇଥିବା ହ୍ୟାଣ୍ଡ ପମ୍ପ ଟ୍ୟୁବ୍ ୱେଲ୍ କିଏ ମରାମତି କରନ୍ତି, ଏବଂ ଏହାର ପ୍ରକ୍ରିୟା ସମୟ ସୀମା କ'ଣ?",
+    "expected_record_ids": ["OD_STATEWIDE_WATER_TUBE_WELL_REPAIR"],
+    "expected_answer_gist": "The Junior Engineer, Tube Wells (PHEO) handles it. 7 days for minor repair, 14 days for major repair, per the HUDD Citizen's Charter. No documents are required -- visit the circle/division/section office and collect a request receipt.",
+    "expects_citation": true,
+    "notes": "VERIFIED-anchored. Hand-translated, best-effort (see Q_WASTE_A_OR note)."
+  },
+  {
+    "question_id": "Q_ROADS_A_EN",
+    "language": "en",
+    "question_text": "In Odisha, what is the process to get permission for cutting a road, and how is the fee decided?",
+    "expected_record_ids": ["OD_STATEWIDE_ROADS_ROAD_CUTTING_PERMISSION"],
+    "expected_answer_gist": "Apply to the City Engineer at the ULB's engineering section stating purpose/locality/applicant details; the Junior Engineer estimates restoration charges after verification (no fixed fee -- it varies by the type of road cutting); process time limit is 7 days.",
+    "expects_citation": true,
+    "notes": "VERIFIED-anchored."
+  },
+  {
+    "question_id": "Q_ROADS_A_HI",
+    "language": "hi",
+    "question_text": "ओडिशा में सड़क खोदने की अनुमति लेने की प्रक्रिया क्या है, और शुल्क कैसे तय किया जाता है?",
+    "expected_record_ids": ["OD_STATEWIDE_ROADS_ROAD_CUTTING_PERMISSION"],
+    "expected_answer_gist": "Apply to the City Engineer at the ULB's engineering section stating purpose/locality/applicant details; the Junior Engineer estimates restoration charges after verification (no fixed fee -- it varies by the type of road cutting); process time limit is 7 days.",
+    "expects_citation": true,
+    "notes": "VERIFIED-anchored. Hand-translated, best-effort (see Q_WASTE_A_HI note)."
+  },
+  {
+    "question_id": "Q_ROADS_A_MR",
+    "language": "mr",
+    "question_text": "ओडिशामध्ये रस्ता खोदण्याची परवानगी घेण्याची प्रक्रिया काय आहे, आणि शुल्क कसे ठरवले जाते?",
+    "expected_record_ids": ["OD_STATEWIDE_ROADS_ROAD_CUTTING_PERMISSION"],
+    "expected_answer_gist": "Apply to the City Engineer at the ULB's engineering section stating purpose/locality/applicant details; the Junior Engineer estimates restoration charges after verification (no fixed fee -- it varies by the type of road cutting); process time limit is 7 days.",
+    "expects_citation": true,
+    "notes": "VERIFIED-anchored. Hand-translated, best-effort (see Q_WASTE_A_MR note)."
+  },
+  {
+    "question_id": "Q_ROADS_A_OR",
+    "language": "or",
+    "question_text": "ଓଡ଼ିଶାରେ ରାସ୍ତା କାଟିବା ଅନୁମତି ପାଇବାର ପ୍ରକ୍ରିୟା କ'ଣ, ଏବଂ ଶୁଳ୍କ କିପରି ସ୍ଥିର କରାଯାଏ?",
+    "expected_record_ids": ["OD_STATEWIDE_ROADS_ROAD_CUTTING_PERMISSION"],
+    "expected_answer_gist": "Apply to the City Engineer at the ULB's engineering section stating purpose/locality/applicant details; the Junior Engineer estimates restoration charges after verification (no fixed fee -- it varies by the type of road cutting); process time limit is 7 days.",
+    "expects_citation": true,
+    "notes": "VERIFIED-anchored. Hand-translated, best-effort (see Q_WASTE_A_OR note)."
+  },
+  {
+    "question_id": "Q_ROADS_B_EN",
+    "language": "en",
+    "question_text": "How long does pothole repair typically take in Nagpur?",
+    "expected_record_ids": ["SYN_maharashtra_nagpur_ROADS"],
+    "expected_answer_gist": "This is a SYNTHETIC representative record, not individually verified for Nagpur: the representative range stated is 7-15 days, based on patterns observed in verified citizen charters elsewhere -- not an official Nagpur-specific figure. A correct answer must disclose that it is representative/unverified, not present it as confirmed fact.",
+    "expects_citation": true,
+    "notes": "SYNTHETIC-anchored. Tests whether the model correctly discloses synthetic/unverified status rather than presenting a templated figure as an official Nagpur SLA."
+  },
+  {
+    "question_id": "Q_ROADS_B_HI",
+    "language": "hi",
+    "question_text": "नागपुर में गड्ढे (पोटहोल) की मरम्मत में आमतौर पर कितना समय लगता है?",
+    "expected_record_ids": ["SYN_maharashtra_nagpur_ROADS"],
+    "expected_answer_gist": "This is a SYNTHETIC representative record, not individually verified for Nagpur: the representative range stated is 7-15 days, based on patterns observed in verified citizen charters elsewhere -- not an official Nagpur-specific figure. A correct answer must disclose that it is representative/unverified, not present it as confirmed fact.",
+    "expects_citation": true,
+    "notes": "SYNTHETIC-anchored. Hand-translated, best-effort (see Q_WASTE_A_HI note)."
+  },
+  {
+    "question_id": "Q_ROADS_B_MR",
+    "language": "mr",
+    "question_text": "नागपूरमध्ये खड्डा (पॉटहोल) दुरुस्तीसाठी साधारणपणे किती वेळ लागतो?",
+    "expected_record_ids": ["SYN_maharashtra_nagpur_ROADS"],
+    "expected_answer_gist": "This is a SYNTHETIC representative record, not individually verified for Nagpur: the representative range stated is 7-15 days, based on patterns observed in verified citizen charters elsewhere -- not an official Nagpur-specific figure. A correct answer must disclose that it is representative/unverified, not present it as confirmed fact.",
+    "expects_citation": true,
+    "notes": "SYNTHETIC-anchored. Hand-translated, best-effort (see Q_WASTE_A_MR note)."
+  },
+  {
+    "question_id": "Q_ROADS_B_OR",
+    "language": "or",
+    "question_text": "ନାଗପୁରରେ ଗାତ (ପଟହୋଲ୍) ମରାମତି ପାଇଁ ସାଧାରଣତଃ କେତେ ସମୟ ଲାଗେ?",
+    "expected_record_ids": ["SYN_maharashtra_nagpur_ROADS"],
+    "expected_answer_gist": "This is a SYNTHETIC representative record, not individually verified for Nagpur: the representative range stated is 7-15 days, based on patterns observed in verified citizen charters elsewhere -- not an official Nagpur-specific figure. A correct answer must disclose that it is representative/unverified, not present it as confirmed fact.",
+    "expects_citation": true,
+    "notes": "SYNTHETIC-anchored. Hand-translated, best-effort (see Q_WASTE_A_OR note)."
+  },
+  {
+    "question_id": "Q_STREETLIGHTS_A_EN",
+    "language": "en",
+    "question_text": "In Odisha, what is the process time limit for replacing a damaged street light?",
+    "expected_record_ids": ["OD_STATEWIDE_STREETLIGHTS_REPLACEMENT"],
+    "expected_answer_gist": "10 days, per the HUDD Citizen's Charter. Complaints can be filed online (grievance website) or manually with the ULB's street light office, giving the locality/pole number and a phone number.",
+    "expects_citation": true,
+    "notes": "VERIFIED-anchored."
+  },
+  {
+    "question_id": "Q_STREETLIGHTS_A_HI",
+    "language": "hi",
+    "question_text": "ओडिशा में क्षतिग्रस्त स्ट्रीट लाइट बदलने की प्रक्रिया समय सीमा क्या है?",
+    "expected_record_ids": ["OD_STATEWIDE_STREETLIGHTS_REPLACEMENT"],
+    "expected_answer_gist": "10 days, per the HUDD Citizen's Charter. Complaints can be filed online (grievance website) or manually with the ULB's street light office, giving the locality/pole number and a phone number.",
+    "expects_citation": true,
+    "notes": "VERIFIED-anchored. Hand-translated, best-effort (see Q_WASTE_A_HI note)."
+  },
+  {
+    "question_id": "Q_STREETLIGHTS_A_MR",
+    "language": "mr",
+    "question_text": "ओडिशामध्ये खराब झालेला रस्त्यावरील दिवा (स्ट्रीट लाइट) बदलण्याची प्रक्रिया वेळ मर्यादा किती आहे?",
+    "expected_record_ids": ["OD_STATEWIDE_STREETLIGHTS_REPLACEMENT"],
+    "expected_answer_gist": "10 days, per the HUDD Citizen's Charter. Complaints can be filed online (grievance website) or manually with the ULB's street light office, giving the locality/pole number and a phone number.",
+    "expects_citation": true,
+    "notes": "VERIFIED-anchored. Hand-translated, best-effort (see Q_WASTE_A_MR note)."
+  },
+  {
+    "question_id": "Q_STREETLIGHTS_A_OR",
+    "language": "or",
+    "question_text": "ଓଡ଼ିଶାରେ କ୍ଷତିଗ୍ରସ୍ତ ରାସ୍ତା ଆଲୋକ ବଦଳାଇବାର ପ୍ରକ୍ରିୟା ସମୟ ସୀମା କ'ଣ?",
+    "expected_record_ids": ["OD_STATEWIDE_STREETLIGHTS_REPLACEMENT"],
+    "expected_answer_gist": "10 days, per the HUDD Citizen's Charter. Complaints can be filed online (grievance website) or manually with the ULB's street light office, giving the locality/pole number and a phone number.",
+    "expects_citation": true,
+    "notes": "VERIFIED-anchored. Hand-translated, best-effort (see Q_WASTE_A_OR note)."
+  },
+  {
+    "question_id": "Q_STREETLIGHTS_B_EN",
+    "language": "en",
+    "question_text": "What is the typical SLA for repairing a non-working street light in Jaipur?",
+    "expected_record_ids": ["SYN_rajasthan_jaipur_STREETLIGHTS"],
+    "expected_answer_gist": "This is a SYNTHETIC representative record, not individually verified for Jaipur: the representative range stated is 7-10 days, based on patterns observed in verified citizen charters elsewhere -- not an official Jaipur-specific figure. A correct answer must disclose that it is representative/unverified, not present it as confirmed fact.",
+    "expects_citation": true,
+    "notes": "SYNTHETIC-anchored. Tests the same disclosure requirement as Q_ROADS_B."
+  },
+  {
+    "question_id": "Q_STREETLIGHTS_B_HI",
+    "language": "hi",
+    "question_text": "जयपुर में खराब स्ट्रीट लाइट की मरम्मत के लिए सामान्य एसएलए (सेवा समय सीमा) क्या है?",
+    "expected_record_ids": ["SYN_rajasthan_jaipur_STREETLIGHTS"],
+    "expected_answer_gist": "This is a SYNTHETIC representative record, not individually verified for Jaipur: the representative range stated is 7-10 days, based on patterns observed in verified citizen charters elsewhere -- not an official Jaipur-specific figure. A correct answer must disclose that it is representative/unverified, not present it as confirmed fact.",
+    "expects_citation": true,
+    "notes": "SYNTHETIC-anchored. Hand-translated, best-effort (see Q_WASTE_A_HI note)."
+  },
+  {
+    "question_id": "Q_STREETLIGHTS_B_MR",
+    "language": "mr",
+    "question_text": "जयपूरमध्ये बंद पडलेला रस्त्यावरील दिवा दुरुस्त करण्यासाठी सर्वसाधारण एसएलए (सेवा वेळ मर्यादा) किती आहे?",
+    "expected_record_ids": ["SYN_rajasthan_jaipur_STREETLIGHTS"],
+    "expected_answer_gist": "This is a SYNTHETIC representative record, not individually verified for Jaipur: the representative range stated is 7-10 days, based on patterns observed in verified citizen charters elsewhere -- not an official Jaipur-specific figure. A correct answer must disclose that it is representative/unverified, not present it as confirmed fact.",
+    "expects_citation": true,
+    "notes": "SYNTHETIC-anchored. Hand-translated, best-effort (see Q_WASTE_A_MR note)."
+  },
+  {
+    "question_id": "Q_STREETLIGHTS_B_OR",
+    "language": "or",
+    "question_text": "ଜୟପୁରରେ ଖରାପ ହୋଇଥିବା ରାସ୍ତା ଆଲୋକ ମରାମତି ପାଇଁ ସାଧାରଣ SLA (ସେବା ସମୟ ସୀମା) କ'ଣ?",
+    "expected_record_ids": ["SYN_rajasthan_jaipur_STREETLIGHTS"],
+    "expected_answer_gist": "This is a SYNTHETIC representative record, not individually verified for Jaipur: the representative range stated is 7-10 days, based on patterns observed in verified citizen charters elsewhere -- not an official Jaipur-specific figure. A correct answer must disclose that it is representative/unverified, not present it as confirmed fact.",
+    "expects_citation": true,
+    "notes": "SYNTHETIC-anchored. Hand-translated, best-effort (see Q_WASTE_A_OR note)."
+  }
+]
