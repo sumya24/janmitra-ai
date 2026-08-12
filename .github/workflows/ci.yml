@@ -25,8 +25,12 @@ jobs:
           pip install --index-url https://download.pytorch.org/whl/cpu torch==2.13.0
           pip install -r requirements.txt
 
+      # `python -m pytest` (not bare `pytest`) so the repo root -- and therefore the `backend`
+      # package -- is on sys.path. Bare `pytest` doesn't reliably do this and fails CI with
+      # "ModuleNotFoundError: No module named 'backend'" even though `backend/__init__.py`
+      # exists, since there's no installed package or pytest.ini pythonpath config to cover it.
       - name: Run backend tests
-        run: pytest tests/ -v
+        run: python -m pytest tests/ -v
 
   frontend-build:
     runs-on: ubuntu-latest
