@@ -1,0 +1,214 @@
+[
+  {
+    "record_id": "SYN_haryana_gurugram_WASTE",
+    "service_id": "WASTE_SOLID_WASTE_GURUGRAM",
+    "service_name": "Solid Waste Collection & Sanitation Complaints",
+    "sub_service": "Collection & disposal of municipal solid waste from roads / streets / localities",
+    "problem_type": "Garbage not collected / solid waste not removed from a street or locality",
+    "service_category": "WASTE_SANITATION",
+    "state": "Haryana",
+    "district": null,
+    "city": "Gurugram",
+    "municipality": "Gurugram Municipal Corporation",
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "CITY",
+    "department": "Gurugram Municipal Corporation -- Solid Waste Management / Sanitation Department (representative structure; exact department name for Gurugram not individually verified)",
+    "authority": "Ward-level Sanitary Inspector",
+    "description": "Representative service description for solid waste / garbage collection complaints in Gurugram, Haryana. This is a SYNTHETIC record: it follows the same general shape and SLA range observed across the VERIFIED tier's real citizen charters (Odisha, Mohali, Patiala) but has not been individually checked against a real Gurugram government source. Do not present any figure below as Gurugram's actual official SLA.",
+    "procedure": "Typical process (representative, not city-specific): (1) Register the complaint via the municipal corporation's helpline/toll-free number, its online grievance portal, or a mobile complaint app, if available, or in person at the ward office / zonal office. (2) Provide the locality/ward and a contact phone number. (3) Note the complaint/reference number issued. (4) Track status via the same channel used to register.",
+    "required_information": [
+      "Locality / ward",
+      "Phone number of the complainant"
+    ],
+    "required_documents": [],
+    "sla": "Representative range: 2-3 days, based on patterns observed in verified citizen charters (not city-specific).",
+    "expected_response_time": null,
+    "expected_resolution_time": "2-3 days (representative range, not verified for this city)",
+    "complaint_channel": [
+      "Municipal Corporation helpline / toll-free number (city-specific; not individually verified)",
+      "Online citizen grievance portal or mobile app, if available for this city",
+      "In person at the ward office or Municipal Corporation zonal office"
+    ],
+    "contact_information": "Contact the Gurugram Municipal Corporation's ward office or public helpline for this locality (specific number not verified for this synthetic record).",
+    "escalation_procedure": "Representative escalation pattern observed across verified charters: Ward-level Sanitary Inspector -> Zonal / Assistant Health Officer -> Municipal Commissioner. Exact levels, officer titles, and time norms for Gurugram have not been individually verified.",
+    "escalation_authority": "Representative chain: Sanitary Inspector -> Zonal/Assistant Health Officer -> Municipal Commissioner (not verified for this city).",
+    "faq": [
+      {
+        "question": "Is this the official SLA for solid waste complaints in Gurugram?",
+        "answer": "No -- this is a synthetic, representative record based on patterns seen in other cities' verified citizen charters, not a figure confirmed from an official source for this city."
+      }
+    ],
+    "citizen_guidance": "Confirm the exact helpline number and current SLA with your local municipal corporation, as this record is representative, not independently verified for this city.",
+    "source_id": "SYNTHETIC_REPRESENTATIVE_DATA",
+    "source_title": "Synthetic Representative Civic-Service Record",
+    "source_organization": "JanMitra AI — synthetic representative record (not sourced from an official document)",
+    "source_url": null,
+    "source_type": "SYNTHETIC_REPRESENTATIVE",
+    "verification_status": "SYNTHETIC",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-09T22:59:32.461314Z",
+    "created_at": "2026-08-09T22:59:32.461314Z"
+  },
+  {
+    "record_id": "SYN_haryana_gurugram_WATER",
+    "service_id": "WATER_SUPPLY_DRAINAGE_GURUGRAM",
+    "service_name": "Water Supply & Drainage Complaints",
+    "sub_service": "Water supply pipeline leakage / sewerage or drainage blockage / overflow",
+    "problem_type": "Water pipeline leakage, sewerage blockage, or storm-water drainage overflow",
+    "service_category": "WATER_DRAINAGE",
+    "state": "Haryana",
+    "district": null,
+    "city": "Gurugram",
+    "municipality": "Gurugram Municipal Corporation",
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "CITY",
+    "department": "Gurugram Municipal Corporation / Water Supply & Sewerage Board -- Public Health Engineering wing (representative structure; exact department name for Gurugram not individually verified)",
+    "authority": "Junior Engineer (ward/zone-level)",
+    "description": "Representative service description for water supply and drainage complaints in Gurugram, Haryana. This is a SYNTHETIC record following the general shape and SLA range observed across the VERIFIED tier's real citizen charters, not individually checked against a real Gurugram government source.",
+    "procedure": "Typical process (representative, not city-specific): (1) Register the complaint via the water board's or municipal corporation's helpline/toll-free number, online portal, or mobile app, if available, or in person at the water works / engineering division office. (2) Provide the exact location and a contact phone number. (3) Note the complaint/reference number issued. (4) Track status via the same channel used to register.",
+    "required_information": [
+      "Location of the leak / blockage / overflow",
+      "Phone number of the complainant"
+    ],
+    "required_documents": [],
+    "sla": "Representative range: 2-4 days for a leakage/blockage complaint, based on patterns observed in verified citizen charters (not city-specific).",
+    "expected_response_time": null,
+    "expected_resolution_time": "2-4 days (representative range, not verified for this city)",
+    "complaint_channel": [
+      "Water board / Municipal Corporation helpline (city-specific; not individually verified)",
+      "Online citizen grievance portal or mobile app, if available for this city",
+      "In person at the water works / engineering division office"
+    ],
+    "contact_information": "Contact the Gurugram Municipal Corporation's water supply/engineering division for this locality (specific number not verified for this synthetic record).",
+    "escalation_procedure": "Representative escalation pattern observed across verified charters: Junior Engineer -> Assistant/Executive Engineer -> Municipal Commissioner. Exact levels and time norms for Gurugram have not been individually verified.",
+    "escalation_authority": "Representative chain: Junior Engineer -> Assistant/Executive Engineer -> Municipal Commissioner (not verified for this city).",
+    "faq": [
+      {
+        "question": "Is this the official SLA for water/drainage complaints in Gurugram?",
+        "answer": "No -- this is a synthetic, representative record based on patterns seen in other cities' verified citizen charters, not a figure confirmed from an official source for this city."
+      }
+    ],
+    "citizen_guidance": "Confirm the exact helpline number and current SLA with your local water board or municipal corporation, as this record is representative, not independently verified for this city.",
+    "source_id": "SYNTHETIC_REPRESENTATIVE_DATA",
+    "source_title": "Synthetic Representative Civic-Service Record",
+    "source_organization": "JanMitra AI — synthetic representative record (not sourced from an official document)",
+    "source_url": null,
+    "source_type": "SYNTHETIC_REPRESENTATIVE",
+    "verification_status": "SYNTHETIC",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-09T22:59:32.461314Z",
+    "created_at": "2026-08-09T22:59:32.461314Z"
+  },
+  {
+    "record_id": "SYN_haryana_gurugram_ROADS",
+    "service_id": "ROADS_POTHOLES_GURUGRAM",
+    "service_name": "Road & Pothole Repair Complaints",
+    "sub_service": "Pothole / road surface damage repair",
+    "problem_type": "Pothole or damaged road surface needing repair",
+    "service_category": "ROADS_POTHOLES",
+    "state": "Haryana",
+    "district": null,
+    "city": "Gurugram",
+    "municipality": "Gurugram Municipal Corporation",
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "CITY",
+    "department": "Gurugram Municipal Corporation -- Engineering (Civil) Department (representative structure; exact department name for Gurugram not individually verified)",
+    "authority": "Junior Engineer, Civil (ward/zone-level)",
+    "description": "Representative service description for pothole/road-damage complaints in Gurugram, Haryana. This is a SYNTHETIC record following the general shape and SLA range observed across the VERIFIED tier's real citizen charters, not individually checked against a real Gurugram government source.",
+    "procedure": "Typical process (representative, not city-specific): (1) Register the complaint via the municipal corporation's helpline/toll-free number, online portal, or mobile app, if available, or in person at the ward engineering office. (2) Provide the exact road/location and a contact phone number. (3) Note the complaint/reference number issued. (4) Track status via the same channel used to register.",
+    "required_information": [
+      "Exact road / location of the pothole or damage",
+      "Phone number of the complainant"
+    ],
+    "required_documents": [],
+    "sla": "Representative range: 7-15 days, based on patterns observed in verified citizen charters (not city-specific).",
+    "expected_response_time": null,
+    "expected_resolution_time": "7-15 days (representative range, not verified for this city)",
+    "complaint_channel": [
+      "Municipal Corporation helpline / toll-free number (city-specific; not individually verified)",
+      "Online citizen grievance portal or mobile app, if available for this city",
+      "In person at the ward engineering office"
+    ],
+    "contact_information": "Contact the Gurugram Municipal Corporation's engineering (civil) division for this locality (specific number not verified for this synthetic record).",
+    "escalation_procedure": "Representative escalation pattern observed across verified charters: Junior Engineer (Civil) -> Executive Engineer -> City Engineer / Municipal Commissioner. Exact levels and time norms for Gurugram have not been individually verified.",
+    "escalation_authority": "Representative chain: Junior Engineer (Civil) -> Executive Engineer -> City Engineer/Municipal Commissioner (not verified for this city).",
+    "faq": [
+      {
+        "question": "Is this the official SLA for pothole repair in Gurugram?",
+        "answer": "No -- this is a synthetic, representative record based on patterns seen in other cities' verified citizen charters, not a figure confirmed from an official source for this city."
+      }
+    ],
+    "citizen_guidance": "Confirm the exact helpline number and current SLA with your local municipal corporation, as this record is representative, not independently verified for this city.",
+    "source_id": "SYNTHETIC_REPRESENTATIVE_DATA",
+    "source_title": "Synthetic Representative Civic-Service Record",
+    "source_organization": "JanMitra AI — synthetic representative record (not sourced from an official document)",
+    "source_url": null,
+    "source_type": "SYNTHETIC_REPRESENTATIVE",
+    "verification_status": "SYNTHETIC",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-09T22:59:32.461314Z",
+    "created_at": "2026-08-09T22:59:32.461314Z"
+  },
+  {
+    "record_id": "SYN_haryana_gurugram_STREETLIGHTS",
+    "service_id": "STREETLIGHTS_GURUGRAM",
+    "service_name": "Street Light Repair / Not Working Complaints",
+    "sub_service": "Street light not working / damaged, repair or replacement",
+    "problem_type": "Street light not working or damaged",
+    "service_category": "STREETLIGHTS",
+    "state": "Haryana",
+    "district": null,
+    "city": "Gurugram",
+    "municipality": "Gurugram Municipal Corporation",
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "CITY",
+    "department": "Gurugram Municipal Corporation -- Engineering (Electrical) Department (representative structure; exact department name for Gurugram not individually verified)",
+    "authority": "Junior Engineer, Electrical (ward/zone-level)",
+    "description": "Representative service description for street light complaints in Gurugram, Haryana. This is a SYNTHETIC record following the general shape and SLA range observed across the VERIFIED tier's real citizen charters, not individually checked against a real Gurugram government source.",
+    "procedure": "Typical process (representative, not city-specific): (1) Register the complaint via the municipal corporation's helpline/toll-free number, online portal, or mobile app, if available, or in person at the ward electrical engineering office. (2) Provide the locality/pole number, if known, and a contact phone number. (3) Note the complaint/reference number issued. (4) Track status via the same channel used to register.",
+    "required_information": [
+      "Locality / pole number, if known",
+      "Phone number of the complainant"
+    ],
+    "required_documents": [],
+    "sla": "Representative range: 7-10 days, based on patterns observed in verified citizen charters (not city-specific).",
+    "expected_response_time": null,
+    "expected_resolution_time": "7-10 days (representative range, not verified for this city)",
+    "complaint_channel": [
+      "Municipal Corporation helpline / toll-free number (city-specific; not individually verified)",
+      "Online citizen grievance portal or mobile app, if available for this city",
+      "In person at the ward electrical engineering office"
+    ],
+    "contact_information": "Contact the Gurugram Municipal Corporation's engineering (electrical) division for this locality (specific number not verified for this synthetic record).",
+    "escalation_procedure": "Representative escalation pattern observed across verified charters: Junior Engineer (Electrical) -> Assistant Executive Engineer -> Municipal Commissioner. Exact levels and time norms for Gurugram have not been individually verified.",
+    "escalation_authority": "Representative chain: Junior Engineer (Electrical) -> Assistant Executive Engineer -> Municipal Commissioner (not verified for this city).",
+    "faq": [
+      {
+        "question": "Is this the official SLA for street light repair in Gurugram?",
+        "answer": "No -- this is a synthetic, representative record based on patterns seen in other cities' verified citizen charters, not a figure confirmed from an official source for this city."
+      }
+    ],
+    "citizen_guidance": "Confirm the exact helpline number and current SLA with your local municipal corporation, as this record is representative, not independently verified for this city.",
+    "source_id": "SYNTHETIC_REPRESENTATIVE_DATA",
+    "source_title": "Synthetic Representative Civic-Service Record",
+    "source_organization": "JanMitra AI — synthetic representative record (not sourced from an official document)",
+    "source_url": null,
+    "source_type": "SYNTHETIC_REPRESENTATIVE",
+    "verification_status": "SYNTHETIC",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-09T22:59:32.461314Z",
+    "created_at": "2026-08-09T22:59:32.461314Z"
+  }
+]

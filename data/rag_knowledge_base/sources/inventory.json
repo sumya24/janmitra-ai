@@ -1,0 +1,54 @@
+[
+  {
+    "source_id": "OD_HUD_CITIZEN_CHARTER",
+    "source_title": "Citizen's Charter (Draft) — Housing & Urban Development Department",
+    "source_organization": "Housing & Urban Development Department, Government of Odisha",
+    "source_url": "https://urban.odisha.gov.in/sites/default/files/2021-05/Draft%20Citizen%20Charter_HUD_Final.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-09T22:01:52+00:00",
+    "geographic_scope": "STATE",
+    "notes": "PDF confirmed live (HTTP 200) on 2026-08-10. Text extracted via pypdf (poppler/pdftoppm not available on this machine). This is a state-wide document issued by HUDD applying to all Urban Local Bodies (Municipal Corporations, Municipalities, NACs) across Odisha -- not specific to any one city, hence city=null and geographic_scope=STATE on every KnowledgeRecord citing it. The document is explicitly labelled a DRAFT and states 'The next review of the citizen charter is scheduled on July 2016', meaning its content may be dated or since superseded by an unpublished revision; it is treated as VERIFIED because the source artifact itself is real, live, and government-published -- not as a claim that every figure in it is still current practice. publication_date/last_updated are left null because the PDF does not state either explicitly. Exact figures (service names, process time limits, fees, designated/appellate/revisional officers, and the 4-level grievance escalation matrix) are transcribed directly from the document's services table and escalation-matrix section; no figure was inferred or estimated."
+  },
+  {
+    "source_id": "PB_MOHALI_CITIZEN_CHARTER",
+    "source_title": "Citizen Charter — Municipal Corporation, Sahibzada Ajit Singh Nagar (Mohali) 2016-17",
+    "source_organization": "Municipal Corporation, Sahibzada Ajit Singh Nagar (Mohali), Department of Local Government, Government of Punjab",
+    "source_url": "https://e-nigam.punjab.gov.in/MCData/Mohali/CITIZENCHARTER.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": "2016-01-01",
+    "last_updated": null,
+    "retrieved_at": "2026-08-09T22:07:38+00:00",
+    "geographic_scope": "CITY",
+    "notes": "PDF confirmed live (HTTP 200) on 2026-08-10, downloaded and text-extracted via pypdf. Cover page states '2016-17' -- used as publication_date (year only, day/month not stated, so set to 2016-01-01 as the earliest defensible date; treat as approximate). Contains three distinct, genuinely different figure sets for the same services which are NOT the same number and must not be conflated: (1) Section 2.3 'Services Standards' -- the Citizen Charter's own service-delivery timelines; (2) the Punjab Right to Service Act 2011 table -- a separate STATUTORY sla with its own designated/first-appellate/second-appellate authorities (Executive Officer/CMC -> SDM of concerned district -> Deputy Commissioner, for solid waste/street light/water leakage entries specifically); (3) Section 3.3/3.4 Grievance Redress Mechanism (GRM) Table-2/Table-3 -- the toll-free/mobile-app complaint system's own nodal-officer norms and 4-level internal escalation ladder (Jr Engineer -> A.C.E. -> C.E. -> Commissioner), which differ again. KnowledgeRecords citing this source label each figure with which of the three systems it belongs to, rather than picking one and discarding the others. Real named officers and personal mobile numbers appear in the source document itself (published by the Municipal Corporation specifically so citizens can contact them) -- reproduced as published, not fabricated."
+  },
+  {
+    "source_id": "PB_PATIALA_CITIZEN_CHARTER",
+    "source_title": "Citizen Charter — Municipal Corporation Patiala",
+    "source_organization": "Municipal Corporation Patiala, Department of Local Government, Government of Punjab",
+    "source_url": "https://enigambackuprestore.blob.core.windows.net/securefilestructure/MC/Patiala/MCSubMenu/pdf/linkpdf_2_20_2025_45_862.CITIZEN%20CHARTER%20MCP.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-09T22:07:38+00:00",
+    "geographic_scope": "CITY",
+    "notes": "PDF confirmed live (HTTP 200) on 2026-08-10, downloaded and text-extracted via pypdf. No publication date stated in the extracted text (the file name suggests it was last (re-)linked on the portal on 2025-02-20, but that is a CMS link-management timestamp, not necessarily the document's own publication date, so publication_date is left null rather than guessed). References the 'Punjab Transparency And Accountability Delivery Of Public Service Act / Right to Service Act 2018' (a newer/different Act than Mohali's 2011-Act citation), whose table in this document covers only building-plan, water-connection, property-tax, and licensing services -- it does NOT include solid waste, street light, or general civil-works/roads entries, unlike Mohali's RTS table. KnowledgeRecords citing this source for those categories therefore rely only on Section 2.3 Services Standards and Section 3.3 GRM Table-1 nodal-officer norms, and explicitly do not claim a statutory RTS Act SLA for those categories since none is stated for Patiala. This document's Table of Contents also has no equivalent of Mohali's Section 3.4 multi-level escalation ladder (Sanitation/Street Light/Water complaints have no per-level authority chain listed here) -- the highest escalation contact stated is only 'Secretary' (general oversight of all pending complaints), reproduced as such rather than inventing intermediate levels."
+  },
+  {
+    "source_id": "SYNTHETIC_REPRESENTATIVE_DATA",
+    "source_title": "Synthetic Representative Civic-Service Record",
+    "source_organization": "JanMitra AI — synthetic representative record (not sourced from an official document)",
+    "source_url": null,
+    "source_type": "SYNTHETIC_REPRESENTATIVE",
+    "verification_status": "SYNTHETIC",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-09T22:07:38+00:00",
+    "geographic_scope": "NATIONAL",
+    "notes": "The single shared source_id used by every SYNTHETIC_REPRESENTATIVE KnowledgeRecord generated by scripts/generate_synthetic_rag_records.py. Not tied to any one city/state -- geographic_scope=NATIONAL reflects that this is a template applied broadly, not a claim of national-level official data. See that script's module docstring and data/rag_knowledge_base/sources/candidate_urls.md for how the SLA ranges and department/escalation patterns used in the templates were grounded in the VERIFIED tier (Odisha, Mohali, Patiala) without copying any single city's specific figures as another city's synthetic data."
+  }
+]
