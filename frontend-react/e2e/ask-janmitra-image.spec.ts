@@ -28,6 +28,18 @@ async function signUpAndReachCitizenHome(page: import("@playwright/test").Page) 
   await page.getByLabel("Full name").fill("Ask JanMitra Image Tester");
   await page.getByLabel("Phone number").fill(phone);
   await page.getByLabel("Password").fill("secret123");
+  // Mandatory ward field -- same select-or-freetext handling as theme-and-voice.spec.ts's
+  // own ward step, since whether any real wards are seeded yet varies by test run.
+  const wardField = page.getByLabel("Area / ward");
+  // The field starts as a text input and swaps to a <select> once the async GET
+  // /complaints/wards fetch resolves (Signup.tsx) -- wait for that swap to settle first, or a
+  // fill() started against the input can race a mid-flight re-render and hit a detached node.
+  await page.waitForTimeout(600);
+  if ((await wardField.evaluate((el) => el.tagName)) === "SELECT") {
+    await wardField.selectOption({ index: 1 });
+  } else {
+    await wardField.fill("Test Ward");
+  }
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/citizen$/);
 }
@@ -36,10 +48,10 @@ test("Ask JanMitra: attaching a real photo previews it, removing it works, and s
   // Real backend round-trip PLUS a real local vision-language model call (VisionService,
   // ~1.9B params, CPU inference) -- on a cold backend process this pays a genuine one-time model
   // load from disk (already-downloaded weights, not a network fetch) on top of the usual RAG
-  // round-trip, so this needs a much larger budget than the plain-text ask-janmitra.spec.ts tests
-  // (60s) -- measured directly: a cold load + one caption comfortably exceeded 35s on this
-  // machine's CPU-only setup.
-  test.setTimeout(180000);
+  // round-trip. Measured directly (multiple real, non-mocked HTTP round trips against a cold
+  // process during this feature's development): 208s and 239s. 360s gives real headroom above
+  // that measured range rather than guessing.
+  test.setTimeout(360000);
 
   await signUpAndReachCitizenHome(page);
   await page.getByRole("button", { name: "Ask JanMitra" }).click();
@@ -63,7 +75,7 @@ test("Ask JanMitra: attaching a real photo previews it, removing it works, and s
 
   // Larger than ask-janmitra.spec.ts's 30s -- a cold backend process pays a one-time real model
   // load (see the test-level comment above) on top of the usual RAG round-trip.
-  await expect(page.locator(".ask-answer-text")).toBeVisible({ timeout: 150000 });
+  await expect(page.locator(".ask-answer-text")).toBeVisible({ timeout: 330000 });
   await expect(page.getByText("Official source", { exact: true })).toBeVisible();
 
   // The attached photo is cleared after a successful send (see AskJanMitra.tsx's runQuery) --
