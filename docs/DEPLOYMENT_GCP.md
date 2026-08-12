@@ -167,11 +167,77 @@ curl http://localhost/health
 backend container restarts repeatedly right after boot, that's the OOM killer; confirm swap is
 actually active (`free -h` should show a non-zero Swap line) before troubleshooting further.
 
-### 5. Domain/HTTPS and GitHub Actions secrets
+### 5. Set up automated deployment (GitHub Actions CD)
 
-Identical to Oracle's steps 5 and 6 in `docs/DEPLOYMENT.md` — `SITE_ADDRESS`, Caddy's automatic
-HTTPS, and the `SSH_HOST`/`SSH_USER`/`SSH_PRIVATE_KEY`/`SSH_DEPLOY_PATH` GitHub secrets all work
-exactly the same way, just pointed at this VM's external IP.
+This wires up `.github/workflows/cd.yml` so every merge to `main` automatically deploys to this
+VM, instead of you SSHing in and running `docker compose` by hand each time.
+
+**a) Generate a dedicated deploy keypair** (on your own laptop, not the VM — this key's private
+half becomes a GitHub secret, its public half goes on the VM):
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/janmitra_deploy_key -N "" -C "github-actions-deploy"
+```
+
+Don't reuse your personal SSH key here — a dedicated key means you can revoke deploy access
+later (by removing it from the VM's `authorized_keys`) without touching your own login.
+
+**b) Add the public half to the VM.** SSH into the VM (Console's SSH button) and run:
+
+```bash
+echo "<paste the contents of ~/.ssh/janmitra_deploy_key.pub here>" >> ~/.ssh/authorized_keys
+```
+
+**c) Make sure the VM has a real, up-to-date clone with secrets configured.** If you cloned the
+repo earlier (before this work was pushed to `main`), re-clone it — the old clone predates all of
+this and won't have the current Dockerfiles/compose file:
+
+```bash
+cd ~
+rm -rf janmitra-ai   # only if you have an old/stale clone from before -- skip if this is your first clone
+git clone https://github.com/<your-username>/janmitra-ai.git
+cd janmitra-ai
+cp .env.example .env
+nano .env   # fill in SARVAM_API_KEY, and set JWT_SECRET_KEY to a fixed value: openssl rand -hex 32
+```
+
+**d) Get the VM's external IP** — either from the Console (Compute Engine → VM instances →
+External IP column), or by running this on the VM:
+
+```bash
+curl -s ifconfig.me
+```
+
+**e) Add the 5 GitHub secrets.** Either via the GitHub web UI (**repo → Settings → Secrets and
+variables → Actions → New repository secret**), or with the `gh` CLI from your laptop if you have
+it installed and authenticated:
+
+```bash
+gh secret set SSH_HOST --body "<the VM's external IP from step d>"
+gh secret set SSH_USER --body "<your VM username -- the part before @ in your SSH prompt, e.g. gpkp182093>"
+gh secret set SSH_PRIVATE_KEY < ~/.ssh/janmitra_deploy_key
+gh secret set SSH_DEPLOY_PATH --body "/home/<your VM username>/janmitra-ai"
+```
+
+`SSH_PORT` is optional — the workflow defaults to `22` if you don't set it.
+
+**f) Verify it actually works.** The easiest way: make any small commit to `main` (even just this
+doc) and push — that re-triggers CI, and once CI passes, CD fires automatically. Watch it with:
+
+```bash
+gh run list --workflow=cd.yml --limit 1
+gh run watch   # follow the most recent run live
+```
+
+If the SSH step fails, double check: the public key is really in the VM's `~/.ssh/authorized_keys`
+(one line, no extra whitespace), `SSH_DEPLOY_PATH` matches exactly where you cloned the repo, and
+`SSH_USER` matches your actual VM login username (not your Google account email).
+
+### 6. Domain/HTTPS (optional)
+
+Identical to Oracle's step 5 in `docs/DEPLOYMENT.md` — set `SITE_ADDRESS=your-domain.com` in the
+VM's `.env` once a domain points at its IP, then `docker compose -f docker-compose.prod.yml up -d`
+to pick up the change. Caddy handles the Let's Encrypt certificate automatically from there.
 
 ## Before the credit runs out (~1 November 2026) — only matters if you picked Option B
 
