@@ -1,0 +1,620 @@
+@font-face {
+  /* Single variable-weight file (Google's own build collapses discrete 400/500/600/700
+     requests for Inter into one variable woff2 -- see public/fonts/) covering the whole
+     weight range used across the app: headings 600-700, body 400-500, buttons 500-600. */
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400 700;
+  src: url("/fonts/Inter-Variable.woff2") format("woff2-variations"), url("/fonts/Inter-Variable.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400;
+  src: url("/fonts/JetBrainsMono-Regular.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 700;
+  src: url("/fonts/JetBrainsMono-Bold.ttf") format("truetype");
+  font-display: swap;
+}
+
+:root {
+  /* ===== JanMitra AI brand system =====
+     Source of truth: the supplied logo (Navy "J" + circuit mark, green/blue/orange/purple
+     service segments). Navy + Green are the primary identity; Blue/Orange/Purple are
+     supporting accents mapped 1:1 to the logo's own service colors (waste=green,
+     water=blue, roads=orange, streetlight=purple) so the UI visibly belongs to this mark. */
+  --paper: #F8FAFC;
+  --surface: #FFFFFF;
+  --surface-2: #F1F5F9;
+  --ink: #0F172A;
+  --ink-2: #475569;
+  --ink-3: #64748B;
+  --line: #E2E8F0;
+
+  /* --primary (Green) is the adaptive secondary/AI accent -- shifts to a brighter shade in
+     dark mode to stay vibrant, same role the old teal token played. Small accents (active
+     pills, tracker "done" steps) key off this. */
+  --primary: #16A34A;
+  /* Dark text, not light, on this fill: white-on-#16A34A measures ~3.3:1 -- legible but short
+     of AA's 4.5:1 normal-text floor for the small bold labels (langpill, tracker dot) that use
+     it. Dark ink against a saturated green reads reliably in both directions. */
+  --primary-ink: #052E12;
+
+  /* --accent/--brand-surface (Navy) are the FIXED brand anchor -- defined once here, never
+     redefined in the theme blocks below, on purpose. Navy is "strong JanMitra identity" per
+     brand direction: primary buttons, the top bar, and the auth side panel all stay the same
+     navy regardless of theme, the way a permanently-dark sidebar/logo mark would. Only use
+     --accent for FILLS with light text on top (buttons, avatars) -- fixed navy #0F2D6B
+     against dark-mode's near-black backgrounds measures ~1.3:1 contrast as foreground text,
+     nowhere near WCAG's 4.5:1 floor. Small text/icon/border accents (nav active state,
+     "Report ->" links, focus rings) must use --accent-fg instead, which adapts per theme. */
+  --accent: #0F2D6B;
+  --accent-ink: #F8FAFC;
+  --accent-fg: #0F2D6B;
+  --brand-surface: #0F2D6B;
+  --brand-surface-ink: #F8FAFC;
+
+  /* Status: Resolved=green, In Progress=blue, Assigned=orange, Pending=amber,
+     Rejected/Error=red -- never color-only, always paired with icon+text (see StatusBadge). */
+  --status-pending: #B45309; --status-pending-bg: #FEF3C7;
+  --status-open: #EA580C; --status-open-bg: #FFEDD5;
+  --status-progress: #0284C7; --status-progress-bg: #E0F2FE;
+  --status-resolved: #16A34A; --status-resolved-bg: #DCFCE7;
+  --status-critical: #DC2626; --status-critical-bg: #FEE2E2;
+
+  /* Civic service identity, mirroring the logo's 4 service-color segments exactly. */
+  --service-waste: #16A34A; --service-waste-bg: #DCFCE7;
+  --service-water: #0284C7; --service-water-bg: #E0F2FE;
+  --service-roads: #F97316; --service-roads-bg: #FFEDD5;
+  --service-streetlight: #7C3AED; --service-streetlight-bg: #EDE9FE;
+
+  /* AI visual language: one consistent gradient for AI-touched surfaces (Ask JanMitra, voice,
+     AI Understanding) -- calm and purposeful, not decorative. See .ai-glow/.ai-gradient-text. */
+  --ai-from: #0284C7;
+  --ai-to: #16A34A;
+
+  --shadow-sm: 0 1px 2px rgba(15,23,42,0.05), 0 1px 1px rgba(15,23,42,0.04);
+  --shadow: 0 1px 2px rgba(15,23,42,0.06), 0 4px 16px rgba(15,23,42,0.05);
+  --shadow-md: 0 2px 6px rgba(15,23,42,0.07), 0 8px 24px rgba(15,23,42,0.08);
+  --shadow-lg: 0 4px 12px rgba(15,23,42,0.1), 0 16px 40px rgba(15,23,42,0.12);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 140ms;
+  --dur: 220ms;
+  --dur-slow: 380ms;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #07111F; --surface: #0F1F35; --surface-2: #132A45;
+    --ink: #F8FAFC; --ink-2: #CBD5E1; --ink-3: #94A3B8; --line: #1E3A5F;
+    --primary: #22C55E; --primary-ink: #07111F; --accent-fg: #38BDF8;
+    --status-pending: #FBBF24; --status-pending-bg: #2E2410;
+    --status-open: #FB923C; --status-open-bg: #331D0C;
+    --status-progress: #38BDF8; --status-progress-bg: #0F2436;
+    --status-resolved: #22C55E; --status-resolved-bg: #0F2A18;
+    --status-critical: #F87171; --status-critical-bg: #341015;
+    --service-waste: #22C55E; --service-waste-bg: #0F2A18;
+    --service-water: #38BDF8; --service-water-bg: #0F2436;
+    --service-roads: #FB923C; --service-roads-bg: #331D0C;
+    --service-streetlight: #A78BFA; --service-streetlight-bg: #241A3D;
+    --ai-from: #38BDF8; --ai-to: #22C55E;
+    color-scheme: dark;
+  }
+}
+/* Manual theme toggle overrides — these win over the OS-preference media
+   query above in both directions, once the user picks Light or Dark
+   explicitly (see lib/theme.tsx). No [data-theme] attribute = follow system. */
+:root[data-theme="dark"] {
+  --paper: #07111F; --surface: #0F1F35; --surface-2: #132A45;
+  --ink: #F8FAFC; --ink-2: #CBD5E1; --ink-3: #94A3B8; --line: #1E3A5F;
+  --primary: #22C55E; --primary-ink: #07111F; --accent-fg: #38BDF8;
+  --status-pending: #FBBF24; --status-pending-bg: #2E2410;
+  --status-open: #FB923C; --status-open-bg: #331D0C;
+  --status-progress: #38BDF8; --status-progress-bg: #0F2436;
+  --status-resolved: #22C55E; --status-resolved-bg: #0F2A18;
+  --status-critical: #F87171; --status-critical-bg: #341015;
+  --service-waste: #22C55E; --service-waste-bg: #0F2A18;
+  --service-water: #38BDF8; --service-water-bg: #0F2436;
+  --service-roads: #FB923C; --service-roads-bg: #331D0C;
+  --service-streetlight: #A78BFA; --service-streetlight-bg: #241A3D;
+  --ai-from: #38BDF8; --ai-to: #22C55E;
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  --paper: #F8FAFC; --surface: #FFFFFF; --surface-2: #F1F5F9;
+  --ink: #0F172A; --ink-2: #475569; --ink-3: #64748B; --line: #E2E8F0;
+  --primary: #16A34A; --primary-ink: #052E12; --accent-fg: #0F2D6B;
+  --status-pending: #B45309; --status-pending-bg: #FEF3C7;
+  --status-open: #EA580C; --status-open-bg: #FFEDD5;
+  --status-progress: #0284C7; --status-progress-bg: #E0F2FE;
+  --status-resolved: #16A34A; --status-resolved-bg: #DCFCE7;
+  --status-critical: #DC2626; --status-critical-bg: #FEE2E2;
+  --service-waste: #16A34A; --service-waste-bg: #DCFCE7;
+  --service-water: #0284C7; --service-water-bg: #E0F2FE;
+  --service-roads: #F97316; --service-roads-bg: #FFEDD5;
+  --service-streetlight: #7C3AED; --service-streetlight-bg: #EDE9FE;
+  --ai-from: #0284C7; --ai-to: #16A34A;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  /* Smooth, not instant, when the theme switches (system change or manual toggle) — a snap
+     between light and dark reads as a glitch; a quick fade reads as intentional. */
+  transition: background-color var(--dur-slow) var(--ease), color var(--dur-slow) var(--ease);
+}
+a { color: inherit; }
+button { font-family: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent-fg); outline-offset: 2px; border-radius: 4px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+
+/* ============ Motion system ============
+   A small, consistent vocabulary of motion instead of animation scattered ad hoc: entrances
+   fade/rise (new content arriving follows the same "settles into place" logic everywhere),
+   interactive elements get a quick, subtle lift on hover and a slight press on click, nothing
+   takes longer than --dur-slow (380ms) per the general "keep it under ~400ms" guidance for
+   UI motion, and every animated rule is disabled outright for anyone who's asked for reduced
+   motion at the OS level. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes fade-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+/* Transition-based, not the fade-rise @keyframes animation used elsewhere (.field-error,
+   .banner-error) -- a CSS animation keeps "owning" the properties it touches even after it
+   finishes (fill-mode: both pins the end keyframe via the animation cascade layer, which sits
+   above normal declarations regardless of specificity), which was silently blocking any later
+   :hover transform (e.g. .surface-card.hoverable's lift) on every Reveal-wrapped element. A
+   transition settles to a normal property value once done, so :hover can override it normally
+   afterward. Reveal.tsx supplies the "from" state (opacity:0, translateY(8px)) inline. */
+.enter {
+  opacity: 1; transform: translateY(0);
+  transition: opacity var(--dur-slow) var(--ease-out), transform var(--dur-slow) var(--ease-out);
+  transition-delay: calc(var(--stagger, 0) * 45ms);
+}
+
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* Base elevated-surface look, used for every card-like container (forms, complaint cards,
+   stat tiles, table rows) — consistent radius/border/shadow regardless of whether that
+   particular surface reacts to hover. */
+.surface-card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out);
+}
+/* Opt-in: a gentle lift on hover, only for surfaces that genuinely represent something to
+   look at/act on (a complaint you can open, a stat, a worker row) — not blanket-applied to
+   every card, since a static form panel lifting under the cursor reads as a mistake, not a cue. */
+.surface-card.hoverable:hover,
+.surface-card.hoverable:focus-within {
+  transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: color-mix(in srgb, var(--line) 60%, var(--ink-3));
+}
+
+.table-row-hover { transition: background-color var(--dur-fast) var(--ease); }
+.table-row-hover:hover { background-color: var(--paper); }
+
+/* ============ Skeleton loading ============ */
+@keyframes skeleton-sweep { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+.skeleton {
+  border-radius: 8px; background: linear-gradient(90deg, var(--surface-2) 25%, var(--line) 37%, var(--surface-2) 63%);
+  background-size: 200% 100%; animation: skeleton-sweep 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; background: var(--surface-2); } }
+/* Covers every script the app's 6 languages use (Devanagari for hi/mr, Odia, Gujarati,
+   Bengali) — "Nirmala UI" is Windows' single system font spanning all of these, listed first
+   since it's the broadest single fallback; the Noto Sans variants cover non-Windows platforms
+   per-script, since no one Noto family covers all of them the way Nirmala UI does. */
+.indic { font-family: "Nirmala UI", "Noto Sans Devanagari", "Noto Sans Bengali", "Noto Sans Gujarati", "Noto Sans Oriya", "Kohinoor Devanagari", "Segoe UI", sans-serif; }
+.mono { font-family: "JetBrains Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+
+/* Visually hidden but still announced by screen readers -- for form controls whose label is
+   already conveyed visually another way (e.g. a step's <h2>) but still needs a real
+   programmatic label for assistive tech. */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+/* Headings use the same Inter family as body text (no decorative display face, per brand
+   direction) at a heavier weight -- hierarchy comes from size/weight/spacing, not a second
+   typeface. */
+.display { font-family: "Inter", system-ui, sans-serif; font-weight: 700; letter-spacing: -0.01em; }
+
+.btn {
+  border: none; border-radius: 8px; padding: 10px 18px; font-size: 13.5px; font-weight: 700;
+  display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out),
+              filter var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
+}
+.btn-primary { background: var(--accent); color: var(--accent-ink); box-shadow: 0 1px 2px rgba(20,30,26,0.08); }
+.btn-primary:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); box-shadow: var(--shadow); }
+.btn-primary:active:not(:disabled) { transform: translateY(0) scale(0.98); filter: brightness(0.98); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+/* var(--line) reads fine in dark mode (real contrast against the near-black paper background)
+   but is nearly invisible in light mode -- it's a subtle divider color, sitting on a
+   near-white paper background, and the two are barely distinguishable. --ink-3 keeps a real
+   outline in both themes without touching --line itself (which stays intentionally subtle for
+   its other job: dividers and card borders). */
+.btn-ghost { background: transparent; color: var(--ink); border: 1px solid var(--ink-3); }
+.btn-ghost:hover:not(:disabled) { background: var(--surface-2); transform: translateY(-1px); }
+.btn-ghost:active:not(:disabled) { transform: translateY(0) scale(0.98); }
+/* Destructive actions only (delete worker/complaint) -- same interaction language as
+   .btn-primary, just the --status-critical red instead of the accent color, so a delete button
+   never reads as just another primary action. */
+.btn-danger { background: var(--status-critical); color: #fff; box-shadow: 0 1px 2px rgba(20,30,26,0.08); }
+.btn-danger:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); box-shadow: var(--shadow); }
+.btn-danger:active:not(:disabled) { transform: translateY(0) scale(0.98); filter: brightness(0.98); }
+.btn-danger:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-sm { padding: 7px 13px; font-size: 12px; }
+/* Small icon-only action button for table rows (delete/assign) -- round, subtle by default,
+   a stronger hover state so a row of icon buttons doesn't read as inert. */
+.icon-action-btn {
+  width: 28px; height: 28px; border-radius: 7px; border: none; background: transparent;
+  color: var(--ink-3); display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.icon-action-btn:hover:not(:disabled) { background: var(--surface-2); color: var(--ink); }
+.icon-action-btn.danger:hover:not(:disabled) { background: var(--status-critical-bg); color: var(--status-critical); }
+.icon-action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+/* Segmented-control-style filter chips (status filter row on the Admin Complaints table) --
+   pill radius distinguishes them from regular .btn actions like "+ Add worker". */
+.filter-chip { border-radius: 999px !important; }
+
+/* Status pills: color + icon + text together, always -- see components/StatusBadge.tsx,
+   which is the only thing that should render this class. Covers the full 8-state lifecycle
+   vocabulary (SUBMITTED/ASSIGNED/ACCEPTED/IN_PROGRESS/RESOLVED/REJECTED/ESCALATED/CANCELLED)
+   using only the existing status color tokens -- no new colors introduced for the extra
+   states, since REJECTED/ESCALATED/CANCELLED aren't real backend states yet either. */
+.status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 20px; font-size: 11.5px; font-weight: 700; white-space: nowrap; transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease); }
+.status-badge svg { flex-shrink: 0; }
+.status-badge.assigned svg, .status-badge.accepted svg { animation: tracker-pulse 1.8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .status-badge.assigned svg, .status-badge.accepted svg { animation: none; } }
+.status-badge.resolved { background: var(--status-resolved-bg); color: var(--status-resolved); }
+.status-badge.pending { background: var(--status-pending-bg); color: var(--status-pending); }
+.status-badge.assigned { background: var(--status-open-bg); color: var(--status-open); }
+.status-badge.accepted { background: var(--status-progress-bg); color: var(--status-progress); }
+.status-badge.critical { background: var(--status-critical-bg); color: var(--status-critical); }
+.status-badge.muted { background: var(--surface-2); color: var(--ink-3); opacity: 0.75; }
+
+@keyframes tracker-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+.tracker-dot-active { animation: tracker-pulse 1.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .tracker-dot-active { animation: none; } }
+
+/* ============ Service cards (citizen Home) ============ */
+.service-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+}
+@media (max-width: 900px) { .service-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 520px) { .service-grid { grid-template-columns: 1fr; } }
+.service-card {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+  padding: 20px; text-decoration: none; color: inherit; cursor: pointer;
+}
+.service-card-icon {
+  width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  background: var(--surface-2); color: var(--ink-3); margin-bottom: 10px;
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+/* Each service card carries its own accent (mirroring the logo's 4 service-color segments):
+   a tinted icon tile at rest, filling solid on hover/focus. Title/description/action stay on
+   neutral tokens -- only the icon tile and the small "done" underline-style hover accent use
+   the per-service hue, so 4 cards side by side don't turn into a color clash. */
+.service-card-waste .service-card-icon { background: var(--service-waste-bg); color: var(--service-waste); }
+.service-card-water .service-card-icon { background: var(--service-water-bg); color: var(--service-water); }
+.service-card-roads .service-card-icon { background: var(--service-roads-bg); color: var(--service-roads); }
+.service-card-streetlight .service-card-icon { background: var(--service-streetlight-bg); color: var(--service-streetlight); }
+.service-card-waste.hoverable:hover .service-card-icon, .service-card-waste.hoverable:focus-within .service-card-icon { background: var(--service-waste); color: #fff; }
+.service-card-water.hoverable:hover .service-card-icon, .service-card-water.hoverable:focus-within .service-card-icon { background: var(--service-water); color: #fff; }
+.service-card-roads.hoverable:hover .service-card-icon, .service-card-roads.hoverable:focus-within .service-card-icon { background: var(--service-roads); color: #fff; }
+.service-card-streetlight.hoverable:hover .service-card-icon, .service-card-streetlight.hoverable:focus-within .service-card-icon { background: var(--service-streetlight); color: #fff; }
+/* Same-element variant for places that render just the icon tile on its own (e.g. the wizard's
+   AI Understanding result), not nested inside a full .service-card-<color> container. */
+.service-card-icon.service-tile-waste { background: var(--service-waste-bg); color: var(--service-waste); }
+.service-card-icon.service-tile-water { background: var(--service-water-bg); color: var(--service-water); }
+.service-card-icon.service-tile-roads { background: var(--service-roads-bg); color: var(--service-roads); }
+.service-card-icon.service-tile-streetlight { background: var(--service-streetlight-bg); color: var(--service-streetlight); }
+.service-card h3 { font-size: 15px; font-weight: 700; margin: 0; color: var(--ink); }
+.service-card p { font-size: 12.5px; color: var(--ink-2); margin: 0; line-height: 1.4; }
+.service-card-action {
+  margin-top: 10px; display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12.5px; font-weight: 700; color: var(--accent-fg);
+}
+.service-card-action svg { transition: transform var(--dur-fast) var(--ease-out); }
+.service-card.hoverable:hover .service-card-action svg, .service-card.hoverable:focus-within .service-card-action svg {
+  transform: translateX(3px);
+}
+
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 12px; font-weight: 700; color: var(--ink-2); margin-bottom: 6px; }
+.field input, .field select, .field textarea {
+  width: 100%; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+  border-radius: 8px; padding: 10px 12px; font-size: 14px; font-family: inherit;
+  transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none; border-color: var(--accent-fg);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-fg) 22%, transparent);
+}
+.field.has-error input, .field.has-error textarea { border-color: var(--status-critical); }
+.field-error { color: var(--status-critical); font-size: 11.5px; margin-top: 5px; animation: fade-rise var(--dur) var(--ease-out) both; }
+
+/* Native <select> keeps browser chrome by default, which clashes with everything else here —
+   flatten it and draw our own chevron so it matches text inputs exactly. */
+.field select {
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%235B665F' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center; padding-right: 34px;
+}
+
+/* Native <input type=file> renders as an OS-styled button + "no file chosen" text that ignores
+   every design token here — hide it and let a sibling label (see CitizenDashboard.tsx) act as
+   a proper, on-brand dropzone-style control instead. */
+.file-drop {
+  display: flex; align-items: center; gap: 10px; border: 1.5px dashed var(--line); border-radius: 8px;
+  padding: 12px 14px; cursor: pointer; background: var(--paper); color: var(--ink-2); font-size: 13px;
+  transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.file-drop:hover, .file-drop.drag-over { border-color: var(--accent-fg); color: var(--ink); background: color-mix(in srgb, var(--accent-fg) 6%, var(--paper)); }
+.file-drop.drag-over { border-style: solid; }
+.file-drop svg { flex-shrink: 0; }
+.file-drop input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.file-drop .file-name { color: var(--ink); font-weight: 600; }
+
+.banner-error {
+  background: var(--status-critical-bg); color: var(--status-critical); border-radius: 8px;
+  padding: 10px 14px; font-size: 13px; margin-bottom: 14px;
+  animation: fade-rise var(--dur-slow) var(--ease-out) both;
+}
+
+.theme-toggle {
+  width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--ink-2); display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease-out);
+}
+.theme-toggle:hover { background: var(--surface-2); color: var(--ink); transform: translateY(-1px); }
+.theme-toggle:active { transform: translateY(0) scale(0.94); }
+
+.langpills { display: flex; gap: 6px; flex-wrap: wrap; }
+.langpill {
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink-2);
+  padding: 6px 13px; border-radius: 20px; font-size: 12.5px; font-weight: 600;
+  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease-out);
+}
+.langpill:hover { transform: translateY(-1px); border-color: var(--ink-3); }
+.langpill.active { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); }
+
+/* ============ Toasts ============
+   Real-time-feeling feedback for actions (submit, accept, reject, resolve) that replaces a
+   static banner sitting at the top of the page with something that arrives, is noticed, and
+   gets out of the way on its own -- closer to how a real product confirms an action landed. */
+.toast-viewport {
+  position: fixed; top: 20px; right: 20px; z-index: 200;
+  display: flex; flex-direction: column; gap: 10px; width: min(360px, calc(100vw - 40px));
+  pointer-events: none;
+}
+@keyframes toast-in { from { opacity: 0; transform: translate(16px, -8px) scale(0.96); } to { opacity: 1; transform: translate(0, 0) scale(1); } }
+@keyframes toast-out { from { opacity: 1; transform: translate(0, 0) scale(1); max-height: 100px; margin-bottom: 0; } to { opacity: 0; transform: translate(16px, -4px) scale(0.96); max-height: 0; margin-bottom: -10px; } }
+.toast {
+  pointer-events: auto; display: flex; align-items: flex-start; gap: 10px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  box-shadow: var(--shadow-lg); padding: 13px 14px; font-size: 13px; color: var(--ink);
+  animation: toast-in var(--dur-slow) var(--ease-out) both;
+}
+.toast.leaving { animation: toast-out var(--dur) var(--ease) forwards; }
+.toast-icon { flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; margin-top: 1px; }
+.toast.success .toast-icon { background: var(--status-resolved-bg); color: var(--status-resolved); }
+.toast.error .toast-icon { background: var(--status-critical-bg); color: var(--status-critical); }
+.toast-close { margin-left: auto; background: none; border: none; color: var(--ink-3); padding: 2px; flex-shrink: 0; border-radius: 4px; }
+.toast-close:hover { color: var(--ink); background: var(--surface-2); }
+@media (prefers-reduced-motion: reduce) { .toast, .toast.leaving { animation: fade-in var(--dur) linear both; } }
+
+/* ============ Dev/mock data badge ============
+   Every place this app shows placeholder content ahead of the real backend/RAG pipeline
+   (AI Understanding step, Ask JanMitra answers, Why-delayed panel, My Area stats) wears this
+   same small label, so "this isn't real yet" reads consistently instead of each screen
+   inventing its own disclaimer wording. */
+.dev-badge {
+  display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.04em; text-transform: uppercase; color: var(--status-progress);
+  background: var(--status-progress-bg); border-radius: 6px; padding: 3px 8px;
+}
+
+/* ============ Citizen Home hero ============ */
+.home-hero {
+  border-radius: 16px; padding: 34px 28px; margin-bottom: 26px;
+  background: linear-gradient(135deg, var(--brand-surface), color-mix(in srgb, var(--brand-surface) 80%, black));
+  color: var(--brand-surface-ink);
+}
+.home-hero h1 { margin: 0 0 8px; font-size: clamp(24px, 4vw, 32px); }
+.home-hero p { margin: 0 0 20px; color: color-mix(in srgb, var(--brand-surface-ink) 82%, transparent); font-size: 14px; max-width: 52ch; }
+.home-hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.home-hero .btn-ghost { background: color-mix(in srgb, var(--brand-surface-ink) 10%, transparent); border-color: color-mix(in srgb, var(--brand-surface-ink) 30%, transparent); color: var(--brand-surface-ink); }
+.home-hero .btn-ghost:hover:not(:disabled) { background: color-mix(in srgb, var(--brand-surface-ink) 18%, transparent); }
+
+/* ============ Ask JanMitra ============
+   Deliberately a civic-reference-assistant layout, not a chat bubble UI: one question, one
+   answer card, sources beneath it, then a fixed set of next actions -- no scrolling message
+   history, no streaming-cursor affordance, nothing that reads as "chatbot". */
+.ask-suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 22px; }
+.ask-suggestion {
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink-2);
+  padding: 8px 14px; border-radius: 20px; font-size: 12.5px; font-weight: 600; text-align: left;
+  transition: border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease-out);
+}
+.ask-suggestion:hover:not(:disabled) { border-color: var(--accent-fg); color: var(--ink); transform: translateY(-1px); }
+.ask-question-echo { font-size: 13px; color: var(--ink-2); margin-bottom: 6px; }
+.ask-question-echo strong { color: var(--ink); font-weight: 700; }
+/* ============ AI visual identity ============
+   One consistent, restrained visual language for anywhere JanMitra AI is actively "doing"
+   something (Ask JanMitra's answer, the wizard's AI Understanding step) -- a soft gradient
+   accent + a slow, calm glow, never a flashy/neon effect. Reserved for AI-touched surfaces
+   only; ordinary cards stay solid and plain per the brand direction. */
+.ai-gradient-text {
+  background: linear-gradient(120deg, var(--ai-from), var(--ai-to));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.ai-dot {
+  width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--ai-from), var(--ai-to));
+}
+@keyframes ai-breathe {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ai-to) 35%, transparent); }
+  50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--ai-to) 0%, transparent); }
+}
+.ai-dot.active { animation: ai-breathe 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .ai-dot.active { animation: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--ai-to) 20%, transparent); } }
+
+.ask-answer-card {
+  padding: 21px 20px 20px; margin-bottom: 14px; position: relative; overflow: hidden;
+  /* A quiet glass treatment -- the one place in the app it's used, per brand direction
+     ("selectively... not the entire application"). */
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(8px);
+}
+.ask-answer-card::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--ai-from), var(--ai-to));
+}
+.ask-answer-text { font-size: 14.5px; line-height: 1.6; color: var(--ink); margin: 0; }
+.ask-sources-label { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-3); margin: 18px 0 10px; }
+.ask-quick-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+
+.source-card { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--paper); margin-bottom: 10px; }
+.source-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.source-tag { font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 3px 8px; border-radius: 6px; }
+.source-tag.verified { background: var(--status-resolved-bg); color: var(--status-resolved); }
+.source-tag.synthetic { background: var(--status-progress-bg); color: var(--status-progress); }
+.source-scope { font-size: 10.5px; color: var(--ink-3); font-weight: 600; }
+.source-title { font-size: 13.5px; font-weight: 700; color: var(--ink); }
+.source-org { font-size: 12px; color: var(--ink-2); margin-top: 2px; }
+.source-link { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 700; color: var(--accent-fg); margin-top: 8px; }
+.source-link:hover { text-decoration: underline; }
+.source-note { font-size: 11.5px; color: var(--ink-3); margin: 8px 0 0; }
+
+/* ============ Report Issue wizard ============ */
+.wizard-steps { display: flex; gap: 4px; margin-bottom: 22px; flex-wrap: wrap; }
+.wizard-step-dot {
+  flex: 1; min-width: 24px; height: 4px; border-radius: 2px; background: var(--line);
+  transition: background-color var(--dur) var(--ease);
+}
+.wizard-step-dot.done { background: var(--status-resolved); }
+.wizard-step-dot.active { background: var(--accent-fg); }
+.wizard-panel { padding: 22px; }
+.wizard-panel h2 { margin: 0 0 6px; font-size: 18px; }
+.wizard-panel > p.wizard-hint { margin: 0 0 18px; font-size: 13px; color: var(--ink-2); }
+.wizard-nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 22px; }
+.wizard-summary-row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.wizard-summary-row:last-child { border-bottom: none; }
+.wizard-summary-row dt { color: var(--ink-2); }
+.wizard-summary-row dd { margin: 0; color: var(--ink); font-weight: 600; text-align: right; }
+.location-option {
+  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+  border: 1.5px solid var(--line); border-radius: 10px; padding: 13px 14px; background: var(--surface);
+  color: var(--ink); transition: border-color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
+}
+.location-option:hover:not(:disabled) { border-color: var(--accent-fg); background: color-mix(in srgb, var(--accent-fg) 6%, var(--paper)); }
+.location-option-icon { width: 34px; height: 34px; border-radius: 8px; background: var(--surface-2); color: var(--brand-surface); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+@keyframes success-pop { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.success-icon { animation: success-pop var(--dur-slow) var(--ease-out) both; }
+@media (prefers-reduced-motion: reduce) { .success-icon { animation: none; } }
+
+.photo-preview { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--paper); }
+.photo-preview img { display: block; width: 100%; max-height: 220px; object-fit: cover; }
+.photo-preview-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; flex-wrap: wrap; }
+.photo-preview-meta .file-name { font-size: 12.5px; color: var(--ink); font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+
+/* Multi-file evidence upload (MultiPhotoUpload.tsx) -- selected-but-not-yet-uploaded files,
+   thumbnail grid with a remove button per tile. */
+.multi-photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; margin-bottom: 10px; }
+.multi-photo-thumb { position: relative; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; aspect-ratio: 1; background: var(--paper); }
+.multi-photo-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.multi-photo-remove {
+  position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; border-radius: 50%;
+  background: rgba(15, 23, 20, 0.65); color: #fff; border: none; font-size: 11px; line-height: 1;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.multi-photo-remove:hover { background: rgba(15, 23, 20, 0.85); }
+
+/* Evidence gallery (EvidenceGallery.tsx) -- thumbnail grid of already-uploaded evidence, grouped
+   by stage; click opens the lightbox. */
+.evidence-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+.evidence-thumb { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; aspect-ratio: 1; background: var(--paper); padding: 0; cursor: pointer; }
+.evidence-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.evidence-lightbox-overlay {
+  position: fixed; inset: 0; background: rgba(15, 23, 20, 0.85); display: flex; align-items: center; justify-content: center;
+  padding: 24px; z-index: 80; animation: overlay-in var(--dur) var(--ease-out) both;
+}
+.evidence-lightbox-img { max-width: min(90vw, 900px); max-height: 85vh; object-fit: contain; border-radius: 8px; }
+.evidence-lightbox-close {
+  position: absolute; top: 18px; right: 18px; width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15); color: #fff; border: none; font-size: 18px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.evidence-lightbox-close:hover { background: rgba(255, 255, 255, 0.28); }
+.evidence-lightbox-meta { position: absolute; bottom: 18px; left: 0; right: 0; text-align: center; color: #E2E8F0; font-size: 12px; }
+
+/* ============ App navigation drawer ============ */
+/* Hidden by default, opened via the hamburger button in TopBar (see NavDrawer.tsx) -- an
+   off-canvas overlay (backdrop + fixed panel sliding in from the left) that never pushes or
+   resizes page content, same behavior on desktop and mobile. Only page/tab navigation lives
+   here; notifications/profile/settings/logout stay in the header, untouched. */
+.nav-drawer-toggle {
+  width: 38px; height: 38px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--ink); display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.nav-drawer-toggle:hover { background: var(--surface-2); color: var(--ink); }
+.nav-drawer-backdrop { display: none; }
+.nav-drawer-backdrop.open {
+  display: block; position: fixed; inset: 0; background: rgba(15, 23, 20, 0.45); z-index: 70;
+  animation: overlay-in var(--dur) var(--ease-out) both;
+}
+.nav-drawer {
+  display: flex; flex-direction: column; gap: 3px;
+  position: fixed; top: 0; bottom: 0; left: 0; width: 270px;
+  background: var(--surface); border-right: 1px solid var(--line); box-shadow: var(--shadow-lg);
+  padding: 16px 14px; z-index: 75; overflow-y: auto;
+  transform: translateX(-100%);
+  transition: transform var(--dur) var(--ease-out);
+}
+.nav-drawer.open { transform: translateX(0); }
+.nav-drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 6px 14px; }
+.nav-drawer-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); }
+.nav-drawer-close {
+  width: 30px; height: 30px; border-radius: 8px; border: none; background: none; color: var(--ink-2);
+  display: flex; align-items: center; justify-content: center; transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.nav-drawer-close:hover { background: var(--surface-2); color: var(--ink); }
+.nav-drawer a {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 12px; font-size: 14px; font-weight: 600; color: var(--ink-2); text-decoration: none;
+  border-radius: 10px; white-space: nowrap;
+  transition: color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
+}
+.nav-drawer a svg { flex-shrink: 0; }
+.nav-drawer a:hover { color: var(--ink); background: var(--surface-2); }
+.nav-drawer a.active { color: var(--accent-fg); background: color-mix(in srgb, var(--accent-fg) 12%, var(--surface)); }
+@media (prefers-reduced-motion: reduce) { .nav-drawer { transition: none; } }

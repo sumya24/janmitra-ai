@@ -9,3 +9,43 @@ sarvamai==0.1.30
 pytest==8.3.4
 pytest-mock==3.14.0
 httpx==0.28.1
+bcrypt==4.0.1
+hypothesis==6.151.9
+reportlab==5.0.0  # worker complaint-resolution report PDF generation, see backend/services/complaint_report_service.py
+
+# RAG retrieval (Ask JanMitra) -- see docs/ask_janmitra_rag_architecture.md.
+# torch is CPU-only (~200MB) -- installing plain `pip install torch` on Windows pulls the much
+# larger CUDA wheel by default; install it explicitly first with:
+#   pip install --index-url https://download.pytorch.org/whl/cpu torch
+# before `pip install -r requirements.txt`, or the sentence-transformers install below will pull
+# in the default (CUDA) torch build instead.
+torch==2.13.0
+sentence-transformers==5.7.0
+chromadb==1.5.9
+numpy==2.3.0
+
+# Ask JanMitra orchestration layer -- see docs/ask_janmitra_orchestration.md and
+# backend/services/orchestration/. LangGraph is the workflow-orchestration engine (StateGraph,
+# conditional routing); langchain-core is a direct dependency of langgraph itself (RunnableConfig)
+# and is not otherwise used as a service layer -- see that doc for the "why not LangChain as the
+# orchestrator" reasoning.
+langgraph==1.2.10
+langchain-core==1.5.3
+
+# LangSmith observability layer around the Ask JanMitra LangGraph pipeline -- see
+# backend/services/observability/tracing.py and docs/ask_janmitra_langsmith_observability.md.
+# Already an installed transitive dependency of langchain-core; pinned explicitly here now that
+# this app imports it directly (backend/services/observability/tracing.py).
+langsmith==0.10.17
+
+# Ask JanMitra image understanding -- see backend/services/vision_service.py. Sarvam (this
+# project's only other AI vendor) has no vision/image-understanding capability (checked directly
+# against the installed SDK's type stubs); the user chose a local open-source vision-language
+# model over a new hosted vendor/API key, reusing the torch dependency already installed above.
+# transformers is the model-loading library (same role sentence-transformers plays for text
+# embeddings); pillow decodes uploaded image bytes; accelerate is a transformers dependency for
+# device placement (CPU here -- see vision_service.py's module docstring for why no GPU/
+# quantization is required on this project's deployment target).
+transformers==4.57.1
+pillow==11.0.0
+accelerate==1.2.1

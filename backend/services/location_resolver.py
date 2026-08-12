@@ -1,0 +1,232 @@
+"""Resolves raw GPS coordinates into the administrative location hierarchy (state/district/
+ULB/...), without ever fabricating a ward or locality the resolver has no reliable basis for.
+
+Deliberately NOT coupled to a single geocoding vendor at the call site — `LocationResolver` is
+the abstraction; `NominatimGeocoder` (below) is the one implementation currently plugged into
+it, chosen because it needs no API key and adds no new dependency (`requests` is already in
+requirements.txt). Swapping in a different/paid/official provider later means writing a new
+class with the same two methods and passing it into `LocationResolver(geocoder=...)` — nothing
+else in the codebase should need to change.
+
+HARD LIMITATION, by design, not a bug: this resolver never returns a ward or locality. OSM/
+Nominatim's coverage of India's municipal ward boundaries is inconsistent-to-absent in most
+cities (verified by inspection of sample responses during development of this module — ward-
+level `address` keys are simply not present for the coordinates tested), so claiming ward-level
+precision from it would be exactly the kind of fabrication this project has explicitly committed
+not to do (see docs/location_data_audit.md, data/rag_knowledge_base's VERIFIED/SYNTHETIC rule,
+and the location migration plan). `resolve_coordinates()` only ever populates state/district/
+city-level fields (best-effort, from a free community-maintained data source — NOT an official
+government source, see `ResolvedLocation.resolver_name`) plus the raw coordinates themselves,
+which are always preserved exactly as received regardless of how much administrative detail
+could be resolved. Matching a resolved city name against this project's own `wards` table (see
+`normalize_location`) is a separate, explicit step — never assumed to have happened just because
+coordinates were resolved.
+"""
+
+import logging
+import re
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+
+import requests
+from sqlalchemy.orm import Session
+
+from backend.models import ULB, District, Locality, State, Ward, Zone
+
+logger = logging.getLogger(__name__)
+
+# The app's own free-text ward convention (scripts/seed_multi_ward_data.py):
+# "Ward <number> — <locality>, <city>" (real em dash, U+2014). The ", <city>" suffix is
+# optional in existing data -- rows without it can never be matched (no city to resolve
+# against), which is intentional, not a bug: see resolve_ward_by_text's docstring.
+_WARD_TEXT_PATTERN = re.compile(r"^Ward\s+(\d+)\s*—\s*(.+)$")
+
+NOMINATIM_REVERSE_URL = "https://nominatim.openstreetmap.org/reverse"
+# Nominatim's usage policy (https://operations.osmfoundation.org/policies/nominatim/) requires a
+# descriptive User-Agent identifying the application -- not a generic/browser-spoofing one.
+_USER_AGENT = "JanMitraAI-LocationResolver/1.0 (civic complaint app; dev/prototype use)"
+_REQUEST_TIMEOUT_SECONDS = 6
+
+
+@dataclass
+class ResolvedLocation:
+    """What a geocoder could determine from a pair of coordinates -- best-effort, never
+    fabricated. Every field is None if the resolver couldn't determine it; there is no
+    ward_name/locality_name field at all (see module docstring for why)."""
+
+    latitude: float
+    longitude: float
+    state_name: str | None = None
+    district_name: str | None = None
+    city_name: str | None = None
+    formatted_address: str | None = None
+    resolver_name: str = "none"
+    resolved_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    warnings: list[str] = field(default_factory=list)
+
+
+class NominatimGeocoder:
+    """Thin wrapper around OpenStreetMap's free Nominatim reverse-geocoding API.
+
+    NOT an official government data source -- OSM is community-maintained. Used here only
+    because it requires no API key/account and needs no new dependency, making it a reasonable
+    default for a prototype phase. Documented explicitly as swappable (see module docstring).
+    """
+
+    def reverse(self, latitude: float, longitude: float) -> dict | None:
+        """Returns the raw Nominatim JSON response's `address` dict, or None on any failure
+        (timeout, non-200, malformed response, no network). Never raises -- a geocoding failure
+        must never break complaint submission (see LocationResolver.resolve_coordinates)."""
+        try:
+            resp = requests.get(
+                NOMINATIM_REVERSE_URL,
+                params={"lat": latitude, "lon": longitude, "format": "jsonv2", "zoom": 10, "addressdetails": 1},
+                headers={"User-Agent": _USER_AGENT},
+                timeout=_REQUEST_TIMEOUT_SECONDS,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+        except (requests.exceptions.RequestException, ValueError) as exc:
+            logger.warning("Nominatim reverse geocode failed for (%s, %s): %s", latitude, longitude, exc)
+            return None
+        return data.get("address")
+
+
+class LocationResolver:
+    """Resolves coordinates into administrative location, and separately matches resolved names
+    against this project's own seeded location-hierarchy tables (states/districts/ulbs).
+
+    Constructor-injected geocoder (matches this codebase's existing service pattern, e.g.
+    TranslationService's injected SarvamClient) so tests can substitute a fake geocoder instead
+    of making real network calls.
+    """
+
+    def __init__(self, geocoder: NominatimGeocoder | None = None) -> None:
+        self._geocoder = geocoder or NominatimGeocoder()
+
+    def resolve_ward_by_text(self, db: Session, ward_text: str) -> Ward | None:
+        """Deterministically parses the app's own "Ward <n> — <locality>, <city>" free-text
+        convention and looks for an exact-enough match in the seeded `wards` table -- the same
+        logic scripts/migrate_existing_locations.py uses for historical data, exposed here so
+        newly-created complaints/workers get it applied live, not just at migration time.
+
+        Never guesses: returns None if the text doesn't parse, has no city suffix to resolve
+        against, or doesn't match any seeded ULB/district by name. No fuzzy matching.
+        """
+        match = _WARD_TEXT_PATTERN.match(ward_text)
+        if not match:
+            return None
+        ward_number, remainder = match.group(1), match.group(2)
+        if "," not in remainder:
+            return None
+        city_hint = remainder.rsplit(",", 1)[-1].strip().lower()
+        if not city_hint:
+            return None
+
+        for ward in db.query(Ward).filter(Ward.ward_number == ward_number).all():
+            ulb = db.query(ULB).filter(ULB.id == ward.ulb_id).first()
+            district = db.query(District).filter(District.id == ulb.district_id).first() if ulb else None
+            haystacks = [ulb.name.lower() if ulb else "", district.name.lower() if district else ""]
+            if any(city_hint in haystack for haystack in haystacks):
+                return ward
+        return None
+
+    def location_chain_for_ward(self, db: Session, ward: Ward) -> dict[str, int | None]:
+        """The full state->...->locality ID chain for a resolved Ward row. Shared by the live
+        complaint-creation path and scripts/migrate_existing_locations.py so both compute this
+        identically instead of maintaining two copies."""
+        ulb = db.query(ULB).filter(ULB.id == ward.ulb_id).first()
+        district = db.query(District).filter(District.id == ulb.district_id).first() if ulb else None
+        state = db.query(State).filter(State.id == district.state_id).first() if district else None
+        zone = db.query(Zone).filter(Zone.id == ward.zone_id).first() if ward.zone_id else None
+        locality = db.query(Locality).filter(Locality.ward_id == ward.id).first()
+        return {
+            "state_id": state.id if state else None,
+            "district_id": district.id if district else None,
+            "sub_district_id": None,  # not yet seeded for any current ULB -- see seed script
+            "ulb_id": ulb.id if ulb else None,
+            "zone_id": zone.id if zone else None,
+            "ward_id": ward.id,
+            "locality_id": locality.id if locality else None,
+        }
+
+    def resolve_coordinates(self, latitude: float, longitude: float) -> ResolvedLocation:
+        """Best-effort reverse geocode. Always returns a ResolvedLocation (never raises, never
+        returns None) so a caller can always at least keep the raw coordinates -- a geocoding
+        failure must never block complaint submission (see routes/complaints.py)."""
+        address = self._geocoder.reverse(latitude, longitude)
+        if address is None:
+            return ResolvedLocation(
+                latitude=latitude,
+                longitude=longitude,
+                resolver_name="nominatim (unavailable)",
+                warnings=["Reverse geocoding failed or timed out; only raw coordinates are available."],
+            )
+
+        # Nominatim's address dict uses varying keys for "city" depending on place type
+        # (city/town/village/municipality/county) -- take the first that's present, in that
+        # order, rather than assuming one key always applies.
+        city = address.get("city") or address.get("town") or address.get("village") or address.get("municipality")
+        district = address.get("state_district") or address.get("county")
+        state = address.get("state")
+
+        warnings = [
+            "Ward and locality are never resolved by this provider -- OSM/Nominatim does not "
+            "reliably cover Indian municipal ward boundaries. Ward-level matching, if any, must "
+            "come from a separate, explicit step (see LocationResolver.normalize_location)."
+        ]
+        if not city:
+            warnings.append("City/town could not be determined from this provider's response.")
+
+        return ResolvedLocation(
+            latitude=latitude,
+            longitude=longitude,
+            state_name=state,
+            district_name=district,
+            city_name=city,
+            formatted_address=address.get("display_name") if isinstance(address, dict) else None,
+            resolver_name="nominatim (OpenStreetMap, community-maintained -- not an official government source)",
+            warnings=warnings,
+        )
+
+    def normalize_location(self, db: Session, resolved: ResolvedLocation) -> dict[str, int | None]:
+        """Matches a ResolvedLocation's free-text names against this project's own seeded
+        states/districts/ulbs tables (see scripts/seed_location_master_data.py) and returns
+        whichever IDs can be confidently matched. Case-insensitive exact match only -- no fuzzy
+        matching, so a geocoder spelling/naming variant that doesn't exactly match a seeded row
+        simply yields None for that level, rather than guessing at the closest one.
+
+        Always returns state_id/district_id/ulb_id/zone_id/ward_id/locality_id keys;
+        zone_id/ward_id/locality_id are always None here by construction (see module docstring)
+        -- present in the dict only so callers can merge it directly into the same fields
+        Complaint uses, without special-casing which keys exist.
+        """
+        result: dict[str, int | None] = {
+            "state_id": None, "district_id": None, "sub_district_id": None,
+            "ulb_id": None, "zone_id": None, "ward_id": None, "locality_id": None,
+        }
+
+        state = None
+        if resolved.state_name:
+            state = db.query(State).filter(State.name.ilike(resolved.state_name)).first()
+            result["state_id"] = state.id if state else None
+
+        if resolved.district_name and state:
+            district = db.query(District).filter(
+                District.state_id == state.id, District.name.ilike(resolved.district_name)
+            ).first()
+            result["district_id"] = district.id if district else None
+
+        if resolved.city_name and state:
+            # A city is usually the ULB name itself (e.g. "Pune Municipal Corporation" contains
+            # "Pune") -- match by substring within the state, not a separate "cities" table
+            # (this project doesn't have one; ULB is the closest structured equivalent).
+            ulb = (
+                db.query(ULB)
+                .join(District, ULB.district_id == District.id)
+                .filter(District.state_id == state.id, ULB.name.ilike(f"%{resolved.city_name}%"))
+                .first()
+            )
+            result["ulb_id"] = ulb.id if ulb else None
+
+        return result

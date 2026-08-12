@@ -1,0 +1,48 @@
+.git/
+.github/
+.history/
+.claude/
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.hypothesis/
+*.egg-info/
+
+# Runtime state -- never bake user data into an image; these live in the persistent volume
+*.db
+*.db.backup-*
+uploads/*
+!uploads/.gitkeep
+db_backups/
+test-results/
+
+# RAG data: keep the source (knowledge_records/, sources/) but not stale generated/local
+# artifacts -- backend/Dockerfile regenerates chunks/embeddings/chroma at build time.
+data/rag_knowledge_base/chunks/
+data/rag_knowledge_base/embeddings/
+data/rag_knowledge_base/chroma/
+data/rag_knowledge_base/documents/
+data/rag_knowledge_base/schema/
+
+# Secrets -- never bake into an image
+.env
+
+# Frontend (has its own Dockerfile + build context)
+frontend-react/node_modules/
+frontend-react/dist/
+frontend-react/test-results/
+frontend-react/playwright-report/
+
+# Misc
+*.md
+!README.md
+tests/
+scripts/langsmith_rag_evaluation.py
+scripts/evaluate_rag_retrieval.py
+*.png

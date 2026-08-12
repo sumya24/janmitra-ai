@@ -1,0 +1,7 @@
+Citizen's question ({language_name}): {question}
+
+Knowledge context (each excerpt is labeled VERIFIED or SYNTHETIC — treat that label as authoritative):
+
+{context}
+
+Write a concise answer to the citizen's question, in {language_name}, using only the context above. If the context is insufficient to answer, say so plainly instead of guessing.

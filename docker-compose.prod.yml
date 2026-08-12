@@ -1,0 +1,49 @@
+# Production deployment: everything on one host (see docs/DEPLOYMENT.md).
+#
+# backend  -- FastAPI + RAG stack, no ports published; only reachable through caddy.
+# caddy    -- serves the built React SPA and reverse-proxies the backend's route prefixes to it
+#             (same origin, no CORS hop) -- see deploy/Caddyfile.
+#
+# Runtime secrets (SARVAM_API_KEY, JWT_SECRET_KEY, etc.) come from a .env file that lives ONLY
+# on the server, never in git -- see .env.example for the full list of variables it must set.
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: ${BACKEND_IMAGE:-janmitra-backend:local}
+    env_file:
+      - .env
+    environment:
+      # Override the local-dev-relative defaults in backend/config.py so the DB and uploaded
+      # photos live on the persistent backend_state volume, surviving redeploys.
+      DATABASE_URL: sqlite:////app/state/db/janmitra.db
+      UPLOAD_FOLDER: /app/state/uploads
+    volumes:
+      - backend_state:/app/state
+    command: sh -c "mkdir -p /app/state/db /app/state/uploads && exec uvicorn backend.main:app --host 0.0.0.0 --port 8000"
+    restart: unless-stopped
+
+  caddy:
+    build:
+      context: .
+      dockerfile: frontend-react/Dockerfile
+    image: ${FRONTEND_IMAGE:-janmitra-frontend:local}
+    environment:
+      # Plain HTTP on :80 until a domain is pointed at this VM -- set SITE_ADDRESS=your-domain.com
+      # in .env to switch on automatic HTTPS (see deploy/Caddyfile).
+      SITE_ADDRESS: ${SITE_ADDRESS:-http://:80}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  backend_state:
+  caddy_data:
+  caddy_config:

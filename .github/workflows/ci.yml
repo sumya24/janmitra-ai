@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      # torch's CPU-only wheel isn't on the default PyPI index -- see requirements.txt's
+      # comment above the torch line for why this two-step install matters (a plain
+      # `pip install -r requirements.txt` would pull the much larger CUDA build instead).
+      - name: Install dependencies
+        run: |
+          pip install --index-url https://download.pytorch.org/whl/cpu torch==2.13.0
+          pip install -r requirements.txt
+
+      # backend/routes/ask_janmitra.py builds its service at module import time, which reads
+      # data/rag_knowledge_base/chunks/chunks.json -- a generated file (from knowledge_records/,
+      # see build_rag_knowledge_base.py's docstring) deliberately not committed to git, same as
+      # backend/Dockerfile's production build already handles. Without this step, just importing
+      # backend.main (which every test does via conftest.py) crashes with FileNotFoundError on a
+      # fresh checkout, even for tests unrelated to Ask JanMitra.
+      - name: Build RAG knowledge base (chunks.json)
+        run: python scripts/build_rag_knowledge_base.py
+
+      # Populates the actual ChromaDB vector index (524 embedded chunks) that RagRetriever
+      # searches against -- without this, every real-retrieval test opens an empty collection
+      # (0 chunks indexed) and every query comes back "insufficient_knowledge", regardless of
+      # whether the retrieval logic itself is correct. Downloads the embedding model
+      # (intfloat/multilingual-e5-small, ~470MB) on first run; cached below for subsequent runs.
+      - name: Cache embedding model
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-multilingual-e5-small
+
+      - name: Build RAG embeddings (ChromaDB index)
+        run: python scripts/build_rag_embeddings.py
+
+      # `python -m pytest` (not bare `pytest`) so the repo root -- and therefore the `backend`
+      # package -- is on sys.path. Bare `pytest` doesn't reliably do this and fails CI with
+      # "ModuleNotFoundError: No module named 'backend'" even though `backend/__init__.py`
+      # exists, since there's no installed package or pytest.ini pythonpath config to cover it.
+      #
+      # Expect exactly 1 skip here: test_ask_janmitra.py::test_low_relevance_results_are_rejected_tfidf
+      # self-skips because it needs the LEGACY TF-IDF index (data/rag_knowledge_base/embeddings/),
+      # which only gets built by `build_rag_embeddings.py --legacy-tfidf` -- a comparison-only flag
+      # kept so the old-vs-new retrieval threshold comparison in docs/ask_janmitra_rag_architecture.md
+      # stays reproducible, not part of the real ChromaDB retrieval path this CI job builds above.
+      # If the skip count here ever changes, something else broke -- don't assume it's this one.
+      - name: Run backend tests
+        run: python -m pytest tests/ -v
+
+  frontend-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend-react
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend-react/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check and build
+        run: npm run build
+
+  # Playwright e2e (frontend-react/e2e/) exercises the full stack against a live backend,
+  # including the real Sarvam AI voice/translation pipeline -- deliberately not run here.
+  # It needs a real SARVAM_API_KEY, takes several minutes end-to-end, and per this repo's own
+  # notes has already needed real-pipeline-timing tuning (30s+ waits) that doesn't suit a CI
+  # gate. Run `npx playwright test` locally before merging any frontend change that touches
+  # routing, the complaint wizard, or voice input.

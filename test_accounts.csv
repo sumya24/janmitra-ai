@@ -1,0 +1,30 @@
+Role,Full Name,Phone,Password,Ward,Notes
+Admin,Anjali Kulkarni,9999999999,adminpass123,,Super admin — can add workers
+Worker,Ramesh Kadam,9964614524,workerpass123,Ward 14 — Rukadi Road,
+Worker,Suresh Jadhav,9147056870,workerpass123,Ward 9 — Shivaji Nagar,Was a duplicate 'Ramesh Kadam' on the same ward as above — renamed + moved here to stop the confusion; currently holds complaint #42
+Citizen,Smoke Test,9785964770,smoketest123,,Has test complaints already submitted
+Admin,Multi-Ward Seed Admin,714223400,adminpass123,,Created the 6 multi-ward areas below
+Worker,Sunita Pawar,714223401,workerpass123,"Ward 22 — Kothrud, Pune","lang=mr — has 3 complaints (2 open, 1 resolved)"
+Citizen,"Resident of Kothrud, Pune",714223451,citizenpass123,,lang=mr — filed complaint #17 (now resolved)
+Worker,Rajesh Kumar,714223402,workerpass123,"Ward 8 — Civil Lines, Kanpur","lang=hi — has 3 complaints (2 open, 1 resolved)"
+Citizen,"Resident of Civil Lines, Kanpur",714223452,citizenpass123,,lang=hi — filed complaint #18 (now resolved)
+Worker,Debasish Nayak,714223403,workerpass123,"Ward 5 — Saheed Nagar, Bhubaneswar","lang=or — has 3 complaints (2 open, 1 resolved)"
+Citizen,"Resident of Saheed Nagar, Bhubaneswar",714223453,citizenpass123,,lang=or — filed complaint #19 (now resolved)
+Worker,Mitesh Patel,714223404,workerpass123,"Ward 11 — Navrangpura, Ahmedabad","lang=gu — has 3 complaints (2 open, 1 resolved)"
+Citizen,"Resident of Navrangpura, Ahmedabad",714223454,citizenpass123,,lang=gu — filed complaint #20 (now resolved)
+Worker,Sourav Chatterjee,714223405,workerpass123,"Ward 6 — Salt Lake, Kolkata","lang=bn — has 3 complaints (2 open, 1 resolved)"
+Citizen,"Resident of Salt Lake, Kolkata",714223455,citizenpass123,,lang=bn — filed complaint #21 (now resolved)
+Worker,Arjun Reddy,714223406,workerpass123,"Ward 3 — Indiranagar, Bengaluru","lang=en — has 3 complaints (2 open, 1 resolved)"
+Citizen,"Resident of Indiranagar, Bengaluru",714223456,citizenpass123,,lang=en — filed complaint #22 (now resolved)
+Citizen,"Resident of Kothrud, Pune",7142605009,citizenpass123,,lang=mr — filed complaint #23
+Citizen,"Resident of Kothrud, Pune",7142605019,citizenpass123,,lang=mr — filed complaint #24
+Citizen,"Resident of Civil Lines, Kanpur",7142605109,citizenpass123,,lang=hi — filed complaint #25
+Citizen,"Resident of Civil Lines, Kanpur",7142605119,citizenpass123,,lang=hi — filed complaint #26
+Citizen,"Resident of Saheed Nagar, Bhubaneswar",7142605209,citizenpass123,,lang=or — filed complaint #27
+Citizen,"Resident of Saheed Nagar, Bhubaneswar",7142605219,citizenpass123,,lang=or — filed complaint #28
+Citizen,"Resident of Navrangpura, Ahmedabad",7142605309,citizenpass123,,lang=gu — filed complaint #29
+Citizen,"Resident of Navrangpura, Ahmedabad",7142605319,citizenpass123,,lang=gu — filed complaint #30
+Citizen,"Resident of Salt Lake, Kolkata",7142605409,citizenpass123,,lang=bn — filed complaint #31
+Citizen,"Resident of Salt Lake, Kolkata",7142605419,citizenpass123,,lang=bn — filed complaint #32
+Citizen,"Resident of Indiranagar, Bengaluru",7142605509,citizenpass123,,lang=en — filed complaint #33
+Citizen,"Resident of Indiranagar, Bengaluru",7142605519,citizenpass123,,lang=en — filed complaint #34

@@ -1,0 +1,405 @@
+[
+  {
+    "record_id": "OD_STATEWIDE_WASTE_SOLID_WASTE_LIFTING",
+    "service_id": "WASTE_SOLID_WASTE_LIFTING",
+    "service_name": "Lifting of Municipal Solid Waste",
+    "sub_service": "Lifting of municipal solid waste from roads / streets",
+    "problem_type": "Uncollected garbage / solid waste not lifted from a road or street",
+    "service_category": "WASTE_SANITATION",
+    "state": "Odisha",
+    "district": null,
+    "city": null,
+    "municipality": null,
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "STATE",
+    "department": "Urban Local Body (Municipal Corporation / Municipality / NAC) -- Solid Waste Management Section, under the Directorate of Municipal Administration, Housing & Urban Development Department, Government of Odisha",
+    "authority": "Sanitary Inspector (concerned ward)",
+    "description": "Citizens can lodge a complaint about municipal solid waste not being lifted from a road or street. The complaint can be registered online (through a grievance redressal website or app) or manually at the ULB's solid waste management division or with the concerned ward officer/sanitary inspector. Identity proof of the complainant is required at registration.",
+    "procedure": "Online: (1) Visit the applicable grievance redressal website (e.g. www.cmgcorissa.gov.in, www.ulborissa.gov.in, or a city-specific portal such as www.mycitymypride.org for Bhubaneswar Municipal Corporation) or call the toll-free grievance number, or use the solid waste management mobile app, if available. (2) Lodge a grievance stating the locality/ward and the complainant's phone number. (3) Collect the acknowledgement receipt. (4) Track the status of the complaint online. Manual: (1) Visit the solid waste management division of the concerned ULB, or contact the concerned ward officer/sanitary inspector directly. (2) Lodge a grievance stating the locality/ward and the complainant's phone number. (3) Collect an acknowledgement receipt. (4) Follow up on the status of the complaint with the same office.",
+    "required_information": [
+      "Locality / ward",
+      "Phone number of the complainant"
+    ],
+    "required_documents": [
+      "Identity proof (for online registration)"
+    ],
+    "sla": "3 days process time limit, per the HUDD Citizen's Charter.",
+    "expected_response_time": null,
+    "expected_resolution_time": "3 days",
+    "complaint_channel": [
+      "Online grievance portal (ULB or city-specific, e.g. www.cmgcorissa.gov.in, www.ulborissa.gov.in, www.mycitymypride.org for BMC)",
+      "Toll-free grievance number (city-specific, not uniformly listed in the source document)",
+      "Mobile application for solid waste management, where available",
+      "In person at the ULB's solid waste management division or with the concerned ward sanitary inspector"
+    ],
+    "contact_information": "Concerned ward Sanitary Inspector or the ULB's Solid Waste Management division; city-specific toll-free numbers and portals vary by ULB and are not individually listed in the source document.",
+    "escalation_procedure": "If the service is not delivered within the stated process time limit, escalate per HUDD's Citizen's Charter grievance escalation matrix. For Municipal Corporations: Level 1 - Additional Municipal Commissioner / Executive Officer (7 days response time); Level 2 - Municipal Commissioner (7 days response time); Level 3 - Directorate of Municipal Administration, DMA (15 days response time); Level 4 - Commissioner-cum-Secretary, Housing & Urban Development Department (30 days response time). For Municipalities/NACs: Level 1 - City Manager (7 days response time); Level 2 - Section Head (7 days response time); Level 3 - Executive Officer (7 days response time); Level 4 - Directorate of Municipal Administration, DMA (15 days response time). Separately, under the Odisha Right to Public Services (ORTPS) Act 2012, a citizen may appeal to the service's Appellate Authority within 30-90 days of the decision (the Appellate Authority must dispose of the appeal within 30 days), and may further appeal to the Revisional Authority within 30-90 days of the Appellate Authority's order (no statutory disposal deadline applies to the Revisional Authority).",
+    "escalation_authority": "Designated officer: Sanitary Inspector (concerned ward). Appellate Authority: City Health Officer. Revisional Authority: Municipal Commissioner.",
+    "faq": [
+      {
+        "question": "What information do I need to give when reporting uncollected garbage?",
+        "answer": "Your locality/ward and a phone number where you can be reached -- these are required to register and track the complaint."
+      },
+      {
+        "question": "How long should it take for the waste to be lifted after I complain?",
+        "answer": "Per the HUDD Citizen's Charter, the process time limit for this service is 3 days."
+      },
+      {
+        "question": "Is there a fee for reporting uncollected waste?",
+        "answer": "No. The HUDD Citizen's Charter states 'No fees' for this service."
+      }
+    ],
+    "citizen_guidance": "Keep your acknowledgement receipt/complaint number -- it is needed to track status and to escalate if the 3-day limit is not met.",
+    "source_id": "OD_HUD_CITIZEN_CHARTER",
+    "source_title": "Citizen's Charter (Draft) — Housing & Urban Development Department",
+    "source_organization": "Housing & Urban Development Department, Government of Odisha",
+    "source_url": "https://urban.odisha.gov.in/sites/default/files/2021-05/Draft%20Citizen%20Charter_HUD_Final.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-09T22:01:52+00:00",
+    "created_at": "2026-08-09T22:01:52+00:00"
+  },
+  {
+    "record_id": "OD_STATEWIDE_WATER_WS_PIPELINE_REPAIR",
+    "service_id": "WATER_WS_PIPELINE_REPAIR",
+    "service_name": "Repair of Water Supply Pipelines",
+    "sub_service": "Repairing of water supply pipelines (minor leakage / sewerage overflow / blockage)",
+    "problem_type": "Water supply pipeline leakage, sewerage overflow, or blockage",
+    "service_category": "WATER_DRAINAGE",
+    "state": "Odisha",
+    "district": null,
+    "city": null,
+    "municipality": null,
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "STATE",
+    "department": "Public Health Engineering Organization (PHEO), Housing & Urban Development Department, Government of Odisha",
+    "authority": "Concerned Junior Engineer / Assistant Engineer",
+    "description": "Citizens can request repair of a minor water-supply pipeline leakage, sewerage overflow, or blockage. This is a manual-only process in the source document -- no documents are listed as required.",
+    "procedure": "(1) Visit the concerned circle office / division office / section office of the Public Health Engineering Organization and place a request for repair of the water supply pipeline. (2) Collect the request receipt, which contains the request number.",
+    "required_information": [
+      "Location of the leakage / overflow / blockage"
+    ],
+    "required_documents": [],
+    "sla": "2 days process time limit, per the HUDD Citizen's Charter.",
+    "expected_response_time": null,
+    "expected_resolution_time": "2 days",
+    "complaint_channel": [
+      "In person at the PHEO circle / division / section office"
+    ],
+    "contact_information": "Concerned PHEO circle/division/section office; exact contact details vary by ULB/district and are not individually listed in the source document.",
+    "escalation_procedure": "If the service is not delivered within the stated process time limit, escalate per HUDD's Citizen's Charter grievance escalation matrix. For Municipal Corporations: Level 1 - Additional Municipal Commissioner / Executive Officer (7 days response time); Level 2 - Municipal Commissioner (7 days response time); Level 3 - Directorate of Municipal Administration, DMA (15 days response time); Level 4 - Commissioner-cum-Secretary, Housing & Urban Development Department (30 days response time). For Municipalities/NACs: Level 1 - City Manager (7 days response time); Level 2 - Section Head (7 days response time); Level 3 - Executive Officer (7 days response time); Level 4 - Directorate of Municipal Administration, DMA (15 days response time). Separately, under the Odisha Right to Public Services (ORTPS) Act 2012, a citizen may appeal to the service's Appellate Authority within 30-90 days of the decision (the Appellate Authority must dispose of the appeal within 30 days), and may further appeal to the Revisional Authority within 30-90 days of the Appellate Authority's order (no statutory disposal deadline applies to the Revisional Authority).",
+    "escalation_authority": "Designated officer: Concerned Junior Engineer / Assistant Engineer. Appellate Authority: Concerned Assistant Executive Engineer (AEE) / Deputy Executive Engineer. Revisional Authority: Executive Engineer.",
+    "faq": [
+      {
+        "question": "Do I need any documents to report a pipeline leak?",
+        "answer": "No. The Citizen's Charter lists no required documents for this service -- you just need to visit the PHEO office and register your request."
+      },
+      {
+        "question": "How fast should a minor leak be fixed?",
+        "answer": "The stated process time limit is 2 days."
+      },
+      {
+        "question": "Is there a fee for a pipeline repair request?",
+        "answer": "No. The HUDD Citizen's Charter states 'No fee' for this service."
+      }
+    ],
+    "citizen_guidance": "Note the request number from your receipt -- it is needed for follow-up and for escalation if the 2-day limit is not met.",
+    "source_id": "OD_HUD_CITIZEN_CHARTER",
+    "source_title": "Citizen's Charter (Draft) — Housing & Urban Development Department",
+    "source_organization": "Housing & Urban Development Department, Government of Odisha",
+    "source_url": "https://urban.odisha.gov.in/sites/default/files/2021-05/Draft%20Citizen%20Charter_HUD_Final.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-09T22:01:52+00:00",
+    "created_at": "2026-08-09T22:01:52+00:00"
+  },
+  {
+    "record_id": "OD_STATEWIDE_WATER_TUBE_WELL_REPAIR",
+    "service_id": "WATER_TUBE_WELL_REPAIR",
+    "service_name": "Repair of Hand Pump Tube Wells",
+    "sub_service": "Repair of tube wells",
+    "problem_type": "Non-functional or damaged hand pump / tube well",
+    "service_category": "WATER_DRAINAGE",
+    "state": "Odisha",
+    "district": null,
+    "city": null,
+    "municipality": null,
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "STATE",
+    "department": "Public Health Engineering Organization (PHEO), Housing & Urban Development Department, Government of Odisha",
+    "authority": "Junior Engineer, Tube Wells",
+    "description": "Citizens can request repair of a hand pump tube well. This is a manual-only process in the source document -- no documents are listed as required. The Charter distinguishes minor and major repairs, each with a different process time limit, but does not define the boundary between the two.",
+    "procedure": "(1) Visit the concerned circle office / division office / section office and place a request for repair of the tube well(s). (2) Collect the request receipt, which contains the request number and the unique tube well number.",
+    "required_information": [
+      "Tube well location / unique tube well number, if already known"
+    ],
+    "required_documents": [],
+    "sla": "7 days for minor repair; 14 days for major repair, per the HUDD Citizen's Charter.",
+    "expected_response_time": null,
+    "expected_resolution_time": "7 days (minor repair) / 14 days (major repair)",
+    "complaint_channel": [
+      "In person at the PHEO circle / division / section office"
+    ],
+    "contact_information": "Concerned PHEO circle/division/section office; exact contact details vary by ULB/district and are not individually listed in the source document.",
+    "escalation_procedure": "If the service is not delivered within the stated process time limit, escalate per HUDD's Citizen's Charter grievance escalation matrix. For Municipal Corporations: Level 1 - Additional Municipal Commissioner / Executive Officer (7 days response time); Level 2 - Municipal Commissioner (7 days response time); Level 3 - Directorate of Municipal Administration, DMA (15 days response time); Level 4 - Commissioner-cum-Secretary, Housing & Urban Development Department (30 days response time). For Municipalities/NACs: Level 1 - City Manager (7 days response time); Level 2 - Section Head (7 days response time); Level 3 - Executive Officer (7 days response time); Level 4 - Directorate of Municipal Administration, DMA (15 days response time). Separately, under the Odisha Right to Public Services (ORTPS) Act 2012, a citizen may appeal to the service's Appellate Authority within 30-90 days of the decision (the Appellate Authority must dispose of the appeal within 30 days), and may further appeal to the Revisional Authority within 30-90 days of the Appellate Authority's order (no statutory disposal deadline applies to the Revisional Authority).",
+    "escalation_authority": "Designated officer: Junior Engineer, Tube Wells. Appellate Authority: Assistant Engineer-in-Charge, Tube Wells. Revisional Authority: Executive Engineer.",
+    "faq": [
+      {
+        "question": "How is a 'major' repair different from a 'minor' one for time-limit purposes?",
+        "answer": "The Citizen's Charter does not define the boundary -- it only states the two different time limits (7 days vs 14 days). The classification is made by the PHEO officials handling the request."
+      },
+      {
+        "question": "Is there a fee for a tube well repair request?",
+        "answer": "No. The HUDD Citizen's Charter states 'No fee' for this service."
+      }
+    ],
+    "citizen_guidance": "Keep the request receipt -- it carries both the request number and the unique tube well number, both needed for follow-up.",
+    "source_id": "OD_HUD_CITIZEN_CHARTER",
+    "source_title": "Citizen's Charter (Draft) — Housing & Urban Development Department",
+    "source_organization": "Housing & Urban Development Department, Government of Odisha",
+    "source_url": "https://urban.odisha.gov.in/sites/default/files/2021-05/Draft%20Citizen%20Charter_HUD_Final.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-09T22:01:52+00:00",
+    "created_at": "2026-08-09T22:01:52+00:00"
+  },
+  {
+    "record_id": "OD_STATEWIDE_ROADS_ROAD_CUTTING_PERMISSION",
+    "service_id": "ROADS_ROAD_CUTTING_PERMISSION",
+    "service_name": "Road Cutting Permission",
+    "sub_service": "Permission to cut a municipal road (e.g. for utility or pipeline work)",
+    "problem_type": "Need permission to cut a municipal road",
+    "service_category": "ROADS_POTHOLES",
+    "state": "Odisha",
+    "district": null,
+    "city": null,
+    "municipality": null,
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "STATE",
+    "department": "Engineering section, Urban Local Body (Municipal Corporation / Municipality / NAC)",
+    "authority": "City Engineer",
+    "description": "Citizens or contractors who need to cut a municipal road (e.g. to lay a pipeline or cable) must obtain prior permission from the concerned ULB and pay restoration charges estimated by the Junior Engineer. The restoration fee is not fixed -- it is estimated case-by-case based on the proposed type of road cutting. This is a manual-only process in the source document.",
+    "procedure": "(1) Visit the concerned engineering section of the ULB. (2) Submit an application to the City Engineer stating the purpose of the road cutting, locality details, and applicant details. (3) After verification by the Junior Engineer, collect the estimate of restoration charges applicable to the case. (4) Submit the restoration fees along with the application for road cutting permission to the counter officer of the concerned section. (5) Collect the acknowledgement receipt. (6) Collect the permission letter from the concerned authority.",
+    "required_information": [
+      "Purpose of road cutting",
+      "Locality details",
+      "Applicant details"
+    ],
+    "required_documents": [],
+    "sla": "7 days process time limit, per the HUDD Citizen's Charter.",
+    "expected_response_time": null,
+    "expected_resolution_time": "7 days",
+    "complaint_channel": [
+      "In person at the ULB's engineering section"
+    ],
+    "contact_information": "Concerned ULB engineering section.",
+    "escalation_procedure": "If the service is not delivered within the stated process time limit, escalate per HUDD's Citizen's Charter grievance escalation matrix. For Municipal Corporations: Level 1 - Additional Municipal Commissioner / Executive Officer (7 days response time); Level 2 - Municipal Commissioner (7 days response time); Level 3 - Directorate of Municipal Administration, DMA (15 days response time); Level 4 - Commissioner-cum-Secretary, Housing & Urban Development Department (30 days response time). For Municipalities/NACs: Level 1 - City Manager (7 days response time); Level 2 - Section Head (7 days response time); Level 3 - Executive Officer (7 days response time); Level 4 - Directorate of Municipal Administration, DMA (15 days response time). Separately, under the Odisha Right to Public Services (ORTPS) Act 2012, a citizen may appeal to the service's Appellate Authority within 30-90 days of the decision (the Appellate Authority must dispose of the appeal within 30 days), and may further appeal to the Revisional Authority within 30-90 days of the Appellate Authority's order (no statutory disposal deadline applies to the Revisional Authority).",
+    "escalation_authority": "Designated officer: Concerned Junior Engineer. Appellate Authority: Executive Engineer concerned. Revisional Authority: City Engineer.",
+    "faq": [
+      {
+        "question": "How much does road cutting permission cost?",
+        "answer": "There is no fixed fee -- the restoration charge is estimated per case by the Junior Engineer after site verification, based on the proposed type of road cutting. Budget for this before applying."
+      }
+    ],
+    "citizen_guidance": "The restoration fee is not fixed -- it is estimated per case, so confirm the estimate before you pay. Retain your acknowledgement receipt and permission letter.",
+    "source_id": "OD_HUD_CITIZEN_CHARTER",
+    "source_title": "Citizen's Charter (Draft) — Housing & Urban Development Department",
+    "source_organization": "Housing & Urban Development Department, Government of Odisha",
+    "source_url": "https://urban.odisha.gov.in/sites/default/files/2021-05/Draft%20Citizen%20Charter_HUD_Final.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-09T22:01:52+00:00",
+    "created_at": "2026-08-09T22:01:52+00:00"
+  },
+  {
+    "record_id": "OD_STATEWIDE_ROADS_ROAD_RESTORATION",
+    "service_id": "ROADS_ROAD_RESTORATION",
+    "service_name": "Road Restoration After Road Cutting",
+    "sub_service": "Road restoration from the date of issue of road cutting permission",
+    "problem_type": "Road surface needs restoration after authorized road-cutting work is completed",
+    "service_category": "ROADS_POTHOLES",
+    "state": "Odisha",
+    "district": null,
+    "city": null,
+    "municipality": null,
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "STATE",
+    "department": "Engineering section, Urban Local Body (Municipal Corporation / Municipality / NAC)",
+    "authority": "City Engineer",
+    "description": "After completing authorized road-cutting work, the permit holder should request the ULB to restore the road surface. No separate fee applies at this stage -- the restoration fee was already collected when the road cutting permission was granted.",
+    "procedure": "(1) Visit the concerned engineering section of the ULB after completion of the work, or intimate the City Engineer / concerned Junior Engineer of the ULB regarding completion of the work and request restoration of the road. (2) Track the status of the restoration work within the stipulated time.",
+    "required_information": [
+      "Reference to the original road cutting permission"
+    ],
+    "required_documents": [],
+    "sla": "15 days process time limit, per the HUDD Citizen's Charter.",
+    "expected_response_time": null,
+    "expected_resolution_time": "15 days",
+    "complaint_channel": [
+      "In person at the ULB's engineering section"
+    ],
+    "contact_information": "Concerned ULB engineering section.",
+    "escalation_procedure": "If the service is not delivered within the stated process time limit, escalate per HUDD's Citizen's Charter grievance escalation matrix. For Municipal Corporations: Level 1 - Additional Municipal Commissioner / Executive Officer (7 days response time); Level 2 - Municipal Commissioner (7 days response time); Level 3 - Directorate of Municipal Administration, DMA (15 days response time); Level 4 - Commissioner-cum-Secretary, Housing & Urban Development Department (30 days response time). For Municipalities/NACs: Level 1 - City Manager (7 days response time); Level 2 - Section Head (7 days response time); Level 3 - Executive Officer (7 days response time); Level 4 - Directorate of Municipal Administration, DMA (15 days response time). Separately, under the Odisha Right to Public Services (ORTPS) Act 2012, a citizen may appeal to the service's Appellate Authority within 30-90 days of the decision (the Appellate Authority must dispose of the appeal within 30 days), and may further appeal to the Revisional Authority within 30-90 days of the Appellate Authority's order (no statutory disposal deadline applies to the Revisional Authority).",
+    "escalation_authority": "Designated officer: Concerned Junior Engineer. Appellate Authority: Concerned Executive Engineer. Revisional Authority: City Engineer.",
+    "faq": [
+      {
+        "question": "Do I have to pay again for road restoration?",
+        "answer": "No. Per the Citizen's Charter, no separate fee applies -- the restoration fee is collected upfront at the road cutting permission stage."
+      }
+    ],
+    "citizen_guidance": "Notify the ULB promptly once your road-cutting work is complete -- the 15-day restoration clock is a service commitment by the ULB, not something you need to pay for again.",
+    "source_id": "OD_HUD_CITIZEN_CHARTER",
+    "source_title": "Citizen's Charter (Draft) — Housing & Urban Development Department",
+    "source_organization": "Housing & Urban Development Department, Government of Odisha",
+    "source_url": "https://urban.odisha.gov.in/sites/default/files/2021-05/Draft%20Citizen%20Charter_HUD_Final.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-09T22:01:52+00:00",
+    "created_at": "2026-08-09T22:01:52+00:00"
+  },
+  {
+    "record_id": "OD_STATEWIDE_STREETLIGHTS_REPLACEMENT",
+    "service_id": "STREETLIGHTS_DAMAGED_REPLACEMENT",
+    "service_name": "Replacement of Damaged Street Light",
+    "sub_service": "Replacement of damaged street light",
+    "problem_type": "Street light damaged / not working",
+    "service_category": "STREETLIGHTS",
+    "state": "Odisha",
+    "district": null,
+    "city": null,
+    "municipality": null,
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "STATE",
+    "department": "Engineering division (street lighting), Urban Local Body (Municipal Corporation / Municipality / NAC)",
+    "authority": "Concerned Junior Engineer",
+    "description": "Citizens can report a damaged street light for replacement or repair. The complaint can be registered online (via a grievance redressal website) or manually at the ULB's street light engineering office. Identity proof of the complainant is required at registration.",
+    "procedure": "Online: (1) Visit the applicable grievance redressal website (e.g. www.cmgcorissa.gov.in, www.ulborissa.gov.in, or a city-specific portal such as www.mycitymypride.org for Bhubaneswar Municipal Corporation). (2) Lodge a grievance giving the locality/pole number and the complainant's phone number. (3) Collect the acknowledgement receipt. Manual: (1) Visit the ULB's street light office in the engineering division and contact the Junior Engineer for street lighting. (2) Lodge a grievance stating the locality/pole number and the complainant's phone number. (3) Collect an acknowledgement receipt. (4) Follow up with the concerned authority regarding the repair/replacement.",
+    "required_information": [
+      "Locality / pole number",
+      "Phone number of the complainant"
+    ],
+    "required_documents": [
+      "Identity proof (for online registration)"
+    ],
+    "sla": "10 days process time limit, per the HUDD Citizen's Charter.",
+    "expected_response_time": null,
+    "expected_resolution_time": "10 days",
+    "complaint_channel": [
+      "Online grievance portal (ULB or city-specific, e.g. www.cmgcorissa.gov.in, www.ulborissa.gov.in, www.mycitymypride.org for BMC)",
+      "In person at the ULB's street light engineering office"
+    ],
+    "contact_information": "Concerned Junior Engineer for street lighting, at the ULB's engineering division.",
+    "escalation_procedure": "If the service is not delivered within the stated process time limit, escalate per HUDD's Citizen's Charter grievance escalation matrix. For Municipal Corporations: Level 1 - Additional Municipal Commissioner / Executive Officer (7 days response time); Level 2 - Municipal Commissioner (7 days response time); Level 3 - Directorate of Municipal Administration, DMA (15 days response time); Level 4 - Commissioner-cum-Secretary, Housing & Urban Development Department (30 days response time). For Municipalities/NACs: Level 1 - City Manager (7 days response time); Level 2 - Section Head (7 days response time); Level 3 - Executive Officer (7 days response time); Level 4 - Directorate of Municipal Administration, DMA (15 days response time). Separately, under the Odisha Right to Public Services (ORTPS) Act 2012, a citizen may appeal to the service's Appellate Authority within 30-90 days of the decision (the Appellate Authority must dispose of the appeal within 30 days), and may further appeal to the Revisional Authority within 30-90 days of the Appellate Authority's order (no statutory disposal deadline applies to the Revisional Authority).",
+    "escalation_authority": "Designated officer: Concerned Junior Engineer. Appellate Authority: Concerned Executive Engineer. Revisional Authority: City Engineer.",
+    "faq": [
+      {
+        "question": "What details do I need to report a damaged street light?",
+        "answer": "The locality or pole number of the light, and a phone number where you can be reached."
+      },
+      {
+        "question": "How long should replacement take?",
+        "answer": "The stated process time limit is 10 days."
+      },
+      {
+        "question": "Is there a fee for reporting a damaged street light?",
+        "answer": "No. The HUDD Citizen's Charter states 'No Fees' for this service."
+      }
+    ],
+    "citizen_guidance": "If you know the pole number, include it -- it speeds up the ULB locating the exact light to replace.",
+    "source_id": "OD_HUD_CITIZEN_CHARTER",
+    "source_title": "Citizen's Charter (Draft) — Housing & Urban Development Department",
+    "source_organization": "Housing & Urban Development Department, Government of Odisha",
+    "source_url": "https://urban.odisha.gov.in/sites/default/files/2021-05/Draft%20Citizen%20Charter_HUD_Final.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-09T22:01:52+00:00",
+    "created_at": "2026-08-09T22:01:52+00:00"
+  },
+  {
+    "record_id": "OD_STATEWIDE_WATER_NEW_CONNECTION",
+    "service_id": "WATER_NEW_CONNECTION",
+    "service_name": "New Water (Pipe) Connection",
+    "sub_service": "Application for a new individual pipe water connection",
+    "problem_type": "Need to apply for a new water supply connection to a property (not a fault on an existing connection)",
+    "service_category": "WATER_DRAINAGE",
+    "state": "Odisha",
+    "district": null,
+    "city": null,
+    "municipality": null,
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "STATE",
+    "department": "Public Health Engineering Organization (PHEO), Housing & Urban Development Department, Government of Odisha",
+    "authority": "Junior Engineer (concerned)",
+    "description": "Citizens can apply for a new individual pipe water connection to their property, either online via the ULB portal or manually at the PHEO office. This is a distinct service from reporting a leak or fault on an already-existing connection (see WATER_WS_PIPELINE_REPAIR) -- it is the application process for a first-time connection. Sourced from the HUD Citizen's Charter's detailed services table (service #14, 'Pipe water connection'), a separate, more granular table than the one used for this project's other Odisha records.",
+    "procedure": "Online: (1) Visit www.ulbodisha.gov.in and select the applicable municipal corporation/municipality. (2) Go to 'citizen services' and select 'Water Connection & Charges'. (3) Click 'Online Application for new connection', complete the application form, and submit. (4) Collect the acknowledgement receipt. Manual: (1) Deposit the filled-in application form at the maintenance division/sub-division of the Public Health department, along with the security fee. (2) After the plan is verified by the concerned division, deposit the requisite scrutiny fee and collect the acknowledgement receipt from the cash counter. (3) Collect the sanctioned letter from the respective maintenance division/sub-division.",
+    "required_information": [
+      "Holding number",
+      "Proposed point of connection"
+    ],
+    "required_documents": [
+      "Online application: Patta / pauti / kabala / Holding receipt; Agreement between the applicant and PHEO on Rs. 10 non-judicial stamp paper (available at PHEO)",
+      "Manual application: A set of blueprint plans (in duplicate); Holding number; Layout of the premises; Proposed point of connection; Fixtures and future extension details, if any; Details of the licensed plumber or contractor"
+    ],
+    "sla": "45 days process time limit, per the HUDD Citizen's Charter's detailed services table (service #14).",
+    "expected_response_time": null,
+    "expected_resolution_time": "45 days",
+    "complaint_channel": [
+      "Online: www.ulbodisha.gov.in, under 'citizen services' > 'Water Connection & Charges'",
+      "Manual: maintenance division / sub-division of the Public Health department"
+    ],
+    "contact_information": "Concerned Junior Engineer at the PHEO maintenance division/sub-division; exact contact varies by ULB and is not individually listed in the source document.",
+    "escalation_procedure": "Per the HUDD Citizen's Charter's detailed services table for this specific service: Designated Officer -> concerned Junior Engineer; Appellate Authority -> concerned Assistant Engineer; Revisional Authority -> concerned Executive Engineer.",
+    "escalation_authority": "Designated officer: Junior Engineer (concerned). Appellate Authority: Assistant Engineer (concerned). Revisional Authority: Executive Engineer (concerned).",
+    "faq": [
+      {
+        "question": "How much does a new water connection cost in Odisha?",
+        "answer": "A fixed Security Fee of Rs. 60 applies, per the HUDD Citizen's Charter. A separate Scrutiny Fee also applies, but its amount is not fixed in the source -- it states the fee 'as applicable for the type of connection', so the exact figure isn't available without checking with the PHEO office."
+      },
+      {
+        "question": "How long does a new water connection take in Odisha?",
+        "answer": "The stated process time limit is 45 days."
+      },
+      {
+        "question": "Can I apply online for a new water connection in Odisha?",
+        "answer": "Yes -- via www.ulbodisha.gov.in, under 'citizen services' > 'Water Connection & Charges' > 'Online Application for new connection'. A manual (in-person) application path is also available at the PHEO office."
+      }
+    ],
+    "citizen_guidance": "The Security Fee (Rs. 60) is fixed, but the Scrutiny Fee varies by connection type and is not stated as a fixed figure in the source -- confirm the exact scrutiny fee with the PHEO office before applying.",
+    "source_id": "OD_HUD_CITIZEN_CHARTER",
+    "source_title": "Citizen's Charter (Draft) — Housing & Urban Development Department",
+    "source_organization": "Housing & Urban Development Department, Government of Odisha",
+    "source_url": "https://urban.odisha.gov.in/sites/default/files/2021-05/Draft%20Citizen%20Charter_HUD_Final.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-10T12:28:22.416059+00:00",
+    "created_at": "2026-08-10T12:28:22.416059+00:00"
+  }
+]
