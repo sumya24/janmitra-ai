@@ -31,11 +31,20 @@ test("language gate -> landing -> signup validation -> citizen dashboard -> grac
   await expect(page.getByText("Priya Deshmukh")).toBeVisible();
   await expect(page.getByText("नागरिक", { exact: true })).toBeVisible(); // role pill — also renders in Marathi
 
-  // Submit a complaint. The citizen dashboard is still in Marathi, so its placeholder text is
-  // the Marathi translation, not the English original.
-  await page.getByPlaceholder(/कचरा जमा झालेला नाही/).fill("कचरा उचलला नाही");
-  await page.getByRole("button", { name: "तक्रार दाखल करा" }).click();
-  // No ward is selected, so this now correctly fails client-side validation (in Marathi)
-  // rather than reaching the AI pipeline at all.
+  // Start reporting an issue. The complaint form lives in the Report an Issue wizard (Phase 1),
+  // still in Marathi since that's the signed-up language.
+  // Scoped to the hero's own primary button -- a nav-drawer link with the same text also exists
+  // on the page (see components/NavDrawer.tsx), so an unscoped role/name locator is ambiguous.
+  await page.locator("a.btn-primary", { hasText: "समस्या नोंदवा" }).click();
+  await expect(page).toHaveURL(/\/citizen\/report$/);
+
+  // Try to skip straight through without filling anything in — whichever step's client-side
+  // validation fires first (the ward, if other specs sharing this dev db already seeded one;
+  // otherwise the empty-description check on the next step) must show a clear inline error in
+  // Marathi, not crash or silently advance.
+  await page.getByRole("button", { name: "पुढे" }).click();
+  if (!(await page.locator(".banner-error").isVisible())) {
+    await page.getByRole("button", { name: "पुढे" }).click();
+  }
   await expect(page.locator(".banner-error")).toBeVisible({ timeout: 10000 });
 });

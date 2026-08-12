@@ -45,6 +45,12 @@ test("full complaint lifecycle: reject reassigns to the next worker, accept unlo
   // --- Admin creates two workers in the same ward. ---
   await login(page, ADMIN_PHONE, ADMIN_PASSWORD);
   await expect(page).toHaveURL(/\/admin$/);
+  // Worker management lives on its own page, linked from the admin dashboard.
+  // Scoped to the dashboard's own button (class btn-ghost) -- a nav-drawer link with the same
+  // text also exists on the page (see components/NavDrawer.tsx), so an unscoped role/name
+  // locator is ambiguous.
+  await page.locator("a.btn-ghost", { hasText: "Manage Workers" }).click();
+  await expect(page).toHaveURL(/\/admin\/workers$/);
 
   for (const [phone, name] of [[workerAPhone, "Track Worker One"], [workerBPhone, "Track Worker Two"]] as const) {
     await page.getByRole("button", { name: "+ Add worker" }).click();
@@ -68,10 +74,42 @@ test("full complaint lifecycle: reject reassigns to the next worker, accept unlo
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/citizen$/);
 
+  // The complaint form lives in the Report an Issue wizard (Phase 1), not directly on the
+  // citizen Home screen.
+  // Scoped to the hero's own primary button -- a nav-drawer link with the same text also exists
+  // on the page (see components/NavDrawer.tsx), so an unscoped role/name locator is ambiguous.
+  await page.locator("a.btn-primary", { hasText: "Report an Issue" }).click();
+  await expect(page).toHaveURL(/\/citizen\/report$/);
+
+  // Location step: this ward was just created above, so it's a real option in the dropdown.
+  await page.getByRole("button", { name: "Select location" }).click();
+  await page.locator("#wizard-ward").selectOption(WARD);
+  await page.getByRole("button", { name: "Next" }).click();
+
+  // Description step.
   await page.getByPlaceholder(/Garbage not collected/).fill("There is a broken streetlight here.");
-  await page.getByLabel("Area / ward").selectOption(WARD);
+  await page.getByRole("button", { name: "Next" }).click();
+
+  // Photo step (skip) -> AI Understanding (wait for the brief mock classification) -> Preview -> submit.
+  await page.getByRole("button", { name: "Next" }).click();
+  await expect(page.getByText(/Development preview/)).toBeVisible({ timeout: 3000 });
+  await page.getByRole("button", { name: "Next" }).click();
   await page.getByRole("button", { name: "Submit complaint" }).click();
-  await expect(page.getByText("Complaint submitted successfully.")).toBeVisible({ timeout: 15000 });
+  // The real Sarvam AI pipeline (translate -> normalize -> summarize) takes ~20-25s end-to-end
+  // in this environment (a reasoning model, not a mock) -- 15s was cutting it too close and
+  // flaked under load; give it real headroom.
+  // Widened from 45000 after measuring the real backend pipeline directly (integration/
+  // stability phase): complaint creation chains THREE sequential real Sarvam calls (normalize ->
+  // translate -> summarize, each genuinely dependent on the previous one's output, see
+  // backend/services/complaint_agent.py) -- three live timed runs measured 17.7s/28.5s/18.7s for
+  // that chain alone, a ~60% swing, before any browser/page-render overhead. 45s was already a
+  // second widening (see the original comment, now below) and still flaked under full-suite load
+  // in this phase's validation runs; 60s gives real, measured headroom instead of guessing again.
+  await expect(page.getByText("Complaint submitted successfully.")).toBeVisible({ timeout: 60000 });
+
+  // Follow through to the complaints list from the wizard's success screen.
+  await page.getByRole("link", { name: "Track this complaint" }).click();
+  await expect(page).toHaveURL(/\/citizen\/complaints$/);
 
   // Assigned to whichever worker was created first (Track Worker One) — visible immediately, no phone yet.
   await expect(page.getByText("Assigned to")).toBeVisible();
@@ -79,11 +117,16 @@ test("full complaint lifecycle: reject reassigns to the next worker, accept unlo
   await expect(page.getByText("Contact number")).not.toBeVisible();
   await logout(page);
 
-  // --- Track Worker One rejects it. ---
+  // --- Track Worker One rejects it -- mandatory rejection reason. ---
   await login(page, workerAPhone, "workerpass123");
   await expect(page).toHaveURL(/\/worker$/);
   await expect(page.getByText("Awaiting your response")).toBeVisible();
   await page.getByRole("button", { name: "Reject" }).click();
+  // Empty reason is blocked -- confirming with nothing typed must not submit.
+  await page.getByRole("button", { name: "Reject Complaint", exact: true }).click();
+  await expect(page.getByText("A rejection reason is required.")).toBeVisible();
+  await page.getByLabel("Reason for rejection").fill("Outside my assigned coverage area.");
+  await page.getByRole("button", { name: "Reject Complaint", exact: true }).click();
   await expect(page.getByText("Nothing here.")).toBeVisible();
   await logout(page);
 
@@ -96,23 +139,62 @@ test("full complaint lifecycle: reject reassigns to the next worker, accept unlo
   await expect(page.getByText("Awaiting your response")).toBeVisible();
 
   await page.getByRole("button", { name: "Accept" }).click();
-  await expect(page.getByText("In progress")).toBeVisible();
+  // "In progress" is ambiguous by plain text: it's both the status label and, pre-existing and
+  // unrelated to StatusBadge, the "In progress" filter tab's own button text. Scope to the
+  // status pill specifically, same as the "resolved" check below.
+  await expect(page.locator(".status-badge.accepted")).toBeVisible();
 
-  await page.getByRole("button", { name: "Mark Resolved" }).click();
-  await expect(page.locator(".status.resolved")).toBeVisible();
+  // Accepted -> Start Work (mandatory initial assessment) -> In Progress. The modal's own submit
+  // button is also labeled "Start Work" (same text as the trigger that opened it) -- scope to
+  // `.modal` so the click targets the submit button specifically, not the trigger behind it.
+  await page.getByRole("button", { name: "Start Work" }).click();
+  const startModal = page.locator(".modal");
+  await startModal.getByRole("button", { name: "Start Work", exact: true }).click();
+  await expect(page.getByText("An initial assessment is required to start work.")).toBeVisible();
+  await page.getByLabel("Initial assessment").fill("Checked the pole -- the bulb and wiring both need replacing.");
+  await startModal.getByRole("button", { name: "Start Work", exact: true }).click();
+  await expect(page.locator(".status-badge.accepted")).toBeVisible(); // in_progress reuses the "accepted" visual class
+
+  // In Progress -> Complete Complaint (mandatory completion status) -> Resolved.
+  await page.getByRole("button", { name: "Complete Complaint" }).click();
+  await page.getByRole("button", { name: "Mark Resolved", exact: true }).click();
+  await expect(page.getByText("Please provide the completion status before resolving the complaint.")).toBeVisible();
+  await page.getByLabel("Completion status").fill("Replaced the bulb and rewired the fixture. Streetlight now works.");
+  await page.getByRole("button", { name: "Mark Resolved", exact: true }).click();
+  await expect(page.locator(".status-badge.resolved")).toBeVisible();
+
+  // Report only becomes available now that it's resolved.
+  await expect(page.getByRole("button", { name: "View Report" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Download Report" })).toBeVisible();
   await logout(page);
 
   // --- Citizen sees the full tracking history: reassignment happened, now resolved, worker B's
   // phone is visible (only now, post-accept), and a feedback form is waiting. ---
   await login(page, citizenPhone, "citizenpass123");
   await expect(page).toHaveURL(/\/citizen$/);
+  // Scoped to the "track prompt" card's own button -- a nav-drawer link with the same text also
+  // exists on the page (see components/NavDrawer.tsx), so an unscoped role/name locator is
+  // ambiguous. (CitizenNav.tsx, this test's previous landmark, was replaced by NavDrawer.)
+  await page.locator("a.btn-ghost", { hasText: "My Complaints" }).click();
+  await expect(page).toHaveURL(/\/citizen\/complaints$/);
 
   await expect(page.getByText("Track Worker Two")).toBeVisible({ timeout: 10000 });
   await expect(page.getByText("Contact number")).toBeVisible();
   await expect(page.getByText("How was this resolved?")).toBeVisible();
 
+  // Worker-authored updates (initial assessment, completion status) are visible to the citizen.
+  await page.getByRole("button", { name: "View updates" }).click();
+  await expect(page.getByText("Checked the pole -- the bulb and wiring both need replacing.")).toBeVisible();
+  await expect(page.getByText("Replaced the bulb and rewired the fixture. Streetlight now works.")).toBeVisible();
+
+  // The resolution report is available to the citizen too, from the same real data.
+  await expect(page.getByRole("button", { name: "View Report" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Download Report" })).toBeVisible();
+
   await page.getByRole("button", { name: "5" }).click();
   await page.getByPlaceholder("Optional comment").fill("Fixed fast, thank you!");
   await page.getByRole("button", { name: "Submit feedback" }).click();
-  await expect(page.getByText("Thanks for your feedback!")).toBeVisible();
+  // "Thanks for your feedback!" now renders twice at once: the toast (exact) and the on-page
+  // feedback card, which appends the star rating and comment after the same phrase.
+  await expect(page.getByText("Thanks for your feedback!", { exact: true })).toBeVisible();
 });
