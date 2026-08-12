@@ -25,6 +25,17 @@ jobs:
           pip install --index-url https://download.pytorch.org/whl/cpu torch==2.13.0
           pip install -r requirements.txt
 
+      # backend/routes/ask_janmitra.py builds its service at module import time, which reads
+      # data/rag_knowledge_base/chunks/chunks.json -- a generated file (from knowledge_records/,
+      # see build_rag_knowledge_base.py's docstring) deliberately not committed to git, same as
+      # backend/Dockerfile's production build already handles. Without this step, just importing
+      # backend.main (which every test does via conftest.py) crashes with FileNotFoundError on a
+      # fresh checkout, even for tests unrelated to Ask JanMitra. Only the knowledge-base build is
+      # needed here (not build_rag_embeddings.py) -- it's pure Python/pydantic, no ML model
+      # download required, unlike the embeddings step.
+      - name: Build RAG knowledge base (chunks.json)
+        run: python scripts/build_rag_knowledge_base.py
+
       # `python -m pytest` (not bare `pytest`) so the repo root -- and therefore the `backend`
       # package -- is on sys.path. Bare `pytest` doesn't reliably do this and fails CI with
       # "ModuleNotFoundError: No module named 'backend'" even though `backend/__init__.py`
