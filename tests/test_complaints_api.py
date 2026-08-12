@@ -213,6 +213,63 @@ def test_admin_sees_every_complaint(client, make_admin, db_session):
     assert len(response.json()) == 2
 
 
+def test_admin_can_filter_by_worker_id(client, make_admin, make_worker, db_session):
+    """The Admin Worker Detail page's data source -- see routes/complaints.py's list_complaints()
+    docstring for why this is admin-only-effective, not a separate permission check."""
+    make_admin(phone="9999999999", password="adminpass")
+    login = client.post("/auth/login", json={"phone": "9999999999", "password": "adminpass"})
+    admin_token = login.json()["access_token"]
+    _, worker = make_worker(phone="9000000002", ward="Ward 14")
+
+    db = db_session()
+    db.add(Complaint(
+        citizen_id="1", original_text="a", original_language="en", translated_text="a",
+        summary="a", ward="Ward 14", status="assigned", assigned_worker_id=worker["id"],
+    ))
+    db.add(Complaint(
+        citizen_id="2", original_text="b", original_language="en", translated_text="b",
+        summary="b", ward="Ward 9", status="pending",  # unassigned -- must not show up
+    ))
+    db.commit()
+    db.close()
+
+    response = client.get(
+        "/complaints", params={"worker_id": worker["id"]}, headers={"Authorization": f"Bearer {admin_token}"}
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body) == 1
+    assert body[0]["assigned_worker_name"] == worker["full_name"]
+
+
+def test_worker_id_filter_is_ignored_for_non_admin_roles(client, make_worker, db_session):
+    """A worker passing worker_id=<someone else> must still only ever see their OWN queue --
+    the param is a no-op outside the admin role, never a way to see another worker's complaints."""
+    token, worker = make_worker(phone="9000000002", ward="Ward 14")
+
+    db = db_session()
+    own = Complaint(
+        citizen_id="1", original_text="a", original_language="en", translated_text="a",
+        summary="a", ward="Ward 14", status="assigned", assigned_worker_id=worker["id"],
+    )
+    someone_elses = Complaint(
+        citizen_id="2", original_text="b", original_language="en", translated_text="b",
+        summary="b", ward="Ward 9", status="assigned", assigned_worker_id=999999,
+    )
+    db.add_all([own, someone_elses])
+    db.commit()
+    other_id = someone_elses.assigned_worker_id
+    db.close()
+
+    response = client.get(
+        "/complaints", params={"worker_id": other_id}, headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body) == 1
+    assert body[0]["assigned_worker_name"] == worker["full_name"]
+
+
 def test_list_complaints_translates_on_read(client, monkeypatch, make_admin, db_session):
     """GET /complaints?lang=hi should translate stored English text on read only."""
     make_admin(phone="9999999999", password="adminpass")
@@ -329,7 +386,10 @@ def test_reject_complaint_reassigns_to_next_worker_in_ward(client, make_worker, 
     worker2_id = _make_worker_row(db_session, phone="9000000098", ward="Ward 14", full_name="Second Worker")
     complaint_id = _make_assigned_complaint(db_session, worker1["id"])
 
-    response = client.post(f"/complaints/{complaint_id}/reject", headers={"Authorization": f"Bearer {token1}"})
+    response = client.post(
+        f"/complaints/{complaint_id}/reject", headers={"Authorization": f"Bearer {token1}"},
+        json={"reason": "Outside my assigned area."},
+    )
 
     assert response.status_code == 200
     body = response.json()
@@ -345,7 +405,10 @@ def test_reject_complaint_with_no_other_worker_becomes_pending(client, make_work
     token, worker = make_worker(phone="9000000002", ward="Ward 14")
     complaint_id = _make_assigned_complaint(db_session, worker["id"])
 
-    response = client.post(f"/complaints/{complaint_id}/reject", headers={"Authorization": f"Bearer {token}"})
+    response = client.post(
+        f"/complaints/{complaint_id}/reject", headers={"Authorization": f"Bearer {token}"},
+        json={"reason": "Not my specialty."},
+    )
 
     assert response.status_code == 200
     body = response.json()
@@ -357,30 +420,104 @@ def test_reject_complaint_wrong_status_returns_400(client, make_worker, db_sessi
     token, worker = make_worker(phone="9000000002", ward="Ward 14")
     complaint_id = _make_assigned_complaint(db_session, worker["id"], status="accepted")
 
-    response = client.post(f"/complaints/{complaint_id}/reject", headers={"Authorization": f"Bearer {token}"})
+    response = client.post(
+        f"/complaints/{complaint_id}/reject", headers={"Authorization": f"Bearer {token}"},
+        json={"reason": "Doesn't matter, wrong status."},
+    )
     assert response.status_code == 400
+
+
+def test_reject_complaint_requires_a_reason(client, make_worker, db_session):
+    """Mandatory rejection reason -- worker-workflow phase. Empty and whitespace-only reasons
+    must both be rejected (Pydantic's min_length catches the former, an explicit .strip() check
+    catches the latter)."""
+    token, worker = make_worker(phone="9000000002", ward="Ward 14")
+    complaint_id = _make_assigned_complaint(db_session, worker["id"])
+
+    empty = client.post(f"/complaints/{complaint_id}/reject", headers={"Authorization": f"Bearer {token}"}, json={"reason": ""})
+    assert empty.status_code == 422  # Pydantic min_length=1
+
+    whitespace = client.post(f"/complaints/{complaint_id}/reject", headers={"Authorization": f"Bearer {token}"}, json={"reason": "   "})
+    assert whitespace.status_code == 400
+    assert "reason" in whitespace.json()["detail"].lower()
+
+
+def test_reject_complaint_reason_is_stored(client, make_worker, db_session):
+    token, worker = make_worker(phone="9000000002", ward="Ward 14")
+    complaint_id = _make_assigned_complaint(db_session, worker["id"])
+
+    response = client.post(
+        f"/complaints/{complaint_id}/reject", headers={"Authorization": f"Bearer {token}"},
+        json={"reason": "Wrong ward, this belongs elsewhere."},
+    )
+    assert response.status_code == 200
+
+    db = db_session()
+    from backend.models import ComplaintRejection
+    rejection = db.query(ComplaintRejection).filter(ComplaintRejection.complaint_id == complaint_id).first()
+    assert rejection is not None
+    assert rejection.reason == "Wrong ward, this belongs elsewhere."
+    assert rejection.worker_id == worker["id"]
+    db.close()
 
 
 def test_resolve_complaint_requires_accepted_first(client, make_worker, db_session):
     token, worker = make_worker(phone="9000000002", ward="Ward 14")
     complaint_id = _make_assigned_complaint(db_session, worker["id"], status="assigned")
 
-    response = client.post(f"/complaints/{complaint_id}/resolve", headers={"Authorization": f"Bearer {token}"})
+    response = client.post(
+        f"/complaints/{complaint_id}/resolve", headers={"Authorization": f"Bearer {token}"},
+        data={"completion_status": "Done."},
+    )
     assert response.status_code == 400
 
 
-def test_resolve_complaint_succeeds_after_accepted(client, make_worker, db_session):
+def test_resolve_complaint_requires_in_progress_not_just_accepted(client, make_worker, db_session):
+    """Worker-workflow phase: "accepted" is no longer sufficient to resolve -- the complaint must
+    have gone through start_work() into "in_progress" first (accepted -> in_progress ->
+    resolved, not accepted -> resolved directly)."""
     token, worker = make_worker(phone="9000000002", ward="Ward 14")
     complaint_id = _make_assigned_complaint(db_session, worker["id"], status="accepted")
 
-    response = client.post(f"/complaints/{complaint_id}/resolve", headers={"Authorization": f"Bearer {token}"})
+    response = client.post(
+        f"/complaints/{complaint_id}/resolve", headers={"Authorization": f"Bearer {token}"},
+        data={"completion_status": "Done."},
+    )
+    assert response.status_code == 400
+
+
+def test_resolve_complaint_succeeds_after_in_progress(client, make_worker, db_session):
+    token, worker = make_worker(phone="9000000002", ward="Ward 14")
+    complaint_id = _make_assigned_complaint(db_session, worker["id"], status="in_progress")
+
+    response = client.post(
+        f"/complaints/{complaint_id}/resolve", headers={"Authorization": f"Bearer {token}"},
+        data={"completion_status": "Fixture replaced and tested successfully."},
+    )
     assert response.status_code == 200
     assert response.json()["status"] == "resolved"
 
 
+def test_resolve_complaint_requires_completion_status(client, make_worker, db_session):
+    token, worker = make_worker(phone="9000000002", ward="Ward 14")
+    complaint_id = _make_assigned_complaint(db_session, worker["id"], status="in_progress")
+
+    empty = client.post(f"/complaints/{complaint_id}/resolve", headers={"Authorization": f"Bearer {token}"}, data={"completion_status": "   "})
+    assert empty.status_code == 400
+
+    db = db_session()
+    from backend.models import Complaint as ComplaintModel
+    complaint = db.query(ComplaintModel).filter(ComplaintModel.id == complaint_id).first()
+    assert complaint.status == "in_progress"  # unchanged -- never silently resolved
+    db.close()
+
+
 def test_resolve_complaint_missing_returns_404(client, make_worker):
     token, worker = make_worker(phone="9000000002", ward="Ward 14")
-    response = client.post("/complaints/999999/resolve", headers={"Authorization": f"Bearer {token}"})
+    response = client.post(
+        "/complaints/999999/resolve", headers={"Authorization": f"Bearer {token}"},
+        data={"completion_status": "Done."},
+    )
     assert response.status_code == 404
 
 

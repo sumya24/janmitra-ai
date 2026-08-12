@@ -16,8 +16,12 @@ export default function ComplaintTracker({
 }) {
   const isSearching = status === "pending" && rejectionCount > 0;
 
-  // 0 = only "submitted" is done, 1 = assigned, 2 = accepted, 3 = resolved.
-  const currentIndex = status === "resolved" ? 3 : status === "accepted" ? 2 : status === "assigned" ? 1 : 0;
+  // 0 = only "submitted" is done, 1 = assigned, 2 = accepted/in_progress, 3 = resolved.
+  // "in_progress" reuses step 2 ("In Progress") alongside "accepted" -- without this, a
+  // complaint that has actually moved further along than "assigned" would render as if it had
+  // reset back to step 0, since neither "accepted" nor "assigned" would match.
+  const currentIndex =
+    status === "resolved" ? 3 : status === "accepted" || status === "in_progress" ? 2 : status === "assigned" ? 1 : 0;
 
   const steps = [
     { label: t(lang, "citizen.trackSubmitted") },
