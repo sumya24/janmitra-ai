@@ -14,14 +14,31 @@ def test_signup_creates_citizen_and_returns_token(client):
             "phone": "9000000001",
             "password": "secret123",
             "preferred_language": "mr",
+            "ward": "Ward 14",
         },
     )
     assert response.status_code == 200
     body = response.json()
     assert body["user"]["role"] == "citizen"
     assert body["user"]["preferred_language"] == "mr"
-    assert body["user"]["ward"] is None
+    assert body["user"]["ward"] == "Ward 14"
     assert body["access_token"]
+
+
+def test_signup_rejects_missing_ward(client):
+    response = client.post(
+        "/auth/signup",
+        json={"full_name": "Priya", "phone": "9000000001", "password": "secret123", "preferred_language": "en"},
+    )
+    assert response.status_code == 422
+
+
+def test_signup_rejects_blank_ward(client):
+    response = client.post(
+        "/auth/signup",
+        json={"full_name": "Priya", "phone": "9000000001", "password": "secret123", "preferred_language": "en", "ward": "   "},
+    )
+    assert response.status_code == 400
 
 
 def test_signup_rejects_duplicate_phone(client, make_citizen):
@@ -33,6 +50,7 @@ def test_signup_rejects_duplicate_phone(client, make_citizen):
             "phone": "9000000001",
             "password": "secret123",
             "preferred_language": "en",
+            "ward": "Ward 14",
         },
     )
     assert response.status_code == 409
@@ -41,7 +59,7 @@ def test_signup_rejects_duplicate_phone(client, make_citizen):
 def test_signup_rejects_short_password(client):
     response = client.post(
         "/auth/signup",
-        json={"full_name": "Priya", "phone": "9000000001", "password": "abc", "preferred_language": "en"},
+        json={"full_name": "Priya", "phone": "9000000001", "password": "abc", "preferred_language": "en", "ward": "Ward 14"},
     )
     assert response.status_code == 400
 
@@ -49,7 +67,7 @@ def test_signup_rejects_short_password(client):
 def test_signup_rejects_unsupported_language(client):
     response = client.post(
         "/auth/signup",
-        json={"full_name": "Priya", "phone": "9000000001", "password": "secret123", "preferred_language": "fr"},
+        json={"full_name": "Priya", "phone": "9000000001", "password": "secret123", "preferred_language": "fr", "ward": "Ward 14"},
     )
     assert response.status_code == 400
 

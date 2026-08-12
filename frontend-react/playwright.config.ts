@@ -4,6 +4,17 @@ export default defineConfig({
   testDir: "./e2e",
   fullyParallel: false,
   workers: 1,
+  // One retry, locally too (not just CI's usual default). Justified by measurement, not blanket
+  // flakiness tolerance: two suite runs in this project's integration/stability phase timed the
+  // real (non-mocked) complaint-creation pipeline directly -- three sequential real Sarvam calls
+  // (normalize -> translate -> summarize, four for the voice path) measured 17.7s/28.5s/18.7s in
+  // one sample, then exceeded an already-evidence-based 60s timeout on a later run. That's a
+  // long-tail external-API latency distribution this project doesn't control, not a bug in this
+  // codebase (see e2e/complaint-tracking.spec.ts's and theme-and-voice.spec.ts's own submission-
+  // assertion comments for the full data). A retry doesn't weaken what "pass" requires -- the
+  // exact same strict assertions must still succeed -- it just gives a second real attempt
+  // instead of failing the whole suite on one slow external call.
+  retries: 1,
   reporter: "list",
   use: {
     // Use "localhost" rather than the literal 127.0.0.1: on some setups (notably seen

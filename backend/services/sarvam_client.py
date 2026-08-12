@@ -1,4 +1,4 @@
-"""Thin wrapper around the Sarvam AI SDK for speech-to-text and translation."""
+"""Thin wrapper around the Sarvam AI SDK for speech-to-text, translation, and text-to-speech."""
 
 import logging
 
@@ -18,7 +18,7 @@ class AIServiceError(Exception):
 
 
 class SarvamClient:
-    """Wraps the Sarvam AI SDK for speech-to-text and text translation calls."""
+    """Wraps the Sarvam AI SDK for speech-to-text, text translation, and text-to-speech calls."""
 
     def __init__(self) -> None:
         """Initialize the underlying SarvamAI SDK client, if an API key is configured."""
@@ -64,6 +64,44 @@ class SarvamClient:
         except Exception as exc:
             logger.error("STT failed (language=%s): %s", language_code, exc, exc_info=True)
             raise AIServiceError("Speech-to-text service failed. Please try again.") from exc
+
+    def synthesize_speech(
+        self, text: str, language_code: str, speaker: str | None = None, model: str | None = None
+    ) -> str:
+        """Convert text to spoken audio using Sarvam's text-to-speech model.
+
+        Args:
+            text: The text to speak.
+            language_code: BCP-47 language code to speak in, e.g. "mr-IN".
+            speaker: One of Sarvam's named `bulbul` voices. Defaults to `settings.TTS_SPEAKER`.
+            model: Sarvam TTS model version. Defaults to `settings.TTS_MODEL`.
+
+        Returns:
+            The synthesized audio as a base64-encoded WAV string.
+
+        Raises:
+            AIServiceError: If the Sarvam API call fails for any reason.
+        """
+        client = self._require_client()
+        logger.info("TTS started (language=%s)", language_code)
+        try:
+            response = client.text_to_speech.convert(
+                text=text,
+                language_code=language_code,
+                speaker=speaker or settings.TTS_SPEAKER,
+                model=model or settings.TTS_MODEL,
+                output_audio_codec="wav",
+            )
+            audios = getattr(response, "audios", None) or []
+            if not audios:
+                raise AIServiceError("Text-to-speech service returned no audio.")
+            logger.info("TTS completed (language=%s)", language_code)
+            return audios[0]
+        except AIServiceError:
+            raise
+        except Exception as exc:
+            logger.error("TTS failed (language=%s): %s", language_code, exc, exc_info=True)
+            raise AIServiceError("Text-to-speech service failed. Please try again.") from exc
 
     def translate(self, text: str, source_language_code: str, target_language_code: str) -> str:
         """Translate text between two languages using Sarvam's translation model.
