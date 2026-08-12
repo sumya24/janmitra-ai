@@ -30,11 +30,23 @@ jobs:
       # see build_rag_knowledge_base.py's docstring) deliberately not committed to git, same as
       # backend/Dockerfile's production build already handles. Without this step, just importing
       # backend.main (which every test does via conftest.py) crashes with FileNotFoundError on a
-      # fresh checkout, even for tests unrelated to Ask JanMitra. Only the knowledge-base build is
-      # needed here (not build_rag_embeddings.py) -- it's pure Python/pydantic, no ML model
-      # download required, unlike the embeddings step.
+      # fresh checkout, even for tests unrelated to Ask JanMitra.
       - name: Build RAG knowledge base (chunks.json)
         run: python scripts/build_rag_knowledge_base.py
+
+      # Populates the actual ChromaDB vector index (524 embedded chunks) that RagRetriever
+      # searches against -- without this, every real-retrieval test opens an empty collection
+      # (0 chunks indexed) and every query comes back "insufficient_knowledge", regardless of
+      # whether the retrieval logic itself is correct. Downloads the embedding model
+      # (intfloat/multilingual-e5-small, ~470MB) on first run; cached below for subsequent runs.
+      - name: Cache embedding model
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-multilingual-e5-small
+
+      - name: Build RAG embeddings (ChromaDB index)
+        run: python scripts/build_rag_embeddings.py
 
       # `python -m pytest` (not bare `pytest`) so the repo root -- and therefore the `backend`
       # package -- is on sys.path. Bare `pytest` doesn't reliably do this and fails CI with
