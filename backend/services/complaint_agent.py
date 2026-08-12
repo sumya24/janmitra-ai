@@ -7,7 +7,9 @@ from sqlalchemy.orm import Session
 from backend.config import to_bcp47
 from backend.models import Complaint
 from backend.services.normalization_service import NormalizationService
-from backend.services.sarvam_client import SarvamClient
+from backend.services.sarvam_client import AIServiceError, SarvamClient
+from backend.services.stt_service import STT_GAP_MARKER as _STT_GAP_MARKER
+from backend.services.stt_service import transcribe_chunks
 from backend.services.summary_service import SummaryService
 from backend.services.translation_service import TranslationService
 
@@ -41,19 +43,24 @@ class ComplaintAgent:
         citizen_id: str,
         language_code: str,
         text: str | None,
-        audio_bytes: bytes | None,
+        audio_chunks: list[bytes] | None,
         photo_path: str | None,
     ) -> Complaint:
         """Process citizen input and store a new complaint record.
 
-        Exactly one of `text` or `audio_bytes` should be provided.
+        Exactly one of `text` or `audio_chunks` should be provided.
 
         Args:
             db: Active database session.
             citizen_id: Hardcoded citizen identifier.
             language_code: Short language code of the citizen's input, e.g. "mr".
             text: Typed complaint text, or None if voice was used.
-            audio_bytes: Raw audio bytes of a spoken complaint, or None if text was used.
+            audio_chunks: Ordered raw-audio byte chunks of a spoken complaint, or None if
+                text was used. A recording longer than Sarvam's 30-second-per-request STT
+                cap arrives as multiple chunks — see
+                frontend-react/src/lib/useAudioRecorder.ts, which splits recording into
+                ~28s segments client-side for exactly this reason (see
+                docs/ai_pipeline_limits.md for why 30s is a hard, actively-enforced limit).
             photo_path: Relative path to an attached photo, or None.
 
         Returns:
@@ -61,16 +68,20 @@ class ComplaintAgent:
 
         Raises:
             ValueError: If neither text nor audio is provided, or transcription is empty.
-            AIServiceError: If transcription, translation, or summarization fails.
+            AIServiceError: If every audio chunk fails to transcribe, or translation or
+                summarization fails.
         """
-        if audio_bytes is not None:
-            logger.info("Complaint received (voice, citizen=%s, language=%s)", citizen_id, language_code)
-            original_text = self._sarvam.transcribe(audio_bytes, to_bcp47(language_code))
+        if audio_chunks:
+            logger.info(
+                "Complaint received (voice, citizen=%s, language=%s, chunks=%d)",
+                citizen_id, language_code, len(audio_chunks),
+            )
+            original_text = self._transcribe_chunks(audio_chunks, to_bcp47(language_code))
         elif text is not None:
             logger.info("Complaint received (text, citizen=%s, language=%s)", citizen_id, language_code)
             original_text = text
         else:
-            raise ValueError("Either text or audio_bytes must be provided.")
+            raise ValueError("Either text or audio_chunks must be provided.")
 
         original_text = original_text.strip()
         if not original_text:
@@ -100,3 +111,10 @@ class ComplaintAgent:
         db.refresh(complaint)
         logger.info("Complaint stored (id=%s, citizen=%s)", complaint.id, citizen_id)
         return complaint
+
+    def _transcribe_chunks(self, audio_chunks: list[bytes], bcp47_language: str) -> str:
+        """Transcribe each audio chunk in order and join the results into one transcript --
+        see backend/services/stt_service.py's `transcribe_chunks()` for the full behavior
+        (retry-once-then-gap-marker chunk stitching), unchanged, just relocated so Ask
+        JanMitra's voice-assistant flow can reuse it too."""
+        return transcribe_chunks(self._sarvam, audio_chunks, bcp47_language)

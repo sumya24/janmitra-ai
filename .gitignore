@@ -7,5 +7,20 @@ venv/
 uploads/*
 !uploads/.gitkeep
 .pytest_cache/
+.hypothesis/
+.history/
 *.egg-info/
 .DS_Store
+test-results/
+playwright-report/
+blob-report/
+
+# RAG knowledge base: knowledge_records/ and sources/ are the hand-authored source data;
+# everything below is a pure, reproducible function of that source (see
+# scripts/build_rag_knowledge_base.py and build_rag_embeddings.py's docstrings), rebuilt at
+# Docker image build time -- not committed to avoid a stale/binary blob in git.
+data/rag_knowledge_base/chunks/
+data/rag_knowledge_base/documents/
+data/rag_knowledge_base/embeddings/
+data/rag_knowledge_base/schema/
+data/rag_knowledge_base/chroma/

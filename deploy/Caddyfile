@@ -1,0 +1,22 @@
+# Caddy serves the built React SPA and reverse-proxies the backend's own route prefixes to the
+# FastAPI container -- same origin from the browser's point of view, so no CORS hop in
+# production (see frontend-react/src/lib/api.ts and its VITE_API_URL fallback).
+#
+# SITE_ADDRESS defaults to plain HTTP on port 80. Once a domain points at this VM, set
+# SITE_ADDRESS=your-domain.com in the .env used by docker-compose.prod.yml and restart -- Caddy
+# then automatically provisions and renews a Let's Encrypt TLS certificate for it, no config
+# change needed beyond that. See docs/DEPLOYMENT.md.
+{$SITE_ADDRESS:http://:80} {
+	encode gzip
+
+	@backend path /auth* /admin* /complaints* /notifications* /ask-janmitra* /uploads* /health
+	handle @backend {
+		reverse_proxy backend:8000
+	}
+
+	handle {
+		root * /usr/share/caddy
+		try_files {path} /index.html
+		file_server
+	}
+}

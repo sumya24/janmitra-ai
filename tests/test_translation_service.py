@@ -35,6 +35,23 @@ def test_to_language_uses_correct_bcp47_codes():
     assert result == "कचरा उचलला नाही।"
 
 
+@pytest.mark.parametrize(
+    "code,bcp47",
+    [("or", "od-IN"), ("gu", "gu-IN"), ("bn", "bn-IN")],
+)
+def test_to_language_supports_newly_added_indian_languages(code, bcp47):
+    """Odia, Gujarati, and Bengali should map to the BCP-47 codes verified against Sarvam's docs."""
+    fake_sarvam = Mock()
+    fake_sarvam.translate.return_value = "translated"
+    service = TranslationService(sarvam_client=fake_sarvam)
+
+    service.to_language("Garbage has not been collected.", code)
+
+    fake_sarvam.translate.assert_called_once_with(
+        "Garbage has not been collected.", source_language_code="en-IN", target_language_code=bcp47
+    )
+
+
 def test_unsupported_language_raises_value_error():
     """An unsupported language code should raise ValueError before calling Sarvam."""
     fake_sarvam = Mock()

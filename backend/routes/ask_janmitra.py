@@ -1,0 +1,151 @@
+"""POST /ask-janmitra — the Ask JanMitra retrieval endpoint.
+
+Requires authentication (same as every other route in this app — see backend/deps.py) because
+TYPE_C complaint-status questions need to know who's asking (a citizen can only see their own
+complaints, matching GET /complaints's existing authorization rule). All roles (citizen/worker/
+admin) can call this — a worker or admin asking a civic-service question gets the same RAG
+answer a citizen would; TYPE_C status lookups are scoped by role the same way the rest of the
+complaints API already is.
+"""
+
+import json
+import logging
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from pydantic import ValidationError
+from sqlalchemy.orm import Session
+
+from backend.config import settings
+from backend.database import get_db
+from backend.deps import get_current_user
+from backend.models import User
+from backend.schemas.ask_janmitra import AskJanMitraRequest, AskJanMitraResponse, AskVoiceResponse, ConversationTurn
+from backend.services.ask_janmitra_service import AskJanMitraService
+
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/ask-janmitra", tags=["ask-janmitra"])
+
+_service = AskJanMitraService()
+
+_GENERIC_UNAVAILABLE_DETAIL = "Ask JanMitra is temporarily unavailable. Please try again, or use the complaint form directly."
+
+
+@router.post("", response_model=AskJanMitraResponse)
+def ask_janmitra(
+    request: AskJanMitraRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> AskJanMitraResponse:
+    """Ask a civic-service question (complaint-shaped or information-shaped) or check a
+    complaint's status. See backend/services/ask_janmitra_service.py for the full routing logic.
+    """
+    if request.language not in settings.SUPPORTED_LANGUAGES:
+        raise HTTPException(status_code=400, detail=f"Unsupported language: {request.language}")
+
+    try:
+        return _service.ask(db, current_user, request)
+    except Exception as exc:
+        # Defense-in-depth, matching the same principle applied to LocationResolver's call site
+        # in routes/complaints.py: a bug anywhere in the RAG/LLM pipeline must produce a clear
+        # error, never a stack trace leaked to the client and never a fabricated-looking answer.
+        logger.exception("Ask JanMitra request failed unexpectedly")
+        raise HTTPException(status_code=503, detail=_GENERIC_UNAVAILABLE_DETAIL) from exc
+
+
+def _parse_conversation_history(raw: str) -> list[ConversationTurn]:
+    """Multipart form fields can't carry nested JSON structures directly -- the frontend
+    JSON-encodes `conversation_history` into one string field, mirroring the exact shape
+    `AskJanMitraRequest.conversation_history` already validates for the plain-JSON endpoint."""
+    try:
+        parsed = json.loads(raw) if raw else []
+        return [ConversationTurn(**turn) for turn in parsed]
+    except (json.JSONDecodeError, TypeError, ValidationError) as exc:
+        raise HTTPException(status_code=400, detail="Invalid conversation_history.") from exc
+
+
+@router.post("/image", response_model=AskJanMitraResponse)
+def ask_janmitra_with_image(
+    question: str = Form(""),
+    language: str = Form("en"),
+    latitude: float | None = Form(None),
+    longitude: float | None = Form(None),
+    location_text: str | None = Form(None),
+    conversation_history: str = Form("[]"),
+    image: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> AskJanMitraResponse:
+    """Same as `POST /ask-janmitra`, with one attached photo. Multipart (not JSON) because it
+    carries a file -- `question` may be empty here (an image with no text at all is a valid,
+    real use case, unlike the plain endpoint's `AskJanMitraRequest.question` which requires
+    non-empty text). See backend/services/ask_janmitra_service.py's `ask_with_image()`.
+    """
+    if language not in settings.SUPPORTED_LANGUAGES:
+        raise HTTPException(status_code=400, detail=f"Unsupported language: {language}")
+
+    history = _parse_conversation_history(conversation_history)
+
+    try:
+        return _service.ask_with_image(
+            db,
+            current_user,
+            question=question,
+            language=language,
+            latitude=latitude,
+            longitude=longitude,
+            location_text=location_text,
+            conversation_history=history,
+            image=image,
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Ask JanMitra image request failed unexpectedly")
+        raise HTTPException(status_code=503, detail=_GENERIC_UNAVAILABLE_DETAIL) from exc
+
+
+@router.post("/voice", response_model=AskVoiceResponse)
+def ask_janmitra_voice(
+    language: str = Form("en"),
+    latitude: float | None = Form(None),
+    longitude: float | None = Form(None),
+    location_text: str | None = Form(None),
+    conversation_history: str = Form("[]"),
+    audio: list[UploadFile] = File(...),
+    image: UploadFile | None = File(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> AskVoiceResponse:
+    """The voice-to-voice assistant turn: one or more recorded audio segments in, a real spoken
+    answer out. `audio` may contain more than one file for the same reason `POST /complaints`'s
+    own `audio` field does -- Sarvam's STT endpoint hard-caps a single request at 30 seconds (see
+    docs/ai_pipeline_limits.md), so the citizen-facing recorder (useAudioRecorder.ts) splits a
+    longer turn into ~28s segments client-side. An optional attached `image` is accepted here too
+    (a combined voice+image turn) -- see backend/services/ask_janmitra_service.py's `ask_voice()`.
+    """
+    if language not in settings.SUPPORTED_LANGUAGES:
+        raise HTTPException(status_code=400, detail=f"Unsupported language: {language}")
+
+    audio_segments = [a.file.read() for a in audio if a.filename]
+    if not audio_segments:
+        raise HTTPException(status_code=400, detail="At least one audio segment is required.")
+
+    history = _parse_conversation_history(conversation_history)
+
+    try:
+        return _service.ask_voice(
+            db,
+            current_user,
+            audio_segments=audio_segments,
+            language=language,
+            latitude=latitude,
+            longitude=longitude,
+            location_text=location_text,
+            conversation_history=history,
+            image=image,
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Ask JanMitra voice request failed unexpectedly")
+        raise HTTPException(status_code=503, detail=_GENERIC_UNAVAILABLE_DETAIL) from exc

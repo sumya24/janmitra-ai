@@ -1,0 +1,100 @@
+/* Floating entry point for Ask JanMitra -- see AskJanMitraWidget.tsx's docstring for why this
+   replaced the old nav tab. z-index sits below the toast layer (200, see global.css) so a
+   "Complaint submitted" toast can still surface above an open panel. */
+
+.ask-widget-anchor {
+  position: fixed; right: 24px; bottom: 24px; z-index: 96;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+}
+
+.ask-widget-fab {
+  width: 58px; height: 58px; border-radius: 50%; border: none; cursor: pointer;
+  background: linear-gradient(135deg, var(--ai-from), var(--ai-to)); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow-lg);
+  animation: ask-fab-breathe 3.2s ease-in-out infinite;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.ask-widget-fab:hover { transform: scale(1.06); }
+.ask-widget-fab:active { transform: scale(0.97); }
+@keyframes ask-fab-breathe {
+  0%, 100% { box-shadow: var(--shadow-lg), 0 0 0 0 color-mix(in srgb, var(--ai-to) 40%, transparent); }
+  50% { box-shadow: var(--shadow-lg), 0 0 0 10px color-mix(in srgb, var(--ai-to) 0%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) { .ask-widget-fab { animation: none; } }
+
+/* The greeting bubble -- the "hi, ask me anything" cue. Positioned above the button with a
+   small tail pointing down at it, like a real speech bubble. */
+.ask-widget-greeting {
+  position: absolute; bottom: 70px; right: 0; max-width: 240px;
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface); color: var(--ink); border: 1px solid var(--line);
+  padding: 10px 14px; border-radius: 14px; font-size: 13px; font-weight: 600; line-height: 1.4;
+  box-shadow: var(--shadow-md);
+  opacity: 0; transform: translateY(6px) scale(0.96); pointer-events: none;
+  transition: opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-out);
+}
+.ask-widget-greeting.visible { opacity: 1; transform: translateY(0) scale(1); }
+.ask-widget-greeting::after {
+  content: ""; position: absolute; bottom: -6px; right: 22px; width: 12px; height: 12px;
+  background: var(--surface); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  transform: rotate(45deg);
+}
+
+.ask-widget-backdrop {
+  position: fixed; inset: 0; z-index: 90; background: rgba(15, 23, 42, 0.4);
+  opacity: 0; pointer-events: none; transition: opacity var(--dur) var(--ease-out);
+}
+.ask-widget-backdrop.open { opacity: 1; pointer-events: auto; }
+
+.ask-widget-panel {
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 95;
+  width: min(440px, 100vw); background: var(--paper); box-shadow: var(--shadow-lg);
+  display: flex; flex-direction: column; overflow-y: auto; padding: 16px 20px 28px;
+  transform: translateX(100%);
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+.ask-widget-panel.open { transform: translateX(0); }
+.ask-widget-panel-head { display: flex; justify-content: flex-end; margin-bottom: 4px; }
+.ask-widget-close {
+  width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface);
+  color: var(--ink-2); display: flex; align-items: center; justify-content: center; cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.ask-widget-close:hover { background: var(--surface-2); color: var(--ink); }
+
+@media (max-width: 520px) {
+  .ask-widget-panel { width: 100vw; }
+}
+
+/* Mascot (src/components/Mascot.tsx) -- the only place its supporting CSS lives, since this
+   file is its sole Phase-1 consumer (the FAB icon, the greeting bubble, and AskJanMitraContent's
+   loading/empty/success moments). Now a real cropped-and-background-removed photo of the
+   character the user supplied, not a hand-drawn SVG -- so the animations below work with a
+   raster <img>, not currentColor/SVG children like the first pass had. */
+.mascot { flex-shrink: 0; }
+
+/* Listening: a soft pulsing glow that follows the character's own silhouette (drop-shadow
+   respects the PNG's alpha channel, unlike a box-shadow ring which would draw a generic
+   rectangle/oval around a non-square portrait crop) -- same established technique already used
+   for the auth panel's logo glow elsewhere in this app, and the same blue-to-green "AI is
+   listening" color language as .ask-fab-breathe above. */
+.mascot-listening {
+  animation: mascot-listening-glow 1.4s ease-in-out infinite;
+}
+@keyframes mascot-listening-glow {
+  0%, 100% { filter: drop-shadow(0 0 0 color-mix(in srgb, var(--ai-to) 0%, transparent)); }
+  50% { filter: drop-shadow(0 0 10px color-mix(in srgb, var(--ai-to) 65%, transparent)); }
+}
+
+/* Success: a brief settle-in pop when the pose swaps to the thumbs-up/checkmark image. */
+.mascot-success { animation: mascot-success-pop 0.4s var(--ease-out); }
+@keyframes mascot-success-pop {
+  0% { transform: scale(0.8); }
+  60% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot-listening, .mascot-success { animation: none; }
+}

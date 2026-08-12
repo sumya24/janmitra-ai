@@ -1,0 +1,334 @@
+[
+  {
+    "record_id": "PB_PATIALA_WASTE_SOLID_WASTE",
+    "service_id": "WASTE_SOLID_WASTE_PATIALA",
+    "service_name": "Solid Waste Collection & Sanitation Complaints",
+    "sub_service": "Collection & disposal of solid waste",
+    "problem_type": "Garbage not collected / solid waste not removed",
+    "service_category": "WASTE_SANITATION",
+    "state": "Punjab",
+    "district": "Patiala",
+    "city": "Patiala",
+    "municipality": "Municipal Corporation Patiala",
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "CITY",
+    "department": "Health Branch, Municipal Corporation Patiala",
+    "authority": "Sanitary Inspector (S.I.)",
+    "description": "Citizens can report uncollected garbage or request solid waste collection/disposal. This source states two different figures that should not be conflated: the Citizen Charter's own Service Standard (2 working days) and the Grievance Redress Mechanism's nodal-officer norm (13 days) -- notably slower than the service standard, which this record reports honestly rather than picking one. Unlike Mohali's charter, this Patiala document's Right to Service Act table does not include a solid-waste entry, so no separate statutory SLA is claimed here.",
+    "procedure": "Register a complaint via: (1) the Municipal Corporation's toll-free number 1800-180-2808 (complaint centre works 9:00 AM-5:00 PM on working days; a unique Complaint ID is generated and sent by SMS, with a further SMS on resolution); (2) the 'M-SEWA' Android mobile app (developed by the Punjab Government -- search on Google Play Store, register with email/mobile/password, then file complaints by category); (3) the online Punjab Grievance Redressal System (PGRS) portal at https://connect.punjab.gov.in/; (4) the Department of Local Government Punjab's state-wide toll-free 1800-1800-0172; or (5) in person at the Complaint Centre, Municipal Corporation Office, Moti Bagh, Patiala-147001 (working hours 9:00 AM-5:00 PM, excluding public holidays).",
+    "required_information": [
+      "Locality / address of the uncollected garbage"
+    ],
+    "required_documents": [],
+    "sla": "Citizen Charter Service Standard: 2 working days for 'Collection & Disposal of Solid Waste' (Section 2.3). Grievance Redress Mechanism (Section 3.3, Table-1) nodal-officer norm for Sanitation complaints: 13 days.",
+    "expected_response_time": null,
+    "expected_resolution_time": "2 days (Citizen Charter service standard) / 13 days (internal GRM nodal-officer norm)",
+    "complaint_channel": [
+      "Toll-free 1800-180-2808 (Municipal Corporation Patiala)",
+      "Toll-free 1800-1800-0172 (Department of Local Government, Punjab)",
+      "M-SEWA mobile app (Android, Punjab Government)",
+      "Online: Punjab Grievance Redressal System (PGRS) portal, https://connect.punjab.gov.in/",
+      "In person: Complaint Centre, Municipal Corporation Office, Moti Bagh, Patiala-147001"
+    ],
+    "contact_information": "Sanitation nodal officer (per Table-1): Sh. Navinder Singh, Health Officer. Phone number not listed for this row in the source document. General Health Branch contact: Sh. Navinder Singh, Health Officer, mobile 9872920042 (per Section 2.5 work-area listing).",
+    "escalation_procedure": "This document does not provide a multi-level (1st/2nd/3rd/4th) escalation ladder for sanitation complaints, unlike Mohali's charter -- its Table of Contents has no equivalent 'Level of Responsibility for redress' section. The only escalation information stated is that 'Pending complaints of all categories will be monitored by the Secretary' (Section 3.2b). No Right to Service Act entry exists for solid waste in this document's RTS table, so no statutory appellate authority is claimed for this category.",
+    "escalation_authority": "Nodal officer: Health Officer (Sh. Navinder Singh). Overall complaint-system oversight: Secretary, Municipal Corporation Patiala. No further per-level chain or statutory appellate authority is stated in this source for this category.",
+    "faq": [
+      {
+        "question": "How do I report uncollected garbage in Patiala?",
+        "answer": "Call the toll-free number 1800-180-2808, use the M-SEWA mobile app, file a complaint on the PGRS portal (connect.punjab.gov.in), or visit the Complaint Centre at Moti Bagh."
+      },
+      {
+        "question": "How long should it take to resolve?",
+        "answer": "The Citizen Charter's own service standard is 2 days, but the source document's grievance-system nodal-officer norm for sanitation is stated as 13 days -- these two figures are genuinely different in the source and both are reported here rather than picking one."
+      }
+    ],
+    "citizen_guidance": "Keep the Complaint ID sent to you by SMS to track status. If not resolved, there is no documented multi-level appeal path in this source beyond the Health Officer -- pending complaints are generally monitored by the Secretary.",
+    "source_id": "PB_PATIALA_CITIZEN_CHARTER",
+    "source_title": "Citizen Charter — Municipal Corporation Patiala",
+    "source_organization": "Municipal Corporation Patiala, Department of Local Government, Government of Punjab",
+    "source_url": "https://enigambackuprestore.blob.core.windows.net/securefilestructure/MC/Patiala/MCSubMenu/pdf/linkpdf_2_20_2025_45_862.CITIZEN%20CHARTER%20MCP.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-09T22:07:38+00:00",
+    "created_at": "2026-08-09T22:07:38+00:00"
+  },
+  {
+    "record_id": "PB_PATIALA_WATER_SUPPLY_SEWERAGE",
+    "service_id": "WATER_SUPPLY_SEWERAGE_PATIALA",
+    "service_name": "Water Supply & Sewerage Complaints",
+    "sub_service": "Water supply and sewerage complaints (general -- source does not separately itemize leakage vs. other complaint types)",
+    "problem_type": "Water supply or sewerage complaint (e.g. leakage, blockage, supply issue)",
+    "service_category": "WATER_DRAINAGE",
+    "state": "Punjab",
+    "district": "Patiala",
+    "city": "Patiala",
+    "municipality": "Municipal Corporation Patiala",
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "CITY",
+    "department": "Water Supply Branch / Engineering Branch (O&M), Municipal Corporation Patiala",
+    "authority": "Superintendent Engineer",
+    "description": "Citizens can report water supply or sewerage complaints. Note: unlike Mohali's charter, this Patiala document's Services Standards table lists water/sewerage timelines only for administrative service requests (new connection, disconnection, title change, reconnection -- 7-9 days each) and does not include a distinct 'leakage complaint' line item. The figure used here (4 days) comes instead from the Grievance Redress Mechanism table, which is specifically about complaint redress rather than service requests.",
+    "procedure": "Register a complaint via: (1) the Municipal Corporation's toll-free number 1800-180-2808; (2) the 'M-SEWA' Android mobile app; (3) the online PGRS portal at https://connect.punjab.gov.in/; (4) the state-wide toll-free 1800-1800-0172; or (5) in person at the Complaint Centre, Municipal Corporation Office, Moti Bagh, Patiala-147001.",
+    "required_information": [
+      "Locality / address of the water supply or sewerage issue"
+    ],
+    "required_documents": [],
+    "sla": "Grievance Redress Mechanism (Section 3.3, Table-1) nodal-officer norm for Water Supply and Sewerage complaints: 4 days. (Separately, the Citizen Charter's Services Standards table gives 7-9 working days for administrative water/sewerage service requests such as new connections, disconnections, and title changes -- a different category of request, not a leakage/fault complaint.)",
+    "expected_response_time": null,
+    "expected_resolution_time": "4 days (complaint redress, per GRM Table-1)",
+    "complaint_channel": [
+      "Toll-free 1800-180-2808 (Municipal Corporation Patiala)",
+      "Toll-free 1800-1800-0172 (Department of Local Government, Punjab)",
+      "M-SEWA mobile app (Android, Punjab Government)",
+      "Online: Punjab Grievance Redressal System (PGRS) portal, https://connect.punjab.gov.in/",
+      "In person: Complaint Centre, Municipal Corporation Office, Moti Bagh, Patiala-147001"
+    ],
+    "contact_information": "Water Supply & Sewerage nodal officers (per Table-1): Sh. Gurpreet Singh Walia, Superintendent Engineer, and Sh. Harkiran Singh, Superintendent Engineer. Phone numbers not listed for this row in the source document; Sh. Gurpreet Singh Walia's number is listed elsewhere in the source (Engineering Branch staff table) as 9915900007.",
+    "escalation_procedure": "This document provides no multi-level escalation ladder for water/sewerage complaints (no equivalent of Mohali's Section 3.4). Only the nodal-officer contacts above and the general statement that 'Pending complaints of all categories will be monitored by the Secretary' apply. The document's Right to Service Act table does separately cover water-connection administrative services (e.g. 'Approval of Water Disconnection/Reconnection' -- 7 days, Designated Officer: Joint Commissioner, First Appellate Authority: Deputy Commissioner, Patiala), but that is a distinct service category from a leakage/fault complaint and is not the SLA for this record.",
+    "escalation_authority": "Nodal officers: Superintendent Engineers (Sh. Gurpreet Singh Walia / Sh. Harkiran Singh). Overall complaint-system oversight: Secretary, Municipal Corporation Patiala. No statutory appellate chain is stated for water/sewerage fault complaints specifically in this source (the RTS Act table's Deputy Commissioner appellate authority applies only to the separate administrative water-connection services it lists).",
+    "faq": [
+      {
+        "question": "Is a water leak complaint the same as applying for a new water connection, for SLA purposes?",
+        "answer": "No -- this source states different timelines for the two. New connections/disconnections/title changes take 7-9 working days under the Services Standards table; an ongoing leak/sewerage complaint is handled under the Grievance Redress Mechanism with a 4-day nodal-officer norm."
+      }
+    ],
+    "citizen_guidance": "For an active leak or sewerage problem, use the toll-free number, M-SEWA app, or PGRS portal (not the new-connection process) -- the source's applicable norm for this is 4 days.",
+    "source_id": "PB_PATIALA_CITIZEN_CHARTER",
+    "source_title": "Citizen Charter — Municipal Corporation Patiala",
+    "source_organization": "Municipal Corporation Patiala, Department of Local Government, Government of Punjab",
+    "source_url": "https://enigambackuprestore.blob.core.windows.net/securefilestructure/MC/Patiala/MCSubMenu/pdf/linkpdf_2_20_2025_45_862.CITIZEN%20CHARTER%20MCP.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-09T22:07:38+00:00",
+    "created_at": "2026-08-09T22:07:38+00:00"
+  },
+  {
+    "record_id": "PB_PATIALA_ROADS_CIVIL_WORKS",
+    "service_id": "ROADS_CIVIL_WORKS_PATIALA",
+    "service_name": "Civil Works – Road & Park Complaints",
+    "sub_service": "Management of civil works (roads, parks etc.) and resolution of related citizen complaints/grievances",
+    "problem_type": "Road damage / pothole / other civil-works-related complaint (roads, parks, and general municipal civil works)",
+    "service_category": "ROADS_POTHOLES",
+    "state": "Punjab",
+    "district": "Patiala",
+    "city": "Patiala",
+    "municipality": "Municipal Corporation Patiala",
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "CITY",
+    "department": "Engineering Branch (Civil), Municipal Corporation Patiala",
+    "authority": "Junior Engineer (J.E.) / Assistant Corporation Engineer (Civil)",
+    "description": "Citizens can report road damage or other civil-works issues. This source gives three distinct figures under the same Civil Works row that apply to different sub-activities and must not be conflated: 15 days for general civil-works management, 7 days for park/plantation management, and 7 days specifically for 'Resolution of Complaints & Grievances received from citizens' -- the last of these is used here as the citizen-facing complaint SLA. No Grievance Redress Mechanism Table-1 row exists for this category in the extracted source (Table-1 covers only Sanitation, Street Light, Water Supply & Sewerage, and Horticulture), and no Right to Service Act entry covers roads/potholes either.",
+    "procedure": "Register a complaint via: (1) the Municipal Corporation's toll-free number 1800-180-2808; (2) the 'M-SEWA' Android mobile app; (3) the online PGRS portal at https://connect.punjab.gov.in/; (4) the state-wide toll-free 1800-1800-0172; or (5) in person at the Complaint Centre, Municipal Corporation Office, Moti Bagh, Patiala-147001.",
+    "required_information": [
+      "Locality / address of the road damage or civil-works issue"
+    ],
+    "required_documents": [],
+    "sla": "Citizen Charter Service Standard (Section 2.3, Civil Works row): 'Resolution of Complaints & Grievances received from citizens' -- 7 days. (The same row separately states 15 days for general civil-works management and 7 days for park/plantation management -- different sub-activities, not this complaint SLA.)",
+    "expected_response_time": null,
+    "expected_resolution_time": "7 days",
+    "complaint_channel": [
+      "Toll-free 1800-180-2808 (Municipal Corporation Patiala)",
+      "Toll-free 1800-1800-0172 (Department of Local Government, Punjab)",
+      "M-SEWA mobile app (Android, Punjab Government)",
+      "Online: Punjab Grievance Redressal System (PGRS) portal, https://connect.punjab.gov.in/",
+      "In person: Complaint Centre, Municipal Corporation Office, Moti Bagh, Patiala-147001"
+    ],
+    "contact_information": "No dedicated 'Roads/Civil Works' nodal officer is listed in the GRM Table-1. Named Engineering Branch staff (per Section 2.5) include Sh. Harkiran Pal Singh, Superintending Engineer, mobile 7499600003, and Sh. Gurpreet Singh Walia, Superintendent Engineer (Civil), mobile 9915900007.",
+    "escalation_procedure": "No multi-level escalation ladder or Right to Service Act entry exists for this category in this source. The only general statement is that 'Pending complaints of all categories will be monitored by the Secretary' (Section 3.2b).",
+    "escalation_authority": "No documented per-level chain for this category in this source; overall oversight: Secretary, Municipal Corporation Patiala.",
+    "faq": [
+      {
+        "question": "How long should a pothole/road complaint take to resolve in Patiala?",
+        "answer": "The Citizen Charter states 7 days for 'Resolution of Complaints & Grievances received from citizens' under Civil Works -- distinct from the 15-day figure for general civil-works project management, which covers different work."
+      }
+    ],
+    "citizen_guidance": "Use the toll-free number, M-SEWA app, or PGRS portal to log the complaint with the exact road/location; the Engineering Branch (Civil) handles it.",
+    "source_id": "PB_PATIALA_CITIZEN_CHARTER",
+    "source_title": "Citizen Charter — Municipal Corporation Patiala",
+    "source_organization": "Municipal Corporation Patiala, Department of Local Government, Government of Punjab",
+    "source_url": "https://enigambackuprestore.blob.core.windows.net/securefilestructure/MC/Patiala/MCSubMenu/pdf/linkpdf_2_20_2025_45_862.CITIZEN%20CHARTER%20MCP.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-09T22:07:38+00:00",
+    "created_at": "2026-08-09T22:07:38+00:00"
+  },
+  {
+    "record_id": "PB_PATIALA_STREETLIGHTS_REPAIR",
+    "service_id": "STREETLIGHTS_PATIALA",
+    "service_name": "Street Light Repair / Not Working Complaints",
+    "sub_service": "Complaints regarding street light not working",
+    "problem_type": "Street light not working / damaged",
+    "service_category": "STREETLIGHTS",
+    "state": "Punjab",
+    "district": "Patiala",
+    "city": "Patiala",
+    "municipality": "Municipal Corporation Patiala",
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "CITY",
+    "department": "Engineering Branch (Electrical), Municipal Corporation Patiala",
+    "authority": "Junior Engineer (J.E.) / Assistant Corporation Engineer (Electrical)",
+    "description": "Citizens can report a street light that is not working. This source states two figures: the Citizen Charter Service Standard (2 working days) and the Grievance Redress Mechanism nodal-officer norm (4 days) -- notably slower than the service standard, reported honestly rather than reconciled. No Right to Service Act entry covers street lights in this document.",
+    "procedure": "Register a complaint via: (1) the Municipal Corporation's toll-free number 1800-180-2808; (2) the 'M-SEWA' Android mobile app; (3) the online PGRS portal at https://connect.punjab.gov.in/; (4) the state-wide toll-free 1800-1800-0172; or (5) in person at the Complaint Centre, Municipal Corporation Office, Moti Bagh, Patiala-147001.",
+    "required_information": [
+      "Locality / pole number / nearest landmark of the non-working street light"
+    ],
+    "required_documents": [],
+    "sla": "Citizen Charter Service Standard: 2 working days for 'Complaints regarding Street Light not working' (Section 2.3). Grievance Redress Mechanism (Table-1) nodal-officer norm: 4 days.",
+    "expected_response_time": null,
+    "expected_resolution_time": "2 days (Citizen Charter service standard) / 4 days (internal GRM nodal-officer norm)",
+    "complaint_channel": [
+      "Toll-free 1800-180-2808 (Municipal Corporation Patiala)",
+      "Toll-free 1800-1800-0172 (Department of Local Government, Punjab)",
+      "M-SEWA mobile app (Android, Punjab Government)",
+      "Online: Punjab Grievance Redressal System (PGRS) portal, https://connect.punjab.gov.in/",
+      "In person: Complaint Centre, Municipal Corporation Office, Moti Bagh, Patiala-147001"
+    ],
+    "contact_information": "Street Light nodal officer (per Table-1): Sh. Gurpreet Singh Walia, Superintendent Engineer, mobile 9915900007 (per Section 2.5 Engineering Branch listing).",
+    "escalation_procedure": "No multi-level escalation ladder or Right to Service Act entry exists for this category in this source. The only general statement is that 'Pending complaints of all categories will be monitored by the Secretary' (Section 3.2b).",
+    "escalation_authority": "Nodal officer: Superintendent Engineer (Sh. Gurpreet Singh Walia). Overall complaint-system oversight: Secretary, Municipal Corporation Patiala. No further per-level chain or statutory appellate authority is documented in this source for this category.",
+    "faq": [
+      {
+        "question": "How long should street light replacement take in Patiala?",
+        "answer": "The Citizen Charter's own service standard is 2 days; the grievance-system nodal-officer norm stated in the same document is 4 days."
+      }
+    ],
+    "citizen_guidance": "Include the pole number or nearest landmark when reporting to help the Electrical wing locate the exact light.",
+    "source_id": "PB_PATIALA_CITIZEN_CHARTER",
+    "source_title": "Citizen Charter — Municipal Corporation Patiala",
+    "source_organization": "Municipal Corporation Patiala, Department of Local Government, Government of Punjab",
+    "source_url": "https://enigambackuprestore.blob.core.windows.net/securefilestructure/MC/Patiala/MCSubMenu/pdf/linkpdf_2_20_2025_45_862.CITIZEN%20CHARTER%20MCP.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-09T22:07:38+00:00",
+    "created_at": "2026-08-09T22:07:38+00:00"
+  },
+  {
+    "record_id": "PB_PATIALA_WATER_NEW_CONNECTION",
+    "service_id": "WATER_NEW_CONNECTION_PATIALA",
+    "service_name": "New Water Connection",
+    "sub_service": "Application for a new water supply connection",
+    "problem_type": "Need to apply for a new water supply connection to a property",
+    "service_category": "WATER_DRAINAGE",
+    "state": "Punjab",
+    "district": "Patiala",
+    "city": "Patiala",
+    "municipality": "Municipal Corporation Patiala",
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "CITY",
+    "department": "Water Supply Branch / Engineering Branch (O&M), Municipal Corporation Patiala",
+    "authority": "Executive Engineer",
+    "description": "Citizens can apply for a new water supply connection. This is a distinct service from an ongoing leak/sewerage complaint (see WATER_SUPPLY_SEWERAGE_PATIALA). The Citizen Charter's Services Standards table states 9 working days for this service. Note: unlike Mohali's charter, Patiala's Right to Service Act table does NOT include a separate statutory entry for new connections specifically -- it covers 'Approval of Water Disconnection/Reconnection' (7 days) and 'Approval of Sewerage Disconnection/Reconnection' (9 days) as their own distinct, separately-timed services, but a brand-new connection is not itemized in that statutory table. Only the Citizen Charter's own 9-day service standard applies to this record -- no separate statutory RTS Act SLA is claimed here.",
+    "procedure": "The source document lists this service in its Services Standards table with a designated officer chain, but does not provide a specific numbered step-by-step application procedure the way it does for complaint registration. Citizens should apply through the Municipal Corporation's Water Supply Branch / Engineering Branch (O&M), Moti Bagh, Patiala-147001.",
+    "required_information": [],
+    "required_documents": [],
+    "sla": "Citizen Charter Service Standard: 9 working days (Section 2.3, 'New Water Connection' row). No separate Right to Service Act entry exists for this specific service (see description).",
+    "expected_response_time": null,
+    "expected_resolution_time": "9 days",
+    "complaint_channel": [
+      "Municipal Corporation Office, Water Supply Branch / Engineering Branch (O&M), Moti Bagh, Patiala-147001"
+    ],
+    "contact_information": "Designated officer chain for new connections (per Section 2.3 table): Clerk (Meter Reader) -> Junior Engineer -> Executive Engineer. Exact phone number not individually listed for this service in the source document.",
+    "escalation_procedure": "This document provides no multi-level statutory escalation ladder specific to new connections (only 'Change of Title' and 'Disconnection/Reconnection' appear in the Right to Service Act table, not new connections). The Services Standards table lists the responsible-officer progression for 'New Connection & Re-connection' as: Clerk (Meter Reader) -> Junior Engineer -> Executive Engineer. The only general statement beyond that is that 'Pending complaints of all categories will be monitored by the Secretary' (Section 3.2b).",
+    "escalation_authority": "Designated officer chain (Services Standards table, 'New Connection & Re-connection'): Clerk (Meter Reader) -> Junior Engineer -> Executive Engineer. No statutory RTS Act appellate authority applies to this specific service in this source.",
+    "faq": [
+      {
+        "question": "How long does a new water connection take in Patiala?",
+        "answer": "9 working days, per the Citizen Charter's own service standard. Unlike Mohali, Patiala's Right to Service Act table has no separate statutory entry for a brand-new connection specifically, so only this 9-day figure applies here."
+      },
+      {
+        "question": "What documents do I need?",
+        "answer": "The source document does not itemize a specific document checklist for this service -- it only states the timeline and responsible-officer chain. Confirm exact document requirements with the Water Supply Branch directly."
+      },
+      {
+        "question": "Is there a fee?",
+        "answer": "The source states generally that 'service recipients are expected to give complete and duly filled documents and the requisite fee (wherever required)' but does not state a specific amount for this service. Confirm the exact fee with the Water Supply Branch directly."
+      }
+    ],
+    "citizen_guidance": "Apply through the Water Supply Branch / Engineering Branch (O&M) at the Municipal Corporation office, Moti Bagh. Since no statutory RTS Act deadline applies to this specific service in Patiala (unlike Mohali), the 9-day Citizen Charter standard is the only documented commitment.",
+    "source_id": "PB_PATIALA_CITIZEN_CHARTER",
+    "source_title": "Citizen Charter — Municipal Corporation Patiala",
+    "source_organization": "Municipal Corporation Patiala, Department of Local Government, Government of Punjab",
+    "source_url": "https://enigambackuprestore.blob.core.windows.net/securefilestructure/MC/Patiala/MCSubMenu/pdf/linkpdf_2_20_2025_45_862.CITIZEN%20CHARTER%20MCP.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-10T12:28:22.416059+00:00",
+    "created_at": "2026-08-10T12:28:22.416059+00:00"
+  },
+  {
+    "record_id": "PB_PATIALA_WATER_NEW_SEWERAGE_CONNECTION",
+    "service_id": "WATER_NEW_SEWERAGE_CONNECTION_PATIALA",
+    "service_name": "New Sewerage Connection",
+    "sub_service": "Application for a new sewerage connection",
+    "problem_type": "Need to apply for a new sewerage connection to a property",
+    "service_category": "WATER_DRAINAGE",
+    "state": "Punjab",
+    "district": "Patiala",
+    "city": "Patiala",
+    "municipality": "Municipal Corporation Patiala",
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "CITY",
+    "department": "Water Supply Branch / Engineering Branch (O&M), Municipal Corporation Patiala",
+    "authority": "Executive Engineer",
+    "description": "Citizens can apply for a new sewerage connection. This is a distinct service from an ongoing leak/sewerage complaint (see WATER_SUPPLY_SEWERAGE_PATIALA). The Citizen Charter's Services Standards table states 9 working days for this service. Note: unlike Mohali's charter, Patiala's Right to Service Act table does NOT include a separate statutory entry for new connections specifically -- it covers 'Approval of Water Disconnection/Reconnection' (7 days) and 'Approval of Sewerage Disconnection/Reconnection' (9 days) as their own distinct, separately-timed services, but a brand-new connection is not itemized in that statutory table. Only the Citizen Charter's own 9-day service standard applies to this record -- no separate statutory RTS Act SLA is claimed here.",
+    "procedure": "The source document lists this service in its Services Standards table with a designated officer chain, but does not provide a specific numbered step-by-step application procedure the way it does for complaint registration. Citizens should apply through the Municipal Corporation's Water Supply Branch / Engineering Branch (O&M), Moti Bagh, Patiala-147001.",
+    "required_information": [],
+    "required_documents": [],
+    "sla": "Citizen Charter Service Standard: 9 working days (Section 2.3, 'New Sewerage Connection' row). No separate Right to Service Act entry exists for this specific service (see description).",
+    "expected_response_time": null,
+    "expected_resolution_time": "9 days",
+    "complaint_channel": [
+      "Municipal Corporation Office, Water Supply Branch / Engineering Branch (O&M), Moti Bagh, Patiala-147001"
+    ],
+    "contact_information": "Designated officer chain for new connections (per Section 2.3 table): Clerk (Meter Reader) -> Junior Engineer -> Executive Engineer. Exact phone number not individually listed for this service in the source document.",
+    "escalation_procedure": "This document provides no multi-level statutory escalation ladder specific to new connections (only 'Change of Title' and 'Disconnection/Reconnection' appear in the Right to Service Act table, not new connections). The Services Standards table lists the responsible-officer progression for 'New Connection & Re-connection' as: Clerk (Meter Reader) -> Junior Engineer -> Executive Engineer. The only general statement beyond that is that 'Pending complaints of all categories will be monitored by the Secretary' (Section 3.2b).",
+    "escalation_authority": "Designated officer chain (Services Standards table, 'New Connection & Re-connection'): Clerk (Meter Reader) -> Junior Engineer -> Executive Engineer. No statutory RTS Act appellate authority applies to this specific service in this source.",
+    "faq": [
+      {
+        "question": "How long does a new sewerage connection take in Patiala?",
+        "answer": "9 working days, per the Citizen Charter's own service standard. Unlike Mohali, Patiala's Right to Service Act table has no separate statutory entry for a brand-new connection specifically, so only this 9-day figure applies here."
+      },
+      {
+        "question": "What documents do I need?",
+        "answer": "The source document does not itemize a specific document checklist for this service -- it only states the timeline and responsible-officer chain. Confirm exact document requirements with the Water Supply Branch directly."
+      },
+      {
+        "question": "Is there a fee?",
+        "answer": "The source states generally that 'service recipients are expected to give complete and duly filled documents and the requisite fee (wherever required)' but does not state a specific amount for this service. Confirm the exact fee with the Water Supply Branch directly."
+      }
+    ],
+    "citizen_guidance": "Apply through the Water Supply Branch / Engineering Branch (O&M) at the Municipal Corporation office, Moti Bagh. Since no statutory RTS Act deadline applies to this specific service in Patiala (unlike Mohali), the 9-day Citizen Charter standard is the only documented commitment.",
+    "source_id": "PB_PATIALA_CITIZEN_CHARTER",
+    "source_title": "Citizen Charter — Municipal Corporation Patiala",
+    "source_organization": "Municipal Corporation Patiala, Department of Local Government, Government of Punjab",
+    "source_url": "https://enigambackuprestore.blob.core.windows.net/securefilestructure/MC/Patiala/MCSubMenu/pdf/linkpdf_2_20_2025_45_862.CITIZEN%20CHARTER%20MCP.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-10T12:28:22.416059+00:00",
+    "created_at": "2026-08-10T12:28:22.416059+00:00"
+  }
+]

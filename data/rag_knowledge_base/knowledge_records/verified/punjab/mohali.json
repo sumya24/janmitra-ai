@@ -1,0 +1,346 @@
+[
+  {
+    "record_id": "PB_MOHALI_WASTE_SOLID_WASTE",
+    "service_id": "WASTE_SOLID_WASTE_MOHALI",
+    "service_name": "Solid Waste Collection & Sanitation Complaints",
+    "sub_service": "Collection & disposal of solid waste / removal of solid waste from streets and roads",
+    "problem_type": "Garbage not collected / solid waste not removed from a street or road",
+    "service_category": "WASTE_SANITATION",
+    "state": "Punjab",
+    "district": "S.A.S. Nagar",
+    "city": "Sahibzada Ajit Singh Nagar (Mohali)",
+    "municipality": "Municipal Corporation, S.A.S. Nagar (Mohali)",
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "CITY",
+    "department": "Sanitation Branch (Health Branch), Municipal Corporation, S.A.S. Nagar (Mohali)",
+    "authority": "Sanitary Inspector (S.I.)",
+    "description": "Citizens can report uncollected garbage or request removal of solid waste from streets/roads. Mohali's Citizen Charter states three separate figures for this service that should not be conflated: the Citizen Charter's own Service Standard is 2 working days for 'Collection & disposal of Solid Waste'; the Punjab Right to Service Act 2011 sets a statutory 2-day limit for 'Removal of Solid waste from streets/roads' (Service No. 82) with its own designated/appellate chain; and the internal Grievance Redress Mechanism (toll-free/app system) has a 1-day nodal-officer norm.",
+    "procedure": "Register a complaint via: (1) the Municipal Corporation's toll-free number 1800-137-0007 (operational since December 2013; complaint centre works 9:30 AM-4:00 PM on working days) -- a unique Complaint ID is generated and sent by SMS, and a further SMS confirms resolution; (2) the 'MC CRAMAT' Android mobile app (search on Google Play Store, register with email/mobile/password, then file complaints with photo and category); (3) the Department of Local Government Punjab's state-wide toll-free number 1800-1800-0172; or (4) in person at the Complaint Centre, Municipal Corporation Office, Sector 68, S.A.S. Nagar (working hours 9:00 AM-4:00 PM, excluding public holidays).",
+    "required_information": [
+      "Locality / ward / address of the uncollected garbage"
+    ],
+    "required_documents": [],
+    "sla": "Citizen Charter Service Standard: 2 working days for 'Collection & disposal of Solid Waste' (Section 2.3). Punjab Right to Service Act 2011, Service No. 82 ('Removal of Solid waste from streets/roads'): 2 days, statutory. Grievance Redress Mechanism (Section 3.3, Table-2) nodal-officer norm for Sanitation complaints: 1 day.",
+    "expected_response_time": null,
+    "expected_resolution_time": "2 days (Citizen Charter service standard and RTS Act statutory limit) / 1 day (internal GRM nodal-officer norm)",
+    "complaint_channel": [
+      "Toll-free 1800-137-0007 (Municipal Corporation, S.A.S. Nagar)",
+      "Toll-free 1800-1800-0172 (Department of Local Government, Punjab)",
+      "MC CRAMAT mobile app (Android)",
+      "In person: Complaint Centre, Municipal Corporation Office, Sector 68, S.A.S. Nagar"
+    ],
+    "contact_information": "Sanitation nodal officer (per Citizen Charter Table-2): Sh. Sukhwinder Singh, A.C.E., mobile 9888201787. General complaint centre toll-free: 1800-137-0007.",
+    "escalation_procedure": "Two independent escalation paths are stated in this source. (1) Statutory, under the Punjab Right to Service Act 2011 (Service No. 82): Designated Officer Executive Officer/CMC -> First Appellate Authority: Sub Divisional Magistrate (SDM) of the concerned district -> Second Appellate Authority: Deputy Commissioner of the concerned district. (2) Internal Grievance Redress Mechanism escalation ladder for Sanitation/Public Health complaints (Section 3.4, Table 3): Level 1 - Sanitary Inspector (S.I.), 1-day time norm -> Level 2 - Chief Sanitary Inspector (C.S.I.), 1 day -> Level 3 - Medical Officer of Health (M.O.H.), 1 day -> Level 4 - Commissioner, 1 day.",
+    "escalation_authority": "Statutory (RTS Act 2011): Executive Officer/CMC -> SDM (concerned district) -> Deputy Commissioner (concerned district). Internal GRM ladder: S.I. -> C.S.I. -> M.O.H. -> Commissioner.",
+    "faq": [
+      {
+        "question": "How do I report uncollected garbage in Mohali?",
+        "answer": "Call the Municipal Corporation's toll-free number 1800-137-0007, use the MC CRAMAT mobile app, or visit the Complaint Centre at the Municipal Corporation office, Sector 68. You will get a Complaint ID by SMS to track status."
+      },
+      {
+        "question": "How long should it take to resolve?",
+        "answer": "The Citizen Charter's own service standard and the Punjab Right to Service Act both state 2 days; the internal grievance-system nodal-officer norm is 1 day."
+      },
+      {
+        "question": "What are the office/complaint-centre working hours in Mohali?",
+        "answer": "The Municipal Corporation's general office hours are 9:00 AM to 4:00 PM, excluding public holidays (Citizen Charter Section 3.1). The toll-free Complaint Centre specifically operates 9:30 AM to 4:00 PM on working days -- a slightly different window stated separately in the toll-free number's own operating instructions."
+      }
+    ],
+    "citizen_guidance": "Keep the Complaint ID sent to you by SMS -- you can check status by calling the toll-free number and quoting it.",
+    "source_id": "PB_MOHALI_CITIZEN_CHARTER",
+    "source_title": "Citizen Charter — Municipal Corporation, Sahibzada Ajit Singh Nagar (Mohali) 2016-17",
+    "source_organization": "Municipal Corporation, Sahibzada Ajit Singh Nagar (Mohali), Department of Local Government, Government of Punjab",
+    "source_url": "https://e-nigam.punjab.gov.in/MCData/Mohali/CITIZENCHARTER.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": "2016-01-01",
+    "last_updated": null,
+    "retrieved_at": "2026-08-09T22:07:38+00:00",
+    "created_at": "2026-08-09T22:07:38+00:00"
+  },
+  {
+    "record_id": "PB_MOHALI_WATER_SUPPLY_SEWERAGE",
+    "service_id": "WATER_SUPPLY_SEWERAGE_MOHALI",
+    "service_name": "Water Supply & Sewerage Complaints",
+    "sub_service": "Complaints regarding leakage of water/sewerage; water pipe leakage / sewerage blockage / overflow",
+    "problem_type": "Water pipeline leakage, sewerage blockage, or sewerage overflow",
+    "service_category": "WATER_DRAINAGE",
+    "state": "Punjab",
+    "district": "S.A.S. Nagar",
+    "city": "Sahibzada Ajit Singh Nagar (Mohali)",
+    "municipality": "Municipal Corporation, S.A.S. Nagar (Mohali)",
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "CITY",
+    "department": "Water Supply & Sewerage Branch (Public Health wing), Municipal Corporation, S.A.S. Nagar (Mohali)",
+    "authority": "Junior Engineer (J.E.)",
+    "description": "Citizens can report water pipeline leakage or sewerage blockage/overflow. As with solid waste, three different figures apply depending on which system is used: the Citizen Charter Service Standard (3 days), the Punjab Right to Service Act 2011's statutory limit for this specific complaint type (24 hours -- notably faster), and the internal Grievance Redress Mechanism nodal-officer norm (3 days).",
+    "procedure": "Register a complaint via: (1) the Municipal Corporation's toll-free number 1800-137-0007; (2) the 'MC CRAMAT' Android mobile app; (3) the state-wide toll-free 1800-1800-0172; or (4) in person at the Complaint Centre, Municipal Corporation Office, Sector 68, S.A.S. Nagar.",
+    "required_information": [
+      "Locality / ward / address of the leakage or blockage"
+    ],
+    "required_documents": [],
+    "sla": "Citizen Charter Service Standard: 3 days for 'Complaints regarding leakage of Water/Sewerage' (Section 2.3). Punjab Right to Service Act 2011, Service No. 84 ('Water pipes leakages/sewerage/Blocked/overflow'): 24 hours, statutory. Grievance Redress Mechanism (Table-2) nodal-officer norm: 3 days.",
+    "expected_response_time": null,
+    "expected_resolution_time": "24 hours (RTS Act statutory limit) / 3 days (Citizen Charter service standard and GRM nodal-officer norm)",
+    "complaint_channel": [
+      "Toll-free 1800-137-0007 (Municipal Corporation, S.A.S. Nagar)",
+      "Toll-free 1800-1800-0172 (Department of Local Government, Punjab)",
+      "MC CRAMAT mobile app (Android)",
+      "In person: Complaint Centre, Municipal Corporation Office, Sector 68, S.A.S. Nagar"
+    ],
+    "contact_information": "Water Supply & Sewerage nodal officer (per Table-2): Sh. Harprit Singh, A.C.E., mobile 9988802389. Zone-wise Junior Engineers are also individually listed in the source document's work-area distribution table.",
+    "escalation_procedure": "Two independent escalation paths are stated. (1) Statutory, under the Punjab Right to Service Act 2011 (Service No. 84): Designated Officer Executive Officer/CMC -> First Appellate Authority: SDM of the concerned district -> Second Appellate Authority: Deputy Commissioner of the concerned district. (2) Internal Grievance Redress Mechanism escalation ladder for Water Supply & Sewerage (Table 3): Level 1 - Junior Engineer, 3-day time norm -> Level 2 - A.C.E., 2 days -> Level 3 - C.E., 1 day -> Level 4 - Commissioner, 1 day.",
+    "escalation_authority": "Statutory (RTS Act 2011): Executive Officer/CMC -> SDM (concerned district) -> Deputy Commissioner (concerned district). Internal GRM ladder: Junior Engineer -> A.C.E. -> C.E. -> Commissioner.",
+    "faq": [
+      {
+        "question": "How fast should a water leak be fixed in Mohali?",
+        "answer": "The Punjab Right to Service Act 2011 sets a statutory limit of 24 hours for this specific complaint. The Citizen Charter's own service standard and the internal grievance system both state 3 days."
+      },
+      {
+        "question": "What are the office/complaint-centre working hours in Mohali?",
+        "answer": "The Municipal Corporation's general office hours are 9:00 AM to 4:00 PM, excluding public holidays (Citizen Charter Section 3.1). The toll-free Complaint Centre specifically operates 9:30 AM to 4:00 PM on working days -- a slightly different window stated separately in the toll-free number's own operating instructions."
+      }
+    ],
+    "citizen_guidance": "If the internal complaint system's 3-day norm is missed, you have a distinct statutory right under the Punjab Right to Service Act 2011 (24-hour limit) with its own appeal route to the SDM and then the Deputy Commissioner.",
+    "source_id": "PB_MOHALI_CITIZEN_CHARTER",
+    "source_title": "Citizen Charter — Municipal Corporation, Sahibzada Ajit Singh Nagar (Mohali) 2016-17",
+    "source_organization": "Municipal Corporation, Sahibzada Ajit Singh Nagar (Mohali), Department of Local Government, Government of Punjab",
+    "source_url": "https://e-nigam.punjab.gov.in/MCData/Mohali/CITIZENCHARTER.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": "2016-01-01",
+    "last_updated": null,
+    "retrieved_at": "2026-08-09T22:07:38+00:00",
+    "created_at": "2026-08-09T22:07:38+00:00"
+  },
+  {
+    "record_id": "PB_MOHALI_ROADS_CIVIL_WORKS",
+    "service_id": "ROADS_CIVIL_WORKS_MOHALI",
+    "service_name": "Civil Works – Road & Park Complaints",
+    "sub_service": "Management of civil works (roads, parks etc.) and resolution of related citizen complaints/grievances",
+    "problem_type": "Road damage / pothole / other civil-works-related complaint (roads, parks, and general municipal civil works)",
+    "service_category": "ROADS_POTHOLES",
+    "state": "Punjab",
+    "district": "S.A.S. Nagar",
+    "city": "Sahibzada Ajit Singh Nagar (Mohali)",
+    "municipality": "Municipal Corporation, S.A.S. Nagar (Mohali)",
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "CITY",
+    "department": "Civil Works / Engineering Branch, Municipal Corporation, S.A.S. Nagar (Mohali)",
+    "authority": "Junior Engineer (J.E.)",
+    "description": "Citizens can report road damage or other civil-works issues (this category also covers parks and general municipal civil works, not roads exclusively). Note: unlike solid waste, street light, and water leakage, the source document lists no separate Punjab Right to Service Act entry for roads/potholes -- only the Citizen Charter's own service standard and the internal grievance escalation ladder apply.",
+    "procedure": "Register a complaint via: (1) the Municipal Corporation's toll-free number 1800-137-0007; (2) the 'MC CRAMAT' Android mobile app; (3) the state-wide toll-free 1800-1800-0172; or (4) in person at the Complaint Centre, Municipal Corporation Office, Sector 68, S.A.S. Nagar.",
+    "required_information": [
+      "Locality / ward / address of the road damage or civil-works issue"
+    ],
+    "required_documents": [],
+    "sla": "Citizen Charter Service Standard (Section 2.3, Civil Works row): 'Resolution of Complaints & Grievances received from citizens' -- 7 days. (The same row also states 7 days for general civil-works management and park management.)",
+    "expected_response_time": null,
+    "expected_resolution_time": "7 days",
+    "complaint_channel": [
+      "Toll-free 1800-137-0007 (Municipal Corporation, S.A.S. Nagar)",
+      "Toll-free 1800-1800-0172 (Department of Local Government, Punjab)",
+      "MC CRAMAT mobile app (Android)",
+      "In person: Complaint Centre, Municipal Corporation Office, Sector 68, S.A.S. Nagar"
+    ],
+    "contact_information": "No single named 'Roads/Civil Works' nodal officer is listed in the GRM Table-2 (that table covers Sanitation, Street Light, Water Supply, Horticulture, Encroachment, and 'Others' only); zone-wise Junior Engineers for civil works are individually listed in the source document's work-area distribution table (Section 2.5).",
+    "escalation_procedure": "No statutory Right to Service Act entry exists for this category in this source. The internal Grievance Redress Mechanism escalation ladder (Table 3, Civil Works row) applies: Level 1 - Junior Engineer, 7-day time norm -> Level 2 - A.C.E., 5 days -> Level 3 - C.E., 3 days -> Level 4 - Commissioner, 2 days.",
+    "escalation_authority": "Internal GRM ladder only (no RTS Act entry for this category): Junior Engineer -> A.C.E. -> C.E. -> Commissioner.",
+    "faq": [
+      {
+        "question": "Is there a legal (Right to Service Act) deadline for pothole repair in Mohali?",
+        "answer": "Not according to this source -- the Right to Service Act table in Mohali's Citizen Charter does not include a roads/potholes entry. Only the Citizen Charter's own 7-day service standard and internal escalation ladder apply."
+      },
+      {
+        "question": "What are the office/complaint-centre working hours in Mohali?",
+        "answer": "The Municipal Corporation's general office hours are 9:00 AM to 4:00 PM, excluding public holidays (Citizen Charter Section 3.1). The toll-free Complaint Centre specifically operates 9:30 AM to 4:00 PM on working days -- a slightly different window stated separately in the toll-free number's own operating instructions."
+      }
+    ],
+    "citizen_guidance": "If your complaint is not resolved within 7 days, escalate through the same toll-free number or MC CRAMAT app -- the internal ladder moves the complaint from Junior Engineer up to A.C.E., then C.E., then the Commissioner.",
+    "source_id": "PB_MOHALI_CITIZEN_CHARTER",
+    "source_title": "Citizen Charter — Municipal Corporation, Sahibzada Ajit Singh Nagar (Mohali) 2016-17",
+    "source_organization": "Municipal Corporation, Sahibzada Ajit Singh Nagar (Mohali), Department of Local Government, Government of Punjab",
+    "source_url": "https://e-nigam.punjab.gov.in/MCData/Mohali/CITIZENCHARTER.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": "2016-01-01",
+    "last_updated": null,
+    "retrieved_at": "2026-08-09T22:07:38+00:00",
+    "created_at": "2026-08-09T22:07:38+00:00"
+  },
+  {
+    "record_id": "PB_MOHALI_STREETLIGHTS_REPAIR",
+    "service_id": "STREETLIGHTS_MOHALI",
+    "service_name": "Street Light Repair / Not Working Complaints",
+    "sub_service": "Complaints regarding street light not working",
+    "problem_type": "Street light not working / damaged",
+    "service_category": "STREETLIGHTS",
+    "state": "Punjab",
+    "district": "S.A.S. Nagar",
+    "city": "Sahibzada Ajit Singh Nagar (Mohali)",
+    "municipality": "Municipal Corporation, S.A.S. Nagar (Mohali)",
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "CITY",
+    "department": "Street Light wing, Engineering Branch, Municipal Corporation, S.A.S. Nagar (Mohali)",
+    "authority": "Junior Engineer (J.E.)",
+    "description": "Citizens can report a street light that is not working. As with solid waste and water leakage complaints, three figures apply: the Citizen Charter Service Standard (10 days), the Punjab Right to Service Act 2011 statutory limit for street light replacement (also 10 days, with its own appeal chain), and the internal Grievance Redress Mechanism nodal-officer norm (2 days).",
+    "procedure": "Register a complaint via: (1) the Municipal Corporation's toll-free number 1800-137-0007; (2) the 'MC CRAMAT' Android mobile app; (3) the state-wide toll-free 1800-1800-0172; or (4) in person at the Complaint Centre, Municipal Corporation Office, Sector 68, S.A.S. Nagar.",
+    "required_information": [
+      "Locality / pole number / nearest landmark of the non-working street light"
+    ],
+    "required_documents": [],
+    "sla": "Citizen Charter Service Standard: 10 days for 'Complaints regarding Street Light not working' (Section 2.3). Punjab Right to Service Act 2011, Service No. 83 ('Replacement of Street lights'): 10 days, statutory. Grievance Redress Mechanism (Table-2) nodal-officer norm: 2 days.",
+    "expected_response_time": null,
+    "expected_resolution_time": "10 days (Citizen Charter service standard and RTS Act statutory limit) / 2 days (internal GRM nodal-officer norm)",
+    "complaint_channel": [
+      "Toll-free 1800-137-0007 (Municipal Corporation, S.A.S. Nagar)",
+      "Toll-free 1800-1800-0172 (Department of Local Government, Punjab)",
+      "MC CRAMAT mobile app (Android)",
+      "In person: Complaint Centre, Municipal Corporation Office, Sector 68, S.A.S. Nagar"
+    ],
+    "contact_information": "Street Light nodal officer (per Table-2): Sh. Kamaldeep Singh, A.C.E., mobile 9646300021 (also listed as Commissioner-office contact 0172-5044911 area / Joint Commissioner 0172-5044910 for general escalation). Zone-wise Junior Engineers for street light are individually listed in the source document's work-area distribution table.",
+    "escalation_procedure": "Two independent escalation paths are stated. (1) Statutory, under the Punjab Right to Service Act 2011 (Service No. 83): Designated Officer Executive Officer/CMC -> First Appellate Authority: SDM of the concerned district -> Second Appellate Authority: Deputy Commissioner of the concerned district. (2) Internal Grievance Redress Mechanism escalation ladder for Street Light complaints (Table 3): Level 1 - Junior Engineer, 3-day time norm -> Level 2 - A.C.E., 2 days -> Level 3 - C.E., 1 day -> Level 4 - Commissioner, 1 day.",
+    "escalation_authority": "Statutory (RTS Act 2011): Executive Officer/CMC -> SDM (concerned district) -> Deputy Commissioner (concerned district). Internal GRM ladder: Junior Engineer -> A.C.E. -> C.E. -> Commissioner.",
+    "faq": [
+      {
+        "question": "How long should street light replacement take in Mohali?",
+        "answer": "Both the Citizen Charter service standard and the Punjab Right to Service Act state 10 days. The internal grievance-system nodal-officer norm (a faster informal target) is 2 days."
+      },
+      {
+        "question": "What are the office/complaint-centre working hours in Mohali?",
+        "answer": "The Municipal Corporation's general office hours are 9:00 AM to 4:00 PM, excluding public holidays (Citizen Charter Section 3.1). The toll-free Complaint Centre specifically operates 9:30 AM to 4:00 PM on working days -- a slightly different window stated separately in the toll-free number's own operating instructions."
+      }
+    ],
+    "citizen_guidance": "Include the pole number or nearest landmark when reporting -- it helps the Junior Engineer locate the exact light.",
+    "source_id": "PB_MOHALI_CITIZEN_CHARTER",
+    "source_title": "Citizen Charter — Municipal Corporation, Sahibzada Ajit Singh Nagar (Mohali) 2016-17",
+    "source_organization": "Municipal Corporation, Sahibzada Ajit Singh Nagar (Mohali), Department of Local Government, Government of Punjab",
+    "source_url": "https://e-nigam.punjab.gov.in/MCData/Mohali/CITIZENCHARTER.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": "2016-01-01",
+    "last_updated": null,
+    "retrieved_at": "2026-08-09T22:07:38+00:00",
+    "created_at": "2026-08-09T22:07:38+00:00"
+  },
+  {
+    "record_id": "PB_MOHALI_WATER_NEW_CONNECTION",
+    "service_id": "WATER_NEW_CONNECTION_MOHALI",
+    "service_name": "New Water Connection",
+    "sub_service": "Application for a new water supply connection",
+    "problem_type": "Need to apply for a new water supply connection to a property",
+    "service_category": "WATER_DRAINAGE",
+    "state": "Punjab",
+    "district": "S.A.S. Nagar",
+    "city": "Sahibzada Ajit Singh Nagar (Mohali)",
+    "municipality": "Municipal Corporation, S.A.S. Nagar (Mohali)",
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "CITY",
+    "department": "Water Supply & Sewerage Branch (Public Health wing), Municipal Corporation, S.A.S. Nagar (Mohali)",
+    "authority": "Executive Engineer (O&M)",
+    "description": "Citizens can apply for a new water supply connection. This is a distinct service from reporting a leak/blockage on an existing connection (see WATER_SUPPLY_SEWERAGE_MOHALI). Two figures apply and, unlike some of Mohali's other services, they agree: the Citizen Charter's own Services Standards table states 7 working days for this exact row, and the Punjab Right to Service Act 2011's statutory entry (Service No. 77, 'Sanction of Water supply/Sewerage Connection in Corporation Cities', which covers both water and sewerage connection sanctioning under one combined entry) also states 7 days.",
+    "procedure": "The source document lists this service in its Services Standards table and its Right to Service Act table, both stating the designated officer and time limit, but does not provide a specific numbered step-by-step application procedure the way it does for complaint registration. Citizens should apply through the Municipal Corporation's Water Supply & Sewerage Branch / Executive Engineer (O&M) office, Sector 68, S.A.S. Nagar.",
+    "required_information": [],
+    "required_documents": [],
+    "sla": "Citizen Charter Service Standard: 7 working days (Section 2.3, 'New Water Connection' row). Punjab Right to Service Act 2011, Service No. 77 ('Sanction of Water supply/Sewerage Connection in Corporation Cities'): 7 days, statutory -- same figure, covers both water and sewerage connection sanctioning under one combined entry.",
+    "expected_response_time": null,
+    "expected_resolution_time": "7 days",
+    "complaint_channel": [
+      "Municipal Corporation's Water Supply & Sewerage Branch / Executive Engineer (O&M) office, Sector 68, S.A.S. Nagar"
+    ],
+    "contact_information": "Executive Engineer (O&M), Municipal Corporation, S.A.S. Nagar -- exact phone number not individually listed for this service in the source document. General complaint centre toll-free: 1800-137-0007.",
+    "escalation_procedure": "Statutory, under the Punjab Right to Service Act 2011 (Service No. 77): Designated Officer Executive Engineer (O&M) of the Municipal Corporation -> First Appellate Authority: SDM of the Sub-Division -> Second Appellate Authority: Deputy Commissioner of the Concerned District. The Citizen Charter's Services Standards table (Section 2.3) separately lists a generic 'Water Supply & Sewerage' responsible-officer chain of Jr. Engineer -> A.C.E. -> C.E. for the whole services row (which covers this service among 8 others), but does not restate the RTS Act's more specific designated-officer chain.",
+    "escalation_authority": "Statutory (RTS Act 2011, Service No. 77): Executive Engineer (O&M) -> SDM (Sub-Division) -> Deputy Commissioner (Concerned District).",
+    "faq": [
+      {
+        "question": "How long does a new water connection take in Mohali?",
+        "answer": "7 working days, per both the Citizen Charter's own service standard and the Punjab Right to Service Act 2011 (Service No. 77) -- both state the same figure for this service."
+      },
+      {
+        "question": "What documents do I need?",
+        "answer": "The source document does not itemize a specific document checklist for this service -- it only states the timeline and responsible officer. Confirm exact document requirements with the Water Supply & Sewerage Branch directly."
+      },
+      {
+        "question": "Is there a fee?",
+        "answer": "The source states generally that 'service recipients are expected to give complete and duly filled documents and the requisite fee (wherever required)' but does not state a specific amount for this service. Confirm the exact fee with the Water Supply & Sewerage Branch directly."
+      }
+    ],
+    "citizen_guidance": "This is a statutory Right to Service Act entry (Service No. 77) -- if the 7-day limit is missed, you can appeal to the SDM of your Sub-Division, and then to the Deputy Commissioner.",
+    "source_id": "PB_MOHALI_CITIZEN_CHARTER",
+    "source_title": "Citizen Charter — Municipal Corporation, Sahibzada Ajit Singh Nagar (Mohali) 2016-17",
+    "source_organization": "Municipal Corporation, Sahibzada Ajit Singh Nagar (Mohali), Department of Local Government, Government of Punjab",
+    "source_url": "https://e-nigam.punjab.gov.in/MCData/Mohali/CITIZENCHARTER.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": "2016-01-01",
+    "last_updated": null,
+    "retrieved_at": "2026-08-10T12:28:22.416059+00:00",
+    "created_at": "2026-08-10T12:28:22.416059+00:00"
+  },
+  {
+    "record_id": "PB_MOHALI_WATER_NEW_SEWERAGE_CONNECTION",
+    "service_id": "WATER_NEW_SEWERAGE_CONNECTION_MOHALI",
+    "service_name": "New Sewerage Connection",
+    "sub_service": "Application for a new sewerage connection",
+    "problem_type": "Need to apply for a new sewerage connection to a property",
+    "service_category": "WATER_DRAINAGE",
+    "state": "Punjab",
+    "district": "S.A.S. Nagar",
+    "city": "Sahibzada Ajit Singh Nagar (Mohali)",
+    "municipality": "Municipal Corporation, S.A.S. Nagar (Mohali)",
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "CITY",
+    "department": "Water Supply & Sewerage Branch (Public Health wing), Municipal Corporation, S.A.S. Nagar (Mohali)",
+    "authority": "Executive Engineer (O&M)",
+    "description": "Citizens can apply for a new sewerage connection. This is a distinct service from reporting a leak/blockage on an existing connection (see WATER_SUPPLY_SEWERAGE_MOHALI). Two figures apply and, unlike some of Mohali's other services, they agree: the Citizen Charter's own Services Standards table states 7 working days for this exact row, and the Punjab Right to Service Act 2011's statutory entry (Service No. 77, 'Sanction of Water supply/Sewerage Connection in Corporation Cities', which covers both water and sewerage connection sanctioning under one combined entry) also states 7 days.",
+    "procedure": "The source document lists this service in its Services Standards table and its Right to Service Act table, both stating the designated officer and time limit, but does not provide a specific numbered step-by-step application procedure the way it does for complaint registration. Citizens should apply through the Municipal Corporation's Water Supply & Sewerage Branch / Executive Engineer (O&M) office, Sector 68, S.A.S. Nagar.",
+    "required_information": [],
+    "required_documents": [],
+    "sla": "Citizen Charter Service Standard: 7 working days (Section 2.3, 'New Sewerage Connection' row). Punjab Right to Service Act 2011, Service No. 77 ('Sanction of Water supply/Sewerage Connection in Corporation Cities'): 7 days, statutory -- same figure, covers both water and sewerage connection sanctioning under one combined entry.",
+    "expected_response_time": null,
+    "expected_resolution_time": "7 days",
+    "complaint_channel": [
+      "Municipal Corporation's Water Supply & Sewerage Branch / Executive Engineer (O&M) office, Sector 68, S.A.S. Nagar"
+    ],
+    "contact_information": "Executive Engineer (O&M), Municipal Corporation, S.A.S. Nagar -- exact phone number not individually listed for this service in the source document. General complaint centre toll-free: 1800-137-0007.",
+    "escalation_procedure": "Statutory, under the Punjab Right to Service Act 2011 (Service No. 77): Designated Officer Executive Engineer (O&M) of the Municipal Corporation -> First Appellate Authority: SDM of the Sub-Division -> Second Appellate Authority: Deputy Commissioner of the Concerned District. The Citizen Charter's Services Standards table (Section 2.3) separately lists a generic 'Water Supply & Sewerage' responsible-officer chain of Jr. Engineer -> A.C.E. -> C.E. for the whole services row (which covers this service among 8 others), but does not restate the RTS Act's more specific designated-officer chain.",
+    "escalation_authority": "Statutory (RTS Act 2011, Service No. 77): Executive Engineer (O&M) -> SDM (Sub-Division) -> Deputy Commissioner (Concerned District).",
+    "faq": [
+      {
+        "question": "How long does a new sewerage connection take in Mohali?",
+        "answer": "7 working days, per both the Citizen Charter's own service standard and the Punjab Right to Service Act 2011 (Service No. 77) -- both state the same figure for this service."
+      },
+      {
+        "question": "What documents do I need?",
+        "answer": "The source document does not itemize a specific document checklist for this service -- it only states the timeline and responsible officer. Confirm exact document requirements with the Water Supply & Sewerage Branch directly."
+      },
+      {
+        "question": "Is there a fee?",
+        "answer": "The source states generally that 'service recipients are expected to give complete and duly filled documents and the requisite fee (wherever required)' but does not state a specific amount for this service. Confirm the exact fee with the Water Supply & Sewerage Branch directly."
+      }
+    ],
+    "citizen_guidance": "This is a statutory Right to Service Act entry (Service No. 77) -- if the 7-day limit is missed, you can appeal to the SDM of your Sub-Division, and then to the Deputy Commissioner.",
+    "source_id": "PB_MOHALI_CITIZEN_CHARTER",
+    "source_title": "Citizen Charter — Municipal Corporation, Sahibzada Ajit Singh Nagar (Mohali) 2016-17",
+    "source_organization": "Municipal Corporation, Sahibzada Ajit Singh Nagar (Mohali), Department of Local Government, Government of Punjab",
+    "source_url": "https://e-nigam.punjab.gov.in/MCData/Mohali/CITIZENCHARTER.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": "2016-01-01",
+    "last_updated": null,
+    "retrieved_at": "2026-08-10T12:28:22.416059+00:00",
+    "created_at": "2026-08-10T12:28:22.416059+00:00"
+  }
+]
