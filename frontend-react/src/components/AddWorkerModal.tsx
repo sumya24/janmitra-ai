@@ -3,6 +3,7 @@ import { useAuth } from "../lib/auth";
 import { useUiLang } from "../lib/uiLang";
 import { SUPPORTED_LANGUAGES, t, type LangCode } from "../lib/i18n";
 import { api, ApiError } from "../lib/api";
+import { useToast } from "../lib/toast";
 
 export default function AddWorkerModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const { token } = useAuth();
@@ -15,6 +16,7 @@ export default function AddWorkerModal({ onClose, onCreated }: { onClose: () => 
   const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const toast = useToast();
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -38,6 +40,7 @@ export default function AddWorkerModal({ onClose, onCreated }: { onClose: () => 
         ward: ward.trim(),
         preferred_language: language,
       });
+      toast.success(`${t(lang, "addWorker.createdToast")} ${fullName.trim()}`);
       onCreated();
       onClose();
     } catch (err) {
