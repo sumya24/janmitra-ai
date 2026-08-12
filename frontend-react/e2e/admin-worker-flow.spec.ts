@@ -43,6 +43,14 @@ test("super admin creates a worker, who can then log in and see their (empty) qu
   await expect(page).toHaveURL(/\/admin$/);
   await expect(page.getByText("Super Admin", { exact: true })).toBeVisible();
 
+  // Worker management now lives on its own page (AdminDashboard.tsx links out to it rather than
+  // embedding the worker table + "+ Add worker" inline).
+  // Scoped to the dashboard's own button (class btn-ghost) -- a nav-drawer link with the same
+  // text also exists on the page (see components/NavDrawer.tsx), so an unscoped role/name
+  // locator is ambiguous.
+  await page.locator("a.btn-ghost", { hasText: "Manage Workers" }).click();
+  await expect(page).toHaveURL(/\/admin\/workers$/);
+
   await page.getByRole("button", { name: "+ Add worker" }).click();
   await page.getByLabel("Full name").fill("Ramesh Kadam");
   await page.getByLabel("Phone number").fill(workerPhone);
