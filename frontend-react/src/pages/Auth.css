@@ -1,13 +1,129 @@
-.authwrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 40px 20px; position: relative; }
-.authwrap .theme-toggle { position: absolute; top: 20px; right: 20px; }
-.authcard { width: 100%; max-width: 420px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 30px 30px 26px; box-shadow: var(--shadow); }
+.authwrap {
+  min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; position: relative;
+}
+@media (max-width: 860px) { .authwrap { grid-template-columns: 1fr; } }
+.authwrap .theme-toggle { position: absolute; top: 20px; right: 20px; z-index: 2; }
+
+/* Left, brand panel -- fills what used to be a sea of empty background around a lonely card
+   with something worth looking at: the same value proposition as the landing page, restated
+   for someone who's already decided to sign up/log in. Hidden below 860px, where there isn't
+   room for it without crowding the actual form. */
+.auth-panel {
+  /* --brand-surface, not --primary: this is a large fixed fill and needs to stay a dark
+     brand-teal panel with light text in both themes -- see the token comment in global.css. */
+  background: linear-gradient(155deg, var(--brand-surface) 0%, color-mix(in srgb, var(--brand-surface) 75%, black) 100%);
+  color: var(--brand-surface-ink); padding: 48px 44px; display: flex; flex-direction: column;
+  position: relative; overflow: hidden;
+}
+@media (max-width: 860px) { .auth-panel { display: none; } }
+/* A quiet, decorative dot grid -- just enough visual texture that the panel doesn't read as a
+   flat block of color, without competing with the actual content on top of it. */
+.auth-panel::before {
+  content: ""; position: absolute; inset: 0;
+  background-image: radial-gradient(color-mix(in srgb, var(--brand-surface-ink) 14%, transparent) 1.5px, transparent 1.5px);
+  background-size: 22px 22px; opacity: 0.5; pointer-events: none;
+}
+/* Centered rather than left-aligned or paired with separate text beside it -- a duplicate
+   "JanMitra AI" label next to the image (which already has the wordmark baked in) read as
+   redundant. The image alone, centered in the panel's width, is the cleaner result. */
+.auth-panel-brand { display: flex; justify-content: center; position: relative; margin-bottom: 4px; }
+/* No plate/card behind the image at all -- a rectangle here, translucent or not, tight or not,
+   is still exactly the "visible box behind the logo on a dark background" the brand direction
+   ruled out. A soft glow via drop-shadow instead, which follows the image's own alpha channel
+   (the circular mark + the letterforms), not a bounding rectangle. Colored blue->green, the
+   same "AI glow" pairing already used on Ask JanMitra's answer card and the landing hero's
+   illustration halo, rather than a plain white spotlight -- ties this page into that same
+   visual language instead of it being a one-off, and reads as ambient light rather than a
+   flashlight aimed at the logo. The innermost layer stays close to white specifically because
+   that's the one actually doing the legibility work for "Jan"'s navy against this navy panel;
+   the wider blue/green layers are the ambient character and matter less for raw contrast. */
+.auth-panel-mark {
+  display: block; width: 190px; height: auto; object-fit: contain;
+  filter:
+    drop-shadow(0 0 1px rgba(255,255,255,0.95))
+    drop-shadow(0 0 3px rgba(240,248,255,0.9))
+    drop-shadow(0 0 8px rgba(56,189,248,0.25))
+    drop-shadow(0 0 16px rgba(34,197,94,0.15));
+}
+/* Sits close to the brand block above it (natural flow, not `justify-content: space-between`
+   spreading brand/body/foot evenly across the full viewport height) -- that made the logo
+   look disconnected from everything below it on a tall screen. max-width widened from 380px:
+   that left a large unused strip of the panel's own width empty to the right of the text on
+   any screen wider than ~900px. 560px still keeps the paragraph at a readable line length
+   (~70 characters), just uses more of the space the panel actually has. */
+/* Centered to match the logo above it -- text-align on the block text, plus align-items on
+   the checklist (a column of flex rows, so this centers each row horizontally as a group)
+   and margin: 0 auto on the paragraph's own narrower measure so it doesn't just hug the left
+   edge of the wider centered heading. */
+.auth-panel-body { position: relative; max-width: 560px; margin: 36px auto 0; text-align: center; }
+.auth-panel-body h2 { font-size: 38px; line-height: 1.15; margin-bottom: 16px; }
+.auth-panel-body p { font-size: 15.5px; opacity: 0.85; line-height: 1.6; margin: 0 auto 26px; max-width: 480px; }
+/* width: fit-content + margin: 0 auto centers the checklist as one block (shrunk to its
+   widest row); align-items: flex-start keeps every row starting at that block's own left
+   edge internally. Centering each row independently (align-items: center) put the checkmarks
+   at a different horizontal position per row, depending on that row's own text length --
+   they never lined up into a clean vertical column. */
+.auth-panel-points { list-style: none; padding: 0; margin: 0 auto; width: fit-content; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+.auth-panel-points li { display: flex; align-items: center; gap: 10px; font-size: 13.5px; }
+.auth-panel-points .tick {
+  width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,0.14); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 11px;
+}
+/* Pushed to the bottom of the panel on its own, now that the container isn't using
+   space-between to do that job for all three sections at once. */
+.auth-panel-foot { position: relative; font-size: 11.5px; opacity: 0.6; margin-top: auto; }
+
+.auth-form-side {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 40px 20px; position: relative; overflow: hidden;
+}
+/* A slow, quiet gradient-mesh wash -- the same restrained language as the landing hero's
+   background, so the auth pages read as part of the same product. Uses tokens that already
+   adapt correctly between themes (or are intentionally fixed), so no separate dark-mode rule
+   is needed. Purely decorative: aria-hidden, no pointer events, respects reduced-motion. */
+.auth-form-side-bg {
+  position: absolute; inset: -20%; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(circle at 25% 30%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 45%),
+    radial-gradient(circle at 75% 70%, color-mix(in srgb, var(--primary) 10%, transparent), transparent 45%);
+  filter: blur(50px);
+  animation: auth-bg-drift 24s ease-in-out infinite alternate;
+}
+/* Own keyframe name, not a reuse of Landing.css's hero-drift -- Auth.css and Landing.css can
+   both end up injected in the same SPA session (once a visitor has been to both pages), and
+   two same-named @keyframes rules in different stylesheets would silently let whichever loaded
+   last win on both pages. */
+@keyframes auth-bg-drift {
+  from { transform: translate(0, 0) scale(1); }
+  to { transform: translate(-3%, 3%) scale(1.08); }
+}
+@media (prefers-reduced-motion: reduce) { .auth-form-side-bg { animation: none; } }
+
+/* Only shown below 860px, exactly where AuthPanel (the left panel, with its own logo
+   treatment) hides -- the two are never on screen together. They used to both render at once
+   on wide screens: one brand mark big with a glow, the other small with plain colored text,
+   two different executions of the same logo visible on one screen at the same time. This is
+   the fix, not making the two styles match -- there should only ever be one on screen. */
+.auth-form-brand { display: none; align-items: center; gap: 12px; margin-bottom: 22px; position: relative; z-index: 1; }
+@media (max-width: 860px) { .auth-form-brand { display: flex; } }
+.auth-form-brand-mark { width: 46px; height: 46px; object-fit: contain; flex-shrink: 0; }
+.auth-form-brand-word { font-size: 26px; letter-spacing: -0.01em; }
+.auth-form-brand-jan { color: var(--accent-fg); }
+.auth-form-brand-mitra { color: var(--primary); }
+.auth-form-brand-ai { color: var(--service-water); }
+.auth-form-side .authcard { position: relative; z-index: 1; }
+.authcard {
+  width: 100%; max-width: 400px; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 16px; padding: 30px 30px 26px; box-shadow: var(--shadow);
+}
 .authtabs { display: flex; background: var(--surface-2); border-radius: 10px; padding: 4px; margin-bottom: 22px; }
 .authtab {
   flex: 1; border: none; background: transparent; padding: 9px; border-radius: 7px; font-size: 13.5px;
   font-weight: 700; color: var(--ink-2); text-align: center; text-decoration: none; display: block;
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
-.authtab.active { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.authtab.active { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm); }
 .worker-note { font-size: 11.5px; color: var(--ink-2); background: var(--status-progress-bg); border-radius: 8px; padding: 10px 12px; line-height: 1.45; margin-bottom: 14px; }
 .switchline { text-align: center; font-size: 12.5px; color: var(--ink-2); margin-top: 14px; }
-.switchline a { color: var(--accent); font-weight: 700; text-decoration: none; }
+.switchline a { color: var(--accent-fg); font-weight: 700; text-decoration: none; }
 .authcard .btn.full { width: 100%; justify-content: center; padding: 11px; font-size: 14px; }

@@ -1,16 +1,20 @@
 .topbar {
-  background: var(--primary); color: var(--primary-ink);
+  /* A neutral surface bar, not a solid brand-color fill: the logo mark itself carries 5 hues
+     (navy/green/blue/orange/purple) -- sitting it on top of a same-hue navy bar made the
+     mark's own navy "J" nearly disappear. A light/dark-adaptive surface is the one backdrop
+     that doesn't fight the mark's own color, and reads as a clean, modern app header. */
+  background: var(--surface); color: var(--ink);
+  border-bottom: 1px solid var(--line);
   display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 28px; gap: 20px; flex-wrap: wrap;
+  padding: 12px 28px; gap: 20px; flex-wrap: wrap;
 }
+/* Hamburger (NavDrawer) + brand grouped together on the left, so `.topbar`'s
+   justify-content:space-between still only splits two things: this group and `.whoami`. */
+.topbar-left { display: flex; align-items: center; gap: 16px; }
 .brand { display: flex; align-items: center; gap: 12px; }
-.brand .seal {
-  width: 38px; height: 38px; border-radius: 50%;
-  border: 2px solid var(--primary-ink); display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 15px;
-}
-.brand-word { font-size: 22px; line-height: 1; }
-.brand-tag { font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.75; margin-top: 2px; }
+.brand-mark { width: 38px; height: 38px; object-fit: contain; flex-shrink: 0; }
+.brand-word { font-size: 22px; line-height: 1; color: var(--ink); }
+.brand-tag { font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin-top: 2px; }
 .whoami { display: flex; align-items: center; gap: 10px; font-size: 12.5px; }
 .avatar {
   width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--accent-ink);
@@ -18,12 +22,41 @@
 }
 .whoami .role-pill {
   font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;
-  padding: 2px 8px; border-radius: 20px; background: rgba(255,255,255,0.12);
+  padding: 2px 8px; border-radius: 20px; background: var(--surface-2); color: var(--ink-2);
 }
-.icon-btn { width: 34px; height: 34px; border-radius: 8px; border: none; background: rgba(255,255,255,0.12); color: var(--primary-ink); display: flex; align-items: center; justify-content: center; }
-.icon-btn:hover { background: rgba(255,255,255,0.2); }
+.icon-btn { width: 34px; height: 34px; border-radius: 8px; border: none; background: var(--surface-2); color: var(--ink-2); display: flex; align-items: center; justify-content: center; transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease-out); }
+.icon-btn:hover { background: var(--line); color: var(--ink); transform: translateY(-1px); }
+.icon-btn:active { transform: translateY(0) scale(0.94); }
 
-.page { max-width: 1080px; margin: 0 auto; padding: 30px 28px 60px; }
+/* Worker notification bell + dropdown panel -- see components/NotificationBell.tsx. */
+.notif-badge {
+  position: absolute; top: -4px; right: -4px; min-width: 16px; height: 16px; padding: 0 4px;
+  border-radius: 999px; background: var(--status-critical); color: #fff; font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; line-height: 1;
+}
+.notif-panel {
+  position: absolute; top: calc(100% + 8px); right: 0; width: 320px; max-height: 400px; overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow-lg);
+  z-index: 60; animation: modal-in var(--dur) var(--ease-out) both;
+}
+.notif-panel-head { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-2); padding: 12px 14px 8px; }
+.notif-empty { padding: 20px 14px; text-align: center; font-size: 12.5px; color: var(--ink-3); }
+.notif-item {
+  display: block; width: 100%; text-align: left; padding: 10px 14px; border: none; background: none;
+  border-top: 1px solid var(--line); cursor: pointer; transition: background-color var(--dur-fast) var(--ease);
+}
+.notif-item:hover { background: var(--surface-2); }
+.notif-item.unread { background: color-mix(in srgb, var(--accent-fg) 6%, var(--surface)); }
+.notif-item-title { font-size: 12.5px; font-weight: 700; color: var(--ink); }
+.notif-item-message { font-size: 12px; color: var(--ink-2); margin-top: 2px; }
+.notif-item-meta { font-size: 10.5px; color: var(--ink-3); margin-top: 4px; }
+
+/* Same cap as .page-admin below -- wide enough to use the space on a big screen without edge-to-
+   edge full-bleed (that read as too tight, no breathing room at all), capped+centered so there's
+   still real margin on either side on an ultrawide monitor instead of the old 1080px column that
+   read as boxed in the middle. */
+.page { max-width: 1440px; margin: 0 auto; padding: 30px 28px 60px; }
+.page-admin { max-width: 1440px; margin: 0 auto; padding: 30px 28px 60px; }
 .page-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
 .page-title { font-size: 30px; }
 .page-sub { color: var(--ink-2); font-size: 13.5px; margin-top: 3px; }
@@ -33,8 +66,16 @@
 }
 .section-label:first-child { margin-top: 0; }
 
-.overlay { position: fixed; inset: 0; background: rgba(15,23,20,0.45); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 50; }
-.modal { background: var(--surface); border-radius: 16px; padding: 26px 26px 22px; width: 100%; max-width: 420px; box-shadow: var(--shadow); max-height: 86vh; overflow-y: auto; }
+@keyframes overlay-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modal-in { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.overlay {
+  position: fixed; inset: 0; background: rgba(15,23,20,0.45); display: flex; align-items: center; justify-content: center;
+  padding: 20px; z-index: 50; animation: overlay-in var(--dur) var(--ease-out) both;
+}
+.modal {
+  background: var(--surface); border-radius: 16px; padding: 26px 26px 22px; width: 100%; max-width: 420px;
+  box-shadow: var(--shadow-lg); max-height: 86vh; overflow-y: auto; animation: modal-in var(--dur-slow) var(--ease-out) both;
+}
 .modal-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 18px; }
 .modal-head h3 { font-size: 20px; }
 .modal-head button.x { background: none; border: none; color: var(--ink-3); font-size: 18px; line-height: 1; padding: 4px; }

@@ -23,7 +23,7 @@ export default function LanguageGate() {
   return (
     <div className="gate">
       <div className="gate-card">
-        <div className="gate-seal">JM</div>
+        <img src="/brand/logo-mark.png" alt="JanMitra AI" className="gate-seal" />
         <h1 className="gate-title display">
           {OPTIONS.map((opt) => (
             <span key={opt.code} className={`gate-title-line ${opt.code !== "en" ? "indic" : ""}`}>

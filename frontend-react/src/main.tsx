@@ -6,6 +6,7 @@ import App from "./App.tsx";
 import { AuthProvider } from "./lib/auth";
 import { UiLangProvider } from "./lib/uiLang";
 import { ThemeProvider } from "./lib/theme";
+import { ToastProvider } from "./lib/toast";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -13,7 +14,9 @@ createRoot(document.getElementById("root")!).render(
       <BrowserRouter>
         <UiLangProvider>
           <AuthProvider>
-            <App />
+            <ToastProvider>
+              <App />
+            </ToastProvider>
           </AuthProvider>
         </UiLangProvider>
       </BrowserRouter>

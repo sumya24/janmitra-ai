@@ -5,6 +5,8 @@ import { useAuth } from "../lib/auth";
 import { t } from "../lib/i18n";
 import { api, ApiError } from "../lib/api";
 import ThemeToggle from "../components/ThemeToggle";
+import AuthPanel from "../components/AuthPanel";
+import AuthFormBrand from "../components/AuthFormBrand";
 import "./Auth.css";
 
 export default function Login() {
@@ -42,35 +44,40 @@ export default function Login() {
 
   return (
     <div className="authwrap">
-      <ThemeToggle className="theme-toggle" />
-      <div className="authcard">
-        <div className="authtabs">
-          <span className="authtab active">{t(lang, "auth.tab.login")}</span>
-          <Link to="/signup" className="authtab">
-            {t(lang, "auth.tab.signup")}
-          </Link>
-        </div>
-
-        {formError && <div className="banner-error">{formError}</div>}
-
-        <form onSubmit={handleSubmit} noValidate>
-          <div className={`field ${fieldErrors.phone ? "has-error" : ""}`}>
-            <label htmlFor="login-phone">{t(lang, "auth.field.phone")}</label>
-            <input id="login-phone" type="tel" placeholder="98xxxxxxxx" value={phone} onChange={(e) => setPhone(e.target.value)} />
-            {fieldErrors.phone && <div className="field-error">{t(lang, "common.fieldRequired")}</div>}
+      <AuthPanel lang={lang} />
+      <div className="auth-form-side">
+        <div className="auth-form-side-bg" aria-hidden="true" />
+        <ThemeToggle className="theme-toggle" />
+        <AuthFormBrand />
+        <div className="authcard enter">
+          <div className="authtabs">
+            <span className="authtab active">{t(lang, "auth.tab.login")}</span>
+            <Link to="/signup" className="authtab">
+              {t(lang, "auth.tab.signup")}
+            </Link>
           </div>
-          <div className={`field ${fieldErrors.password ? "has-error" : ""}`}>
-            <label htmlFor="login-password">{t(lang, "auth.field.password")}</label>
-            <input id="login-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-            {fieldErrors.password && <div className="field-error">{t(lang, "common.fieldRequired")}</div>}
-          </div>
-          <button type="submit" className="btn btn-primary full" disabled={submitting}>
-            {submitting ? "…" : t(lang, "auth.login.button")}
-          </button>
-        </form>
 
-        <div className="switchline">
-          {t(lang, "auth.login.switch")} <Link to="/signup">{t(lang, "auth.login.switchlink")}</Link>
+          {formError && <div className="banner-error">{formError}</div>}
+
+          <form onSubmit={handleSubmit} noValidate>
+            <div className={`field ${fieldErrors.phone ? "has-error" : ""}`}>
+              <label htmlFor="login-phone">{t(lang, "auth.field.phone")}</label>
+              <input id="login-phone" type="tel" placeholder="98xxxxxxxx" value={phone} onChange={(e) => setPhone(e.target.value)} />
+              {fieldErrors.phone && <div className="field-error">{t(lang, "common.fieldRequired")}</div>}
+            </div>
+            <div className={`field ${fieldErrors.password ? "has-error" : ""}`}>
+              <label htmlFor="login-password">{t(lang, "auth.field.password")}</label>
+              <input id="login-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+              {fieldErrors.password && <div className="field-error">{t(lang, "common.fieldRequired")}</div>}
+            </div>
+            <button type="submit" className="btn btn-primary full" disabled={submitting}>
+              {submitting ? "…" : t(lang, "auth.login.button")}
+            </button>
+          </form>
+
+          <div className="switchline">
+            {t(lang, "auth.login.switch")} <Link to="/signup">{t(lang, "auth.login.switchlink")}</Link>
+          </div>
         </div>
       </div>
     </div>
