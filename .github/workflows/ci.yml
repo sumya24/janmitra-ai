@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      # torch's CPU-only wheel isn't on the default PyPI index -- see requirements.txt's
+      # comment above the torch line for why this two-step install matters (a plain
+      # `pip install -r requirements.txt` would pull the much larger CUDA build instead).
+      - name: Install dependencies
+        run: |
+          pip install --index-url https://download.pytorch.org/whl/cpu torch==2.13.0
+          pip install -r requirements.txt
+
+      - name: Run backend tests
+        run: pytest tests/ -v
+
+  frontend-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend-react
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend-react/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check and build
+        run: npm run build
+
+  # Playwright e2e (frontend-react/e2e/) exercises the full stack against a live backend,
+  # including the real Sarvam AI voice/translation pipeline -- deliberately not run here.
+  # It needs a real SARVAM_API_KEY, takes several minutes end-to-end, and per this repo's own
+  # notes has already needed real-pipeline-timing tuning (30s+ waits) that doesn't suit a CI
+  # gate. Run `npx playwright test` locally before merging any frontend change that touches
+  # routing, the complaint wizard, or voice input.
