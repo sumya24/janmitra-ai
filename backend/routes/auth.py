@@ -32,6 +32,12 @@ class SignupRequest(BaseModel):
     phone: str
     password: str
     preferred_language: str
+    # Mandatory, one-time-at-signup -- not editable later (no ward field in MeUpdateRequest
+    # below), so every citizen account is guaranteed to have one. Free text matching User.ward,
+    # same field workers already have; picked from the same GET /complaints/wards list the
+    # complaint-report wizard already uses, so "My Area" (routes/complaints.py's
+    # /area-summary) always has something real to key off.
+    ward: str
 
 
 class LoginRequest(BaseModel):
@@ -78,11 +84,14 @@ def signup(body: SignupRequest, db: Session = Depends(get_db)) -> AuthResponse:
     """Register a new citizen account and log them in immediately."""
     full_name = body.full_name.strip()
     phone = body.phone.strip()
+    ward = body.ward.strip()
 
     if not full_name:
         raise HTTPException(status_code=400, detail="Full name is required.")
     if not phone:
         raise HTTPException(status_code=400, detail="Phone number is required.")
+    if not ward:
+        raise HTTPException(status_code=400, detail="Area / ward is required.")
     if len(body.password) < MIN_PASSWORD_LENGTH:
         raise HTTPException(
             status_code=400, detail=f"Password must be at least {MIN_PASSWORD_LENGTH} characters."
@@ -98,6 +107,7 @@ def signup(body: SignupRequest, db: Session = Depends(get_db)) -> AuthResponse:
         password_hash=hash_password(body.password),
         role="citizen",
         preferred_language=body.preferred_language,
+        ward=ward,
     )
     db.add(user)
     db.commit()

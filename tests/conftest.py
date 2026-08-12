@@ -43,7 +43,13 @@ def client(db_session):
 def make_citizen(client):
     """Factory fixture: sign up a citizen via the real API and return (token, user)."""
 
-    def _make(phone: str = "9000000001", password: str = "secret123", full_name: str = "Test Citizen", preferred_language: str = "en"):
+    def _make(
+        phone: str = "9000000001",
+        password: str = "secret123",
+        full_name: str = "Test Citizen",
+        preferred_language: str = "en",
+        ward: str = "Test Ward",
+    ):
         response = client.post(
             "/auth/signup",
             json={
@@ -51,6 +57,7 @@ def make_citizen(client):
                 "phone": phone,
                 "password": password,
                 "preferred_language": preferred_language,
+                "ward": ward,
             },
         )
         assert response.status_code == 200, response.text

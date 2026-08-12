@@ -17,9 +17,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 class Settings:
     """Central place for all configuration values used across the app."""
 
-    # Sarvam AI (speech-to-text + translation)
+    # Sarvam AI (speech-to-text + translation + text-to-speech)
     SARVAM_API_KEY: str = os.getenv("SARVAM_API_KEY", "")
     SARVAM_BASE_URL: str = os.getenv("SARVAM_BASE_URL", "https://api.sarvam.ai")
+
+    # Ask JanMitra voice assistant TTS (see backend/services/sarvam_client.py's
+    # synthesize_speech()) -- one fixed default voice/model for v1, not user-configurable (a
+    # cosmetic product decision, not an architectural one -- see the implementation plan).
+    TTS_SPEAKER: str = os.getenv("TTS_SPEAKER", "anushka")
+    TTS_MODEL: str = os.getenv("TTS_MODEL", "bulbul:v2")
 
     # LLM used for complaint summary generation (Sarvam's chat completion API by default,
     # so this can reuse SARVAM_API_KEY if LLM_API_KEY is left unset)
@@ -51,6 +57,74 @@ class Settings:
     # Prompts directory
     PROMPTS_DIR: Path = BASE_DIR / "prompts"
 
+    # RAG civic-knowledge-base data (see backend/schemas/rag_knowledge.py) — reference content,
+    # not app state, so it lives in flat files here rather than the SQLite DB (see that module's
+    # docstring for why).
+    RAG_DATA_DIR: Path = BASE_DIR / "data" / "rag_knowledge_base"
+
+    # RAG retrieval config (see backend/services/rag_retriever.py, vector_store.py,
+    # embedding_provider.py). RAG_TOP_K/RAG_RELEVANCE_THRESHOLD are tunable via env var without
+    # a code change — see docs/ask_janmitra_rag_architecture.md for how these were chosen.
+    RAG_EMBEDDINGS_INDEX_PATH: Path = BASE_DIR / "data" / "rag_knowledge_base" / "embeddings" / "index.json"
+    RAG_TOP_K: int = int(os.getenv("RAG_TOP_K", "5"))
+    # NOTE: this default applies to the LEGACY TF-IDF path only (scores 0.0-~0.4 typically).
+    # The active default path (real embeddings) uses RAG_EMBEDDING_RELEVANCE_THRESHOLD below --
+    # cosine similarity from a neural sentence embedding model has a very different, much
+    # higher-and-narrower score distribution (empirically ~0.7-0.9 for both related and
+    # unrelated text in this corpus -- see docs/ask_janmitra_rag_architecture.md's threshold
+    # evaluation section for the actual measurements behind this default).
+    RAG_RELEVANCE_THRESHOLD: float = float(os.getenv("RAG_RELEVANCE_THRESHOLD", "0.08"))
+
+    # Real-embeddings + ChromaDB retrieval config (see backend/services/embedding_provider.py's
+    # SentenceTransformerEmbeddingProvider and vector_store.py's ChromaVectorStore). This is the
+    # active default retrieval path as of the RAG embeddings/ChromaDB migration -- see
+    # docs/ask_janmitra_rag_architecture.md.
+    EMBEDDING_MODEL_NAME: str = os.getenv("EMBEDDING_MODEL_NAME", "intfloat/multilingual-e5-small")
+
+    # Ask JanMitra image understanding (see backend/services/vision_service.py). A small local
+    # vision-language model, not a hosted vendor -- Sarvam has no vision capability, and the user
+    # chose to avoid adding a new AI vendor/API key for this feature.
+    VISION_MODEL_NAME: str = os.getenv("VISION_MODEL_NAME", "vikhyatk/moondream2")
+    CHROMA_PERSIST_DIR: Path = Path(os.getenv("CHROMA_PERSIST_DIR", str(BASE_DIR / "data" / "rag_knowledge_base" / "chroma")))
+    CHROMA_COLLECTION_NAME: str = os.getenv("CHROMA_COLLECTION_NAME", "janmitra_knowledge")
+    # Chosen from two rounds of actual measurement, not a round-number guess -- see
+    # docs/ask_janmitra_rag_architecture.md's threshold-calibration section for the full data.
+    #
+    # Round 1 (raw/unfiltered search, no category or location restriction): this model's cosine
+    # similarity scores for this corpus cluster narrowly (~0.72-0.85) regardless of true
+    # relevance -- "new electricity connection" (must be REJECTED) scored 0.82-0.83, HIGHER than
+    # genuinely unrelated gibberish (~0.80). A flat threshold cannot separate relevant from
+    # irrelevant text in this regime; a global cutoff alone is not a safe hallucination guard.
+    #
+    # Round 2 (realistic: category + location filter applied first, exactly as RagRetriever.
+    # retrieve() always does in production), across TWO categories to avoid tuning on one:
+    #   STREETLIGHTS+Mohali: genuine paraphrases ("The light outside my house has stopped
+    #     working" / "There is no functioning street light near me" / "My road lamp is broken")
+    #     scored >=0.803; off-topic/gibberish probes run through the SAME filter ("...chocolate
+    #     cake" 0.746-0.750, "...capital of France?" 0.723-0.741, "xyzzy plugh..." 0.766-0.780)
+    #     stayed <=0.780.
+    #   ROADS_POTHOLES+Mohali: genuine paraphrases ("road has a large pothole" top=0.820,
+    #     "there is a deep hole in the road" top=0.794) vs. the same three off-topic/gibberish
+    #     probes (cake <=0.755, capital of France <=0.739, gibberish <=0.782).
+    # An initial round-2 pass tried 0.80 -- it cleanly separated STREETLIGHTS, but rejected the
+    # required ROADS_POTHOLES paraphrase "there is a deep hole in the road" (0.794 < 0.80), a
+    # real measured false negative on one of the spec's mandatory paraphrase examples. 0.79 is
+    # the threshold actually used: it still rejects every off-topic/gibberish probe measured in
+    # both categories (max 0.782) while keeping every genuine paraphrase tested in both (min
+    # 0.794) -- a clean, if narrow (0.782 vs 0.794), separation band.
+    #
+    # Conclusion, stated honestly: this threshold is a real, measured, effective filter WHEN
+    # metadata filtering (category + location) has already restricted the candidate pool -- which
+    # is the only way it is ever used in production. It is NOT, by itself, a reliable filter over
+    # an unrestricted corpus (round 1). The primary hallucination-prevention mechanisms remain (1)
+    # the intent classifier's explicit out-of-scope detection (electricity, new-connection, etc.,
+    # which never reach the retriever at all) and (2) category+location metadata filtering applied
+    # before similarity ranking -- this threshold is a secondary, but now-verified-effective,
+    # safeguard on top of those, not a replacement for them. The separation margin (~0.01-0.03) is
+    # narrow enough that a genuinely borderline real question could go either way -- documented as
+    # a known limitation, not hidden (see docs/ask_janmitra_rag_architecture.md).
+    RAG_EMBEDDING_RELEVANCE_THRESHOLD: float = float(os.getenv("RAG_EMBEDDING_RELEVANCE_THRESHOLD", "0.79"))
+
     # Hardcoded identities (kept only for the legacy Streamlit frontends, which
     # predate real auth and are superseded by the React app + JWT login below)
     HARDCODED_CITIZEN_ID: str = "citizen_001"
@@ -59,6 +133,28 @@ class Settings:
     # Auth (JWT, HS256, implemented with the stdlib only — see services/auth_service.py)
     JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "")
     JWT_EXPIRE_MINUTES: int = int(os.getenv("JWT_EXPIRE_MINUTES", "1440"))  # 24h
+
+    # LangSmith observability (see backend/services/observability/tracing.py and
+    # docs/ask_janmitra_langsmith_observability.md) -- a pure observability layer around the
+    # existing LangGraph/RAG pipeline; OFF by default, and the app must behave identically
+    # whether or not it's configured (see that doc's "failure behavior" section). Tracing is
+    # only actually attempted when BOTH LANGSMITH_TRACING is true AND an API key is set --
+    # matches SarvamClient's own "warn, don't require" pattern for optional external services.
+    LANGSMITH_TRACING: bool = os.getenv("LANGSMITH_TRACING", "false").strip().lower() == "true"
+    LANGSMITH_API_KEY: str = os.getenv("LANGSMITH_API_KEY", "")
+    LANGSMITH_ENDPOINT: str = os.getenv("LANGSMITH_ENDPOINT", "https://api.smith.langchain.com")
+    LANGSMITH_PROJECT: str = os.getenv("LANGSMITH_PROJECT", "janmitra-ai")
+    # Optional deep-link template for the Admin dashboard's "View Trace" button, with a
+    # "{trace_id}" placeholder, e.g.
+    # "https://smith.langchain.com/o/<your-org-id>/projects/p/<project>/r/{trace_id}" -- copy the
+    # prefix from your own LangSmith project's URL in the LangSmith UI. Left blank, trace IDs are
+    # still stored and shown but without a clickable link (deliberately not auto-resolved via the
+    # LangSmith API -- that would be a network call on the admin dashboard's read path).
+    LANGSMITH_TRACE_URL_TEMPLATE: str = os.getenv("LANGSMITH_TRACE_URL_TEMPLATE", "")
+    # LangSmith Annotation Queue every "insufficient_knowledge"/out-of-scope Ask JanMitra trace is
+    # routed into for human review (see tracing.py's enqueue_for_review()) -- a knowledge-base-gap
+    # backlog, not a moderation queue. Created automatically on first use if it doesn't exist yet.
+    LANGSMITH_REVIEW_QUEUE_NAME: str = os.getenv("LANGSMITH_REVIEW_QUEUE_NAME", "janmitra-ai-knowledge-gaps")
 
     # Supported languages: short code -> (display name, Sarvam BCP-47 code)
     SUPPORTED_LANGUAGES: dict[str, dict[str, str]] = {
