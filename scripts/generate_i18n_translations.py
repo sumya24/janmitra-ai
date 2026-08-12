@@ -26,6 +26,13 @@ OUTPUT_PATH = "scripts/i18n_translations_output.json"
 # hand-reviewed) in i18n.ts are NOT regenerated here -- see PRESERVE below -- this only covers
 # what's genuinely new: existing keys in the 3 new languages, and all-new keys in every language.
 ENGLISH_SOURCE: dict[str, str] = {
+    # --- Ask JanMitra RAG-retrieval-phase additions (all 6 languages hand-added directly to
+    # i18n.ts at the same time as these source entries -- see that file's "ask.loading" etc, and
+    # docs/ask_janmitra_rag_architecture.md's known-limitations section for why these three are
+    # hand-translated rather than run through translate_with_retry()'s live Sarvam calls here) ---
+    "ask.loading": "Thinking…",
+    "ask.error": "Something went wrong. Please try again.",
+    "ask.followUp.label": "Please clarify:",
     # --- existing keys, need or/gu/bn only (hi/mr already hand-reviewed in i18n.ts) ---
     "landing.login": "Log in",
     "landing.signup": "Sign up",
