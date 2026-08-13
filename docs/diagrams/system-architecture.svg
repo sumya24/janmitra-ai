@@ -2,7 +2,7 @@
   <rect x="0" y="0" width="940" height="560" fill="#ffffff"/>
 
   <!-- Title -->
-  <text x="470" y="34" text-anchor="middle" font-size="20" font-weight="700" fill="#14213d">JanMitra AI — System Architecture</text>
+  <text x="470" y="34" text-anchor="middle" font-size="20" font-weight="700" fill="#14213d">JanSarthi AI — System Architecture</text>
   <text x="470" y="54" text-anchor="middle" font-size="12.5" fill="#6b7280">Three tiers: a browser front end, one backend that owns every rule, and where each thing is stored</text>
 
   <!-- ============ TIER LABELS ============ -->

@@ -20,7 +20,7 @@ export default function ComplaintReportView({ report }: { report: ComplaintRepor
   return (
     <div className="report-view">
       <div style={{ textAlign: "center", marginBottom: 16 }}>
-        <div className="display" style={{ fontSize: 16, fontWeight: 700 }}>JanMitra AI</div>
+        <div className="display" style={{ fontSize: 16, fontWeight: 700 }}>JanSarthi AI</div>
         <div style={{ fontSize: 11, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
           {t(lang, "worker.report.heading")}
         </div>

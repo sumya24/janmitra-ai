@@ -1,4 +1,4 @@
-/** JanMitra's mascot -- the actual character the user supplied (cropped from their own
+/** Sarthi's mascot -- the actual character the user supplied (cropped from their own
  * reference character sheet: "ChatGPT Image Aug 10, 2026, 06_20_08 PM.png", the green-vest/
  * white-cap "जनमित्र" branded municipal assistant), not a hand-drawn placeholder. Background
  * removed (flood-filled from the image edges, so only the connected white backdrop goes

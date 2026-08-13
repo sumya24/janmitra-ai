@@ -1,4 +1,4 @@
-"""Orchestrates the full Ask JanMitra pipeline via the LangGraph orchestrator in
+"""Orchestrates the full Ask Sarthi pipeline via the LangGraph orchestrator in
 `backend/services/orchestration/` -- intent -> location -> conditional routing -> (RAG retrieval
 -> answer generation -> citations) OR (complaint creation + worker assignment) OR (complaint-
 status lookup) OR (clarification) OR (out-of-scope) -> structured response.
@@ -124,7 +124,7 @@ class AskJanMitraService:
         except Exception as exc:
             # Matches this codebase's "never crash the whole app over an optional AI feature"
             # philosophy (see e.g. SarvamClient's __init__ warning-not-raising on a missing API
-            # key) — Ask JanMitra will report RAG-unavailable per-request rather than the app
+            # key) — Ask Sarthi will report RAG-unavailable per-request rather than the app
             # failing to start if the Chroma collection hasn't been built yet (see §33's
             # empty/missing-store test coverage).
             logger.warning("Chroma vector store could not be loaded: %s", exc)
@@ -277,7 +277,7 @@ class AskJanMitraService:
         LangSmith (see docs/ask_janmitra_langsmith_observability.md §9.1): the root run is
         started here, before STT even runs, so `speech_to_text` (and `vision_processing`, if an
         image is attached too) and the eventual `text_to_speech` span all nest under the SAME
-        trace as the graph's own spans -- "Ask JanMitra Voice -> STT -> [Vision ->] LangGraph ->
+        trace as the graph's own spans -- "Ask Sarthi Voice -> STT -> [Vision ->] LangGraph ->
         ... -> TTS", not three separate traces. `_run()` is told NOT to end the root run itself
         (`end_root_run=False`) since TTS still needs it open; this method ends it once TTS (best-
         effort) is done, via the same `graph.root_run_outputs()` helper `run_graph()`'s own
@@ -346,7 +346,7 @@ class AskJanMitraService:
             audio_base64 = self._sarvam_client.synthesize_speech(base_response.answer, bcp47)
             tracing.end_run(tts_span, outputs={"audio_produced": True})
         except AIServiceError as exc:
-            logger.warning("Ask JanMitra voice flow: TTS failed, returning text-only: %s", exc)
+            logger.warning("Ask Sarthi voice flow: TTS failed, returning text-only: %s", exc)
             tracing.end_run(tts_span, outputs={"audio_produced": False}, error=str(exc))
 
         tracing.end_run(root_run, outputs=root_run_outputs(final_state, latency_ms))
@@ -374,7 +374,7 @@ class AskJanMitraService:
         try:
             image_description = self._vision_service.describe_image(image_bytes)
         except VisionServiceError as exc:
-            logger.warning("Ask JanMitra: captioning failed, continuing without a description: %s", exc)
+            logger.warning("Ask Sarthi: captioning failed, continuing without a description: %s", exc)
 
         return saved, image_description
 
@@ -417,7 +417,7 @@ class AskJanMitraService:
     ) -> tuple[AskJanMitraResponse, GraphState, float]:
         """Shared tail end of `ask()`/`ask_with_image()`/`ask_voice()`: run the graph, record the
         AiRequestLog row, translate the final state into `AskJanMitraResponse`. Extracted so every
-        Ask JanMitra entry point invokes the exact same `run_graph()` call and logs identically --
+        Ask Sarthi entry point invokes the exact same `run_graph()` call and logs identically --
         no parallel pipeline per input mode.
 
         Returns `(response, final_state, latency_ms)` -- callers that don't need the latter two

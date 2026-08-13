@@ -1,4 +1,4 @@
-"""Mirrors this project's own Ask JanMitra prompt files into LangSmith's Prompt Hub, for
+"""Mirrors this project's own Ask Sarthi prompt files into LangSmith's Prompt Hub, for
 versioning and side-by-side testing in the Playground -- WITHOUT changing how the running app
 actually loads prompts.
 

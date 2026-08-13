@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { uniquePhone } from "./helpers";
 
 /**
- * E2E coverage for Ask JanMitra's image-attachment UI (phase 3 of the multimodal upgrade) against
+ * E2E coverage for Ask Sarthi's image-attachment UI (phase 3 of the multimodal upgrade) against
  * the REAL backend (POST /ask-janmitra/image) -- not a mock. Phase 3 scope only: the image is
  * genuinely selected/previewed/removed and really uploaded, but does not yet influence the
  * answer (that's wired in a later phase) -- so the assertions here match ask-janmitra.spec.ts's
@@ -25,7 +25,7 @@ async function signUpAndReachCitizenHome(page: import("@playwright/test").Page) 
   await expect(page).toHaveURL(/\/signup$/);
 
   const phone = uniquePhone();
-  await page.getByLabel("Full name").fill("Ask JanMitra Image Tester");
+  await page.getByLabel("Full name").fill("Ask Sarthi Image Tester");
   await page.getByLabel("Phone number").fill(phone);
   await page.getByLabel("Password").fill("secret123");
   // Mandatory ward field -- same select-or-freetext handling as theme-and-voice.spec.ts's
@@ -44,7 +44,7 @@ async function signUpAndReachCitizenHome(page: import("@playwright/test").Page) 
   await expect(page).toHaveURL(/\/citizen$/);
 }
 
-test("Ask JanMitra: attaching a real photo previews it, removing it works, and sending with a question still returns a grounded answer", async ({ page }) => {
+test("Ask Sarthi: attaching a real photo previews it, removing it works, and sending with a question still returns a grounded answer", async ({ page }) => {
   // Real backend round-trip PLUS a real local vision-language model call (VisionService,
   // ~1.9B params, CPU inference) -- this is genuinely slow and highly variable under load, not a
   // fixed cold-load cost: direct measurements during this feature's development ranged from 92s
@@ -56,7 +56,7 @@ test("Ask JanMitra: attaching a real photo previews it, removing it works, and s
   test.setTimeout(600000);
 
   await signUpAndReachCitizenHome(page);
-  await page.getByRole("button", { name: "Ask JanMitra" }).click();
+  await page.getByRole("button", { name: "Ask Sarthi" }).click();
 
   // The composer's attach panel (MultiPhotoUpload, and so its <input type=file>) is only in the
   // DOM once the "+" attach button is opened -- a deliberate ChatGPT-style composer change (see
@@ -91,9 +91,9 @@ test("Ask JanMitra: attaching a real photo previews it, removing it works, and s
   await expect(page.locator(".multi-photo-thumb")).toHaveCount(0);
 });
 
-test("Ask JanMitra: the submit button is enabled with only an image attached, no text typed", async ({ page }) => {
+test("Ask Sarthi: the submit button is enabled with only an image attached, no text typed", async ({ page }) => {
   await signUpAndReachCitizenHome(page);
-  await page.getByRole("button", { name: "Ask JanMitra" }).click();
+  await page.getByRole("button", { name: "Ask Sarthi" }).click();
 
   const submitButton = page.getByRole("button", { name: "Ask", exact: true });
   await expect(submitButton).toBeDisabled();

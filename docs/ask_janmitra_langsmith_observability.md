@@ -1,4 +1,4 @@
-# Ask JanMitra — LangSmith Observability
+# Ask Sarthi — LangSmith Observability
 
 **Status: implemented and tested.** This document covers the observability layer added around
 the already-complete LangGraph orchestrator (`docs/ask_janmitra_orchestration.md`) and RAG
@@ -84,7 +84,7 @@ classification, location resolution, clarification, status lookup, out-of-scope)
 cheap, deterministic, non-LLM operations already covered by the root span's inputs/outputs and by
 the pre-existing per-node text log (`run_graph()`'s `logger.info(...)` line, unchanged by this
 phase). Sarvam speech-to-text/translation/summarization calls made by the *dedicated* complaint
-form (`POST /complaints`, outside the Ask JanMitra/LangGraph path) are also not traced — this
+form (`POST /complaints`, outside the Ask Sarthi/LangGraph path) are also not traced — this
 integration's scope is the LangGraph pipeline shown in the diagram above, not every Sarvam call in
 the app.
 
@@ -99,7 +99,7 @@ existing convention for every other external service).
 | `LANGSMITH_TRACING` | `false` | Master on/off switch. Tracing only actually runs when this is `true` **and** an API key is set. |
 | `LANGSMITH_API_KEY` | *(empty)* | Your LangSmith API key. Leave blank to keep tracing off regardless of `LANGSMITH_TRACING`. |
 | `LANGSMITH_ENDPOINT` | `https://api.smith.langchain.com` | LangSmith API host — only change this for a self-hosted/EU instance. |
-| `LANGSMITH_PROJECT` | `janmitra-ai` | The LangSmith project traces are grouped under. |
+| `LANGSMITH_PROJECT` | `jansarthi-ai` | The LangSmith project traces are grouped under. |
 | `LANGSMITH_TRACE_URL_TEMPLATE` | *(empty)* | Optional. Enables the Admin dashboard's "View Trace" link — see §5. |
 
 ## 5. Admin Monitoring
@@ -135,10 +135,10 @@ slow/down). Instead, **set `LANGSMITH_TRACE_URL_TEMPLATE` once**, and every subs
 automatically gets a working link:
 
 1. Open any trace in your LangSmith project's UI and copy its URL, e.g.
-   `https://smith.langchain.com/o/1a2b3c/projects/p/janmitra-ai/r/9f8e7d6c-...`.
+   `https://smith.langchain.com/o/1a2b3c/projects/p/jansarthi-ai/r/9f8e7d6c-...`.
 2. Replace the run/trace id at the end with the literal placeholder `{trace_id}`:
    ```
-   LANGSMITH_TRACE_URL_TEMPLATE=https://smith.langchain.com/o/1a2b3c/projects/p/janmitra-ai/r/{trace_id}
+   LANGSMITH_TRACE_URL_TEMPLATE=https://smith.langchain.com/o/1a2b3c/projects/p/jansarthi-ai/r/{trace_id}
    ```
 3. Restart the backend. Every AI Monitoring request row now links straight to its own trace.
 
@@ -164,7 +164,7 @@ actually carries):
   and most ID-like numbers) and caps length at 2000 characters.
 - **Known limitation, stated honestly**: `redact_text()` is a regex filter, not NLU — it will not
   catch a name or street address written in ordinary prose (e.g. "My name is Priya, the streetlight
-  outside 14 MG Road is broken"). If your deployment's Ask JanMitra traffic routinely includes
+  outside 14 MG Road is broken"). If your deployment's Ask Sarthi traffic routinely includes
   such details, treat your LangSmith project as containing citizen PII for access-control purposes,
   the same as the application database itself.
 - **Not PII, sent as-is**: intent, service category, route, verification status, location
@@ -198,7 +198,7 @@ following can happen because of a LangSmith problem:
 `AiRequestLog` writes (the Admin dashboard's data, separate from LangSmith — see §5) are
 independently best-effort: `ai_request_log_repository.record_ai_request()` catches and logs its
 own exceptions rather than raising, so a database hiccup while writing this row cannot fail (or
-mask the outcome of) the Ask JanMitra response that has already been produced.
+mask the outcome of) the Ask Sarthi response that has already been produced.
 
 Verified directly: `tests/test_ask_janmitra_tracing.py::test_ask_janmitra_endpoint_works_when_every_langsmith_call_raises`
 exercises the real `/ask-janmitra` endpoint with `LANGSMITH_TRACING=true` and a LangSmith client
@@ -256,7 +256,7 @@ writes to your live LangSmith project.
 
 ## 11. Annotation Queue — knowledge-base-gap review
 
-Every Ask JanMitra request where the pipeline genuinely couldn't answer — `insufficient_knowledge`
+Every Ask Sarthi request where the pipeline genuinely couldn't answer — `insufficient_knowledge`
 was true, or the intent classifier detected a known-but-unsupported service (`routed_to ==
 "NONE_OUT_OF_SCOPE"`) — is a real citizen question the knowledge base doesn't cover yet. Those
 traces are automatically added to a LangSmith **Annotation Queue** (see `graph.py`'s
@@ -265,9 +265,9 @@ knowledge-base-improvement backlog instead of an invisible aggregate count on th
 dashboard.
 
 The queue (name configurable via `LANGSMITH_REVIEW_QUEUE_NAME`, default
-`janmitra-ai-knowledge-gaps`) is created automatically on first use — no manual setup step.
+`jansarthi-ai-knowledge-gaps`) is created automatically on first use — no manual setup step.
 
-**Where to see it**: LangSmith UI → **Annotation Queues** → `janmitra-ai-knowledge-gaps`. Each
+**Where to see it**: LangSmith UI → **Annotation Queues** → `jansarthi-ai-knowledge-gaps`. Each
 entry is a full trace (question, retrieval outcome, reason) ready for a reviewer to tag "add to
 KB" vs. "genuinely out of scope."
 
@@ -301,7 +301,7 @@ there before ever touching the actual `.txt` files.
 
 A new in-app notification, reusing the existing `Notification` system (previously worker-only,
 for complaint assignments): `ai_request_log_repository.check_and_fire_alerts()` looks at the most
-recent 20 Ask JanMitra requests after every new one, and if either condition holds, notifies every
+recent 20 Ask Sarthi requests after every new one, and if either condition holds, notifies every
 admin:
 
 | Alert | Condition | Cooldown |
@@ -326,7 +326,7 @@ up.
 worker-only) — an admin sees a badge and a dropdown entry titled "High AI error rate" or "High AI
 latency" with the measured rate/latency in the message. Best-effort like the rest of this
 integration: `check_and_fire_alerts()` catches its own exceptions and never breaks the Ask
-JanMitra response that triggered the check.
+Sarthi response that triggered the check.
 
 ## 14. Manual setup steps (not automatable from this repo)
 
@@ -336,7 +336,7 @@ JanMitra response that triggered the check.
    in your `.env` (never commit real credentials — `.env.example` only documents the variable
    names).
 3. Optionally set `LANGSMITH_PROJECT` to match an existing LangSmith project name (default:
-   `janmitra-ai`).
+   `jansarthi-ai`).
 4. Optionally set `LANGSMITH_TRACE_URL_TEMPLATE` per §6 to enable the Admin dashboard's "View
    Trace" links.
 5. Restart the backend. The next `/ask-janmitra` request should appear in your LangSmith project

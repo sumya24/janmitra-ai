@@ -26,7 +26,7 @@ OUTPUT_PATH = "scripts/i18n_translations_output.json"
 # hand-reviewed) in i18n.ts are NOT regenerated here -- see PRESERVE below -- this only covers
 # what's genuinely new: existing keys in the 3 new languages, and all-new keys in every language.
 ENGLISH_SOURCE: dict[str, str] = {
-    # --- Ask JanMitra RAG-retrieval-phase additions (all 6 languages hand-added directly to
+    # --- Ask Sarthi RAG-retrieval-phase additions (all 6 languages hand-added directly to
     # i18n.ts at the same time as these source entries -- see that file's "ask.loading" etc, and
     # docs/ask_janmitra_rag_architecture.md's known-limitations section for why these three are
     # hand-translated rather than run through translate_with_retry()'s live Sarvam calls here) ---
@@ -37,7 +37,7 @@ ENGLISH_SOURCE: dict[str, str] = {
     "landing.login": "Log in",
     "landing.signup": "Sign up",
     "hero.headline": "Report it in your language. It gets read in theirs.",
-    "hero.sub": "JanMitra AI turns your voice into a complaint your local worker can read — translated automatically, no matter which language either of you speaks.",
+    "hero.sub": "JanSarthi AI turns your voice into a complaint your local worker can read — translated automatically, no matter which language either of you speaks.",
     "hero.cta.primary": "Get started",
     "hero.cta.secondary": "Log in",
     "auth.field.phone": "Phone number",
@@ -60,7 +60,7 @@ ENGLISH_SOURCE: dict[str, str] = {
     "common.somethingWrong": "Something went wrong. Please try again.",
     "gate.title": "Choose your language",
     "gate.changeAnytime": "You can change this anytime later in Settings",
-    "gate.privacyNote": "Used to decide what language JanMitra AI shows you in — nothing is sent anywhere yet.",
+    "gate.privacyNote": "Used to decide what language JanSarthi AI shows you in — nothing is sent anywhere yet.",
     "topbar.subtitle": "Municipal Grievance Redressal",
     "role.citizen": "Citizen",
     "role.worker": "Worker",
@@ -70,7 +70,7 @@ ENGLISH_SOURCE: dict[str, str] = {
     "settings.fullName": "Full name",
     "settings.phone": "Phone number",
     "settings.preferredLanguage": "Preferred language",
-    "settings.languageHelp": "This changes the language JanMitra AI shows you — complaint forms, notifications, everything.",
+    "settings.languageHelp": "This changes the language JanSarthi AI shows you — complaint forms, notifications, everything.",
     "settings.logout": "Log out",
     "settings.save": "Save changes",
     "settings.saving": "Saving…",

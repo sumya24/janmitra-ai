@@ -60,7 +60,7 @@ export const SERVICE_CATEGORY_DEFS: ServiceCategoryDef[] = [
 /** Best-effort, client-side-only keyword match used solely to pre-fill the wizard's mock
  * "AI Understanding" step — never presented as a real backend classification. Returns null
  * when nothing matches rather than guessing, matching the same "don't fabricate" rule the
- * mock Ask JanMitra answers follow. */
+ * mock Ask Sarthi answers follow. */
 export function guessServiceCategory(text: string): ServiceCategoryDef | null {
   const q = text.toLowerCase();
   return SERVICE_CATEGORY_DEFS.find((def) => def.keywords.some((k) => q.includes(k))) ?? null;

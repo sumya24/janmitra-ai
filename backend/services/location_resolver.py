@@ -44,7 +44,7 @@ _WARD_TEXT_PATTERN = re.compile(r"^Ward\s+(\d+)\s*—\s*(.+)$")
 NOMINATIM_REVERSE_URL = "https://nominatim.openstreetmap.org/reverse"
 # Nominatim's usage policy (https://operations.osmfoundation.org/policies/nominatim/) requires a
 # descriptive User-Agent identifying the application -- not a generic/browser-spoofing one.
-_USER_AGENT = "JanMitraAI-LocationResolver/1.0 (civic complaint app; dev/prototype use)"
+_USER_AGENT = "JanSarthiAI-LocationResolver/1.0 (civic complaint app; dev/prototype use)"
 _REQUEST_TIMEOUT_SECONDS = 6
 
 

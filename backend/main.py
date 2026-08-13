@@ -1,4 +1,4 @@
-"""FastAPI application entry point for JanMitra AI."""
+"""FastAPI application entry point for JanSarthi AI."""
 
 import logging
 from collections.abc import AsyncIterator
@@ -24,7 +24,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     """Initialize the database, then warm the RAG embedding model, on application startup.
 
     Warming the embedding model here (rather than leaving it fully lazy) matters in practice --
-    measured directly while validating this: the FIRST live Ask JanMitra request after a fresh
+    measured directly while validating this: the FIRST live Ask Sarthi request after a fresh
     backend start paid the model's ~20-25s load cost inline, on top of normal retrieval+LLM
     latency, and exceeded a 30s client timeout in one such run. Warming it once at startup (a
     few extra seconds before the app reports ready, paid once, off the request path) avoids
@@ -40,11 +40,11 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         logger.info("RAG embedding model warmed up at startup")
     except Exception as exc:
         logger.warning("Could not warm up the RAG embedding model at startup (will lazy-load on first request): %s", exc)
-    logger.info("JanMitra AI backend started")
+    logger.info("JanSarthi AI backend started")
     yield
 
 
-app = FastAPI(title="JanMitra AI", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="JanSarthi AI", version="0.1.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -57,7 +57,7 @@ app.add_middleware(
     # the header IS actually present -- curl/Postman never show this bug since CORS is a
     # browser-only restriction. That's what made the report download filename fall back to the
     # generic "report.pdf" (see frontend-react/src/lib/api.ts's requestBlob()) instead of the
-    # real "JanMitra_Complaint_JM-00042_Report.pdf" the backend was already sending correctly.
+    # real "JanSarthi_Complaint_JM-00042_Report.pdf" the backend was already sending correctly.
     expose_headers=["Content-Disposition"],
 )
 app.include_router(auth.router)

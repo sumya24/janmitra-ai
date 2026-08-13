@@ -1,8 +1,8 @@
-# The AI Agent — How JanMitra AI Actually Uses AI
+# The AI Agent — How JanSarthi AI Actually Uses AI
 
 *Written so it makes sense whether or not you write code. If a term might be unfamiliar, it's explained the first time it shows up, and again in the [Glossary](#glossary-plain-language) at the bottom.*
 
-> Part of the JanMitra AI documentation set. Start at [`README.md`](../README.md) for the big picture, or [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md) for a full tour of the whole codebase. This document is the deep dive on just one piece: the AI pipeline.
+> Part of the JanSarthi AI documentation set. Start at [`README.md`](../README.md) for the big picture, or [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md) for a full tour of the whole codebase. This document is the deep dive on just one piece: the AI pipeline.
 
 ---
 
@@ -18,7 +18,7 @@ In this codebase, the agent is a Python class called `ComplaintAgent` ([`backend
 4. Write a short 1–2 sentence summary, so a worker skimming a long list doesn't have to read every full complaint.
 5. Save the result to the database.
 
-None of these steps involve JanMitra AI *training* an AI model. All the actual "intelligence" comes from **Sarvam AI**, an Indian AI company whose models specialize in Indian languages. This codebase just calls their API, in a specific order, and handles it sensibly when a call fails. If you're wondering how this compares to *building* a generative AI model from scratch — it doesn't; it's an *AI-powered application*, which is what the overwhelming majority of real-world "AI products" actually are. See [§6](#6-what-this-is-and-isnt--a-note-on-scope) for that distinction spelled out properly.
+None of these steps involve JanSarthi AI *training* an AI model. All the actual "intelligence" comes from **Sarvam AI**, an Indian AI company whose models specialize in Indian languages. This codebase just calls their API, in a specific order, and handles it sensibly when a call fails. If you're wondering how this compares to *building* a generative AI model from scratch — it doesn't; it's an *AI-powered application*, which is what the overwhelming majority of real-world "AI products" actually are. See [§6](#6-what-this-is-and-isnt--a-note-on-scope) for that distinction spelled out properly.
 
 ---
 

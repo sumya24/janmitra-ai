@@ -1,5 +1,5 @@
 /**
- * Backend-ready contracts for the RAG/"Ask JanMitra" and civic-service concepts this phase
+ * Backend-ready contracts for the RAG/"Ask Sarthi" and civic-service concepts this phase
  * builds UI for, but does not implement the backend of (see docs — Track A is preparing the
  * real knowledge base separately).
  *
@@ -49,7 +49,7 @@ export interface SourceRecord {
   last_updated?: string | null;
 }
 
-/** The real Ask JanMitra backend's response shape (backend/schemas/ask_janmitra.py's
+/** The real Ask Sarthi backend's response shape (backend/schemas/ask_janmitra.py's
  * AskJanMitraResponse — POST /ask-janmitra, wired in lib/api.ts's askJanMitra() and consumed by
  * pages/AskJanMitra.tsx). Superset of the original `{answer, sources}` shape this page rendered
  * against its now-removed mock data (lib/mockAskJanMitra.ts, deleted once this real backend

@@ -12,7 +12,7 @@ from backend.services.intent_classifier import QuestionIntent
 
 
 class ConversationTurn(BaseModel):
-    """One prior turn in a multi-turn Ask JanMitra exchange. The caller (frontend) resends the
+    """One prior turn in a multi-turn Ask Sarthi exchange. The caller (frontend) resends the
     full history with each request — this API is stateless server-side (see
     docs/ask_janmitra_rag_architecture.md's "why no server-side conversation store" note), which
     keeps this phase's scope to the retrieval pipeline itself rather than also building session

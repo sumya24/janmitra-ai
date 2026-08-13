@@ -216,7 +216,7 @@ export interface ComplaintReport {
 // In-app notifications -- see backend/routes/notifications.py. NEW_ASSIGNMENT/REASSIGNED go to
 // workers (created by assignment_service.py). AI_ALERT goes to every admin, created by
 // backend/repositories/ai_request_log_repository.py's check_and_fire_alerts() when the Ask
-// JanMitra pipeline's rolling error rate or latency crosses a threshold -- see that function's
+// Sarthi pipeline's rolling error rate or latency crosses a threshold -- see that function's
 // docstring for the cooldown that keeps a sustained problem from spamming a notification per
 // request. AI_ALERT notifications never have a complaint_id (see NotificationBell.tsx).
 export type NotificationType = "NEW_ASSIGNMENT" | "REASSIGNED" | "AI_ALERT";

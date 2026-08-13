@@ -30,7 +30,7 @@ jobs:
       # see build_rag_knowledge_base.py's docstring) deliberately not committed to git, same as
       # backend/Dockerfile's production build already handles. Without this step, just importing
       # backend.main (which every test does via conftest.py) crashes with FileNotFoundError on a
-      # fresh checkout, even for tests unrelated to Ask JanMitra.
+      # fresh checkout, even for tests unrelated to Ask Sarthi.
       - name: Build RAG knowledge base (chunks.json)
         run: python scripts/build_rag_knowledge_base.py
 

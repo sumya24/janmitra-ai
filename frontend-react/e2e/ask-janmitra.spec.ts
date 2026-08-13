@@ -2,9 +2,9 @@ import { test, expect } from "@playwright/test";
 import { uniquePhone } from "./helpers";
 
 /**
- * E2E coverage for Ask JanMitra against the REAL backend (POST /ask-janmitra) — not a mock.
+ * E2E coverage for Ask Sarthi against the REAL backend (POST /ask-janmitra) — not a mock.
  * This is the RAG retrieval + location-aware AI foundation phase's Playwright requirement:
- * "At minimum verify: ... Ask JanMitra ... location ... source links".
+ * "At minimum verify: ... Ask Sarthi ... location ... source links".
  *
  * Uses a real Sarvam AI call end-to-end (no SARVAM_API_KEY mocking at this layer, matching how
  * theme-and-voice.spec.ts's real voice-complaint test already works) — timeouts sized generously
@@ -19,7 +19,7 @@ async function signUpAndReachCitizenHome(page: import("@playwright/test").Page) 
   await expect(page).toHaveURL(/\/signup$/);
 
   const phone = uniquePhone();
-  await page.getByLabel("Full name").fill("Ask JanMitra Tester");
+  await page.getByLabel("Full name").fill("Ask Sarthi Tester");
   await page.getByLabel("Phone number").fill(phone);
   await page.getByLabel("Password").fill("secret123");
   // Mandatory ward field -- same select-or-freetext handling as theme-and-voice.spec.ts's
@@ -38,21 +38,21 @@ async function signUpAndReachCitizenHome(page: import("@playwright/test").Page) 
   await expect(page).toHaveURL(/\/citizen$/);
 }
 
-test("Ask JanMitra: a located, in-scope information question returns a grounded answer with a verified source", async ({ page }) => {
+test("Ask Sarthi: a located, in-scope information question returns a grounded answer with a verified source", async ({ page }) => {
   test.setTimeout(60000); // real Sarvam LLM call, same generous budget as the voice-complaint test
 
   await signUpAndReachCitizenHome(page);
-  // Ask JanMitra is a floating widget (opens a slide-out panel), not a nav tab -- see
+  // Ask Sarthi is a floating widget (opens a slide-out panel), not a nav tab -- see
   // CitizenNav.tsx/AskJanMitraWidget.tsx. No route change on open, so no toHaveURL assertion
   // here the way there used to be.
-  await page.getByRole("button", { name: "Ask JanMitra" }).click();
+  await page.getByRole("button", { name: "Ask Sarthi" }).click();
   // Deliberately a TYPE_B (service-information) phrasing, not a "...is not working" complaint-
   // shaped one -- since the LangGraph orchestration phase, a complaint-shaped question routes to
   // complaint_flow (files a real complaint, see the test below) instead of answering via RAG, so
   // this test exercises the RAG+citation path specifically with a query that stays TYPE_B.
   await page.getByPlaceholder(/Ask about a civic service/i).fill("Who do I contact about street lights in Mohali?");
   // exact: true -- Playwright's accessible-name matching is substring by default, and "Ask"
-  // would otherwise also match the floating widget's own "Ask JanMitra" button, which stays
+  // would otherwise also match the floating widget's own "Ask Sarthi" button, which stays
   // rendered (not hidden) while its panel is open.
   await page.getByRole("button", { name: "Ask", exact: true }).click();
 
@@ -68,21 +68,21 @@ test("Ask JanMitra: a located, in-scope information question returns a grounded 
   expect(href).toMatch(/^https:\/\//);
 });
 
-test("Ask JanMitra: a complaint-shaped question with location files a real complaint", async ({ page }) => {
+test("Ask Sarthi: a complaint-shaped question with location files a real complaint", async ({ page }) => {
   test.setTimeout(60000);
 
   await signUpAndReachCitizenHome(page);
-  // Ask JanMitra is a floating widget (opens a slide-out panel), not a nav tab -- see
+  // Ask Sarthi is a floating widget (opens a slide-out panel), not a nav tab -- see
   // CitizenNav.tsx/AskJanMitraWidget.tsx. No route change on open, so no toHaveURL assertion
   // here the way there used to be.
-  await page.getByRole("button", { name: "Ask JanMitra" }).click();
+  await page.getByRole("button", { name: "Ask Sarthi" }).click();
   // A genuinely complaint-shaped ("...is not working") question with a resolvable location now
   // files a real complaint via the LangGraph orchestrator's complaint_flow (see
   // docs/ask_janmitra_orchestration.md) instead of answering from RAG -- confirmed deliberate
   // behavior change, see backend/services/orchestration/nodes.py's module docstring.
   await page.getByPlaceholder(/Ask about a civic service/i).fill("Street light not working in Mohali.");
   // exact: true -- Playwright's accessible-name matching is substring by default, and "Ask"
-  // would otherwise also match the floating widget's own "Ask JanMitra" button, which stays
+  // would otherwise also match the floating widget's own "Ask Sarthi" button, which stays
   // rendered (not hidden) while its panel is open.
   await page.getByRole("button", { name: "Ask", exact: true }).click();
 
@@ -92,16 +92,16 @@ test("Ask JanMitra: a complaint-shaped question with location files a real compl
   await expect(page.getByText("Official source", { exact: true })).toHaveCount(0);
 });
 
-test("Ask JanMitra: a question with no location asks for clarification instead of guessing", async ({ page }) => {
+test("Ask Sarthi: a question with no location asks for clarification instead of guessing", async ({ page }) => {
   await signUpAndReachCitizenHome(page);
-  // Ask JanMitra is a floating widget (opens a slide-out panel), not a nav tab -- see
+  // Ask Sarthi is a floating widget (opens a slide-out panel), not a nav tab -- see
   // CitizenNav.tsx/AskJanMitraWidget.tsx. No route change on open, so no toHaveURL assertion
   // here the way there used to be.
-  await page.getByRole("button", { name: "Ask JanMitra" }).click();
+  await page.getByRole("button", { name: "Ask Sarthi" }).click();
 
   await page.getByPlaceholder(/Ask about a civic service/i).fill("Street light is not working.");
   // exact: true -- Playwright's accessible-name matching is substring by default, and "Ask"
-  // would otherwise also match the floating widget's own "Ask JanMitra" button, which stays
+  // would otherwise also match the floating widget's own "Ask Sarthi" button, which stays
   // rendered (not hidden) while its panel is open.
   await page.getByRole("button", { name: "Ask", exact: true }).click();
 
@@ -110,14 +110,14 @@ test("Ask JanMitra: a question with no location asks for clarification instead o
   await expect(page.getByRole("button", { name: "Use current location" })).toBeVisible();
 });
 
-test("Ask JanMitra: the floating widget shows the mascot, and voice input toggles a real listening state when the browser supports it", async ({ page, context }) => {
+test("Ask Sarthi: the floating widget shows the mascot, and voice input toggles a real listening state when the browser supports it", async ({ page, context }) => {
   await signUpAndReachCitizenHome(page);
 
   // The FAB's icon is the mascot (Mascot.tsx) now, not the old chat-bubble-with-dots icon --
   // see AskJanMitraWidget.tsx.
   await expect(page.locator(".ask-widget-fab img.mascot")).toBeVisible();
 
-  await page.getByRole("button", { name: "Ask JanMitra" }).click();
+  await page.getByRole("button", { name: "Ask Sarthi" }).click();
 
   // Mic button is only rendered when the browser actually exposes SpeechRecognition -- true
   // graceful absence, not a disabled ghost control, so assert whichever branch is real for this
@@ -155,16 +155,16 @@ test("Ask JanMitra: the floating widget shows the mascot, and voice input toggle
   await expect(page.locator(".ask-chat-composer-mascot img.mascot-listening")).toHaveCount(0);
 });
 
-test("Ask JanMitra: an out-of-scope service question says so honestly, with no fabricated source", async ({ page }) => {
+test("Ask Sarthi: an out-of-scope service question says so honestly, with no fabricated source", async ({ page }) => {
   await signUpAndReachCitizenHome(page);
-  // Ask JanMitra is a floating widget (opens a slide-out panel), not a nav tab -- see
+  // Ask Sarthi is a floating widget (opens a slide-out panel), not a nav tab -- see
   // CitizenNav.tsx/AskJanMitraWidget.tsx. No route change on open, so no toHaveURL assertion
   // here the way there used to be.
-  await page.getByRole("button", { name: "Ask JanMitra" }).click();
+  await page.getByRole("button", { name: "Ask Sarthi" }).click();
 
   await page.getByPlaceholder(/Ask about a civic service/i).fill("I want a new electricity connection.");
   // exact: true -- Playwright's accessible-name matching is substring by default, and "Ask"
-  // would otherwise also match the floating widget's own "Ask JanMitra" button, which stays
+  // would otherwise also match the floating widget's own "Ask Sarthi" button, which stays
   // rendered (not hidden) while its panel is open.
   await page.getByRole("button", { name: "Ask", exact: true }).click();
 

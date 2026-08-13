@@ -130,8 +130,8 @@ export default function Landing() {
       <nav className="landingnav">
         <div className="landingnav-inner">
           <div className="landing-brand">
-            <img src="/brand/logo-mark.png" alt="JanMitra AI" className="landing-seal" />
-            <div className="landing-brand-word display">JanMitra AI</div>
+            <img src="/brand/logo-mark.png" alt="JanSarthi AI" className="landing-seal" />
+            <div className="landing-brand-word display">JanSarthi AI</div>
           </div>
           <div className="navactions">
             <Link to="/" className="lang-badge">
@@ -311,8 +311,8 @@ export default function Landing() {
 
       <footer className="landing-footer">
         <div className="landing-brand">
-          <img src="/brand/logo-mark.png" alt="JanMitra AI" className="landing-seal landing-seal-sm" />
-          <div className="landing-brand-word display">JanMitra AI</div>
+          <img src="/brand/logo-mark.png" alt="JanSarthi AI" className="landing-seal landing-seal-sm" />
+          <div className="landing-brand-word display">JanSarthi AI</div>
         </div>
         <p>{t(lang, "landing.footer.tagline")}</p>
       </footer>

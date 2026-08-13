@@ -1,4 +1,4 @@
-"""Shared graph state for the Ask JanMitra LangGraph orchestrator.
+"""Shared graph state for the Ask Sarthi LangGraph orchestrator.
 
 One `GraphState` flows through every node (see `graph.py`). It is a `TypedDict` (not a Pydantic
 model) because LangGraph's `StateGraph` natively merges partial dict returns from each node into

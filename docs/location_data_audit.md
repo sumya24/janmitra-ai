@@ -1,4 +1,4 @@
-# JanMitra Location Data Audit (Read-Only)
+# Sarthi Location Data Audit (Read-Only)
 
 **Purpose:** ground the upcoming location-architecture design in exactly what exists today —
 no assumptions, nothing inferred from what's planned. Every claim below was checked directly

@@ -1,4 +1,4 @@
-"""Image understanding for Ask JanMitra, via a local open-source vision-language model.
+"""Image understanding for Ask Sarthi, via a local open-source vision-language model.
 
 Sarvam (this project's only other AI vendor) has no vision/image-understanding capability --
 checked directly against the installed SDK's type stubs: `sarvam-105b` chat completions only

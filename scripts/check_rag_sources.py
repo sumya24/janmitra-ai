@@ -54,7 +54,7 @@ def check_urls_live(urls: list[str]) -> dict[str, str]:
         status = None
         for attempt in range(2):
             try:
-                resp = requests.get(url, timeout=20, headers={"User-Agent": "Mozilla/5.0 (JanMitraAI-RAG-QA/1.0)"})
+                resp = requests.get(url, timeout=20, headers={"User-Agent": "Mozilla/5.0 (JanSarthiAI-RAG-QA/1.0)"})
                 status = str(resp.status_code)
                 break
             except requests.exceptions.SSLError:

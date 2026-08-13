@@ -9,7 +9,7 @@ plausible but isn't in the retrieved context.
 
 Graceful degradation, not a hard failure: if the LLM is unconfigured or the call fails, this
 falls back to a simple template built directly from the retrieved chunks' own text -- Ask
-JanMitra must keep working (with real, sourced content, just not LLM-polished prose) even
+Sarthi must keep working (with real, sourced content, just not LLM-polished prose) even
 without a working LLM connection, matching this codebase's existing pattern
 (normalization_service.py falls back to the original text the same way).
 """
@@ -29,7 +29,7 @@ class AnswerGenerationService:
         if settings.LLM_API_KEY:
             self._client = SarvamAI(api_subscription_key=settings.LLM_API_KEY)
         else:
-            logger.warning("LLM_API_KEY is not set; Ask JanMitra will fall back to raw excerpts, not LLM-generated prose.")
+            logger.warning("LLM_API_KEY is not set; Ask Sarthi will fall back to raw excerpts, not LLM-generated prose.")
 
     def generate(self, question: str, context_chunks: list[str], language_name: str) -> tuple[str, bool]:
         """Returns (answer_text, was_llm_generated). was_llm_generated=False means the fallback
@@ -58,13 +58,13 @@ class AnswerGenerationService:
             content = choice.message.content
             if not content or not content.strip():
                 logger.warning(
-                    "Ask JanMitra answer generation returned no content (finish_reason=%s); falling back to raw excerpts.",
+                    "Ask Sarthi answer generation returned no content (finish_reason=%s); falling back to raw excerpts.",
                     choice.finish_reason,
                 )
                 return self._fallback_answer(context_chunks), False
             return content.strip(), True
         except Exception as exc:
-            logger.warning("Ask JanMitra answer generation failed, falling back to raw excerpts: %s", exc, exc_info=True)
+            logger.warning("Ask Sarthi answer generation failed, falling back to raw excerpts: %s", exc, exc_info=True)
             return self._fallback_answer(context_chunks), False
 
     @staticmethod

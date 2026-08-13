@@ -429,7 +429,7 @@ class _NumberedCanvas(pdfcanvas.Canvas):
         self.setFillColor(_INK_3)
         self.drawString(
             _MARGIN, _FOOTER_H - 7 * mm,
-            f"JANMITRA AI — MUNICIPAL GRIEVANCE REDRESSAL   |   Reflects only actions recorded on Complaint {self._report_id}.",
+            f"JANSARTHI AI — MUNICIPAL GRIEVANCE REDRESSAL   |   Reflects only actions recorded on Complaint {self._report_id}.",
         )
         self.setFont("Helvetica", 7.5)
         self.setFillColor(_INK_2)
@@ -449,7 +449,7 @@ def generate_pdf_bytes(data: ComplaintReportData) -> bytes:
 
     Layout is styled after a reference lab-report PDF the user supplied (navy brand header with
     accent stripe, boxed two-column fact panels, a colored pass/fail-style status banner, and a
-    running "Page X of Y" footer) -- reimplemented here with JanMitra AI's own logo and palette
+    running "Page X of Y" footer) -- reimplemented here with JanSarthi AI's own logo and palette
     (see the `frontend-react/src/styles/global.css` brand tokens mirrored in the color constants
     above), not the reference's.
     """
