@@ -23,7 +23,7 @@ def test_summarize_returns_stripped_model_output(monkeypatch):
         "  Garbage not collected near the house.  "
     )
     monkeypatch.setattr(
-        "backend.services.summary_service.SarvamAI", lambda api_subscription_key: fake_client
+        "backend.services.summary_service.SarvamAI", lambda api_subscription_key, timeout=None: fake_client
     )
 
     service = SummaryService()
@@ -49,7 +49,7 @@ def test_summarize_wraps_unexpected_errors(monkeypatch):
     fake_client = Mock()
     fake_client.chat.completions.side_effect = RuntimeError("network blip")
     monkeypatch.setattr(
-        "backend.services.summary_service.SarvamAI", lambda api_subscription_key: fake_client
+        "backend.services.summary_service.SarvamAI", lambda api_subscription_key, timeout=None: fake_client
     )
 
     service = SummaryService()

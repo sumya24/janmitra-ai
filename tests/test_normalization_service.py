@@ -20,7 +20,7 @@ def test_normalize_returns_stripped_model_output(monkeypatch):
         "  There is garbage near my village, please check the area of Rukadi.  "
     )
     monkeypatch.setattr(
-        "backend.services.normalization_service.SarvamAI", lambda api_subscription_key: fake_client
+        "backend.services.normalization_service.SarvamAI", lambda api_subscription_key, timeout=None: fake_client
     )
 
     service = NormalizationService()
@@ -36,7 +36,7 @@ def test_normalize_works_for_non_english_language(monkeypatch):
     fake_client = Mock()
     fake_client.chat.completions.return_value = _fake_chat_response("कचरा उचलला नाही.")
     monkeypatch.setattr(
-        "backend.services.normalization_service.SarvamAI", lambda api_subscription_key: fake_client
+        "backend.services.normalization_service.SarvamAI", lambda api_subscription_key, timeout=None: fake_client
     )
 
     service = NormalizationService()
@@ -63,7 +63,7 @@ def test_normalize_empty_model_response_returns_original_text(monkeypatch):
     fake_client = Mock()
     fake_client.chat.completions.return_value = _fake_chat_response(None, finish_reason="length")
     monkeypatch.setattr(
-        "backend.services.normalization_service.SarvamAI", lambda api_subscription_key: fake_client
+        "backend.services.normalization_service.SarvamAI", lambda api_subscription_key, timeout=None: fake_client
     )
 
     service = NormalizationService()
@@ -78,7 +78,7 @@ def test_normalize_swallows_unexpected_errors(monkeypatch):
     fake_client = Mock()
     fake_client.chat.completions.side_effect = RuntimeError("network blip")
     monkeypatch.setattr(
-        "backend.services.normalization_service.SarvamAI", lambda api_subscription_key: fake_client
+        "backend.services.normalization_service.SarvamAI", lambda api_subscription_key, timeout=None: fake_client
     )
 
     service = NormalizationService()

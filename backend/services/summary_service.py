@@ -2,6 +2,7 @@
 
 import logging
 
+import httpx
 from sarvamai import SarvamAI
 
 from backend.config import get_prompt, settings
@@ -17,7 +18,18 @@ class SummaryService:
         """Initialize the underlying SarvamAI client, if an API key is configured."""
         self._client: SarvamAI | None = None
         if settings.LLM_API_KEY:
-            self._client = SarvamAI(api_subscription_key=settings.LLM_API_KEY)
+            # This is the exact call that produced the real ~30s ConnectTimeout failure this fix
+            # is responding to -- a reasoning-model call (same LLM_MODEL as answer_generation_
+            # service.py/normalization_service.py), so it gets the generous read timeout, just a
+            # much shorter connect timeout than the SDK's 60s default. See config.py's
+            # SARVAM_CONNECT_TIMEOUT_SECONDS docstring for the full reasoning.
+            timeout = httpx.Timeout(
+                connect=settings.SARVAM_CONNECT_TIMEOUT_SECONDS,
+                read=settings.SARVAM_REASONING_READ_TIMEOUT_SECONDS,
+                write=settings.SARVAM_REASONING_READ_TIMEOUT_SECONDS,
+                pool=settings.SARVAM_REASONING_READ_TIMEOUT_SECONDS,
+            )
+            self._client = SarvamAI(api_subscription_key=settings.LLM_API_KEY, timeout=timeout)
         else:
             logger.warning("LLM_API_KEY is not set; summary generation will fail until configured.")
 

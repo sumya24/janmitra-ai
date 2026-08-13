@@ -16,6 +16,7 @@ without a working LLM connection, matching this codebase's existing pattern
 
 import logging
 
+import httpx
 from sarvamai import SarvamAI
 
 from backend.config import get_prompt, settings
@@ -27,7 +28,16 @@ class AnswerGenerationService:
     def __init__(self) -> None:
         self._client: SarvamAI | None = None
         if settings.LLM_API_KEY:
-            self._client = SarvamAI(api_subscription_key=settings.LLM_API_KEY)
+            # See config.py's SARVAM_CONNECT_TIMEOUT_SECONDS docstring: this reasoning-model call
+            # needs a generous read timeout (legitimate slow-but-working answers shouldn't be cut
+            # off), but still fails fast on a genuinely dead connection.
+            timeout = httpx.Timeout(
+                connect=settings.SARVAM_CONNECT_TIMEOUT_SECONDS,
+                read=settings.SARVAM_REASONING_READ_TIMEOUT_SECONDS,
+                write=settings.SARVAM_REASONING_READ_TIMEOUT_SECONDS,
+                pool=settings.SARVAM_REASONING_READ_TIMEOUT_SECONDS,
+            )
+            self._client = SarvamAI(api_subscription_key=settings.LLM_API_KEY, timeout=timeout)
         else:
             logger.warning("LLM_API_KEY is not set; Ask Sarthi will fall back to raw excerpts, not LLM-generated prose.")
 
