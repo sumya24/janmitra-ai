@@ -5,6 +5,7 @@ import SourceCard from "../components/SourceCard";
 import Mascot, { type MascotState } from "../components/Mascot";
 import MultiPhotoUpload from "../components/MultiPhotoUpload";
 import VoiceAssistantOverlay from "../components/VoiceAssistantOverlay";
+import LocationPicker, { type LocationValue } from "../components/LocationPicker";
 import { useUiLang } from "../lib/uiLang";
 import { useAuth } from "../lib/auth";
 import { t } from "../lib/i18n";
@@ -56,15 +57,54 @@ interface ChatMessage {
  * page below (a fixed-height flex column under TopBar) and inside AskJanMitraWidget.tsx's
  * slide-out panel (already its own flex column) without needing to know which one it's in.
  */
+
+/** Crossfades between two mascot poses instead of hard-swapping the <img src>, which is what read
+ * as "fake"/slideshow-like -- two static poses popping in and out with no transition at all. Both
+ * poses are real, already-existing Mascot states (no invented pose); this only smooths *how* the
+ * welcome screen moves between them. Scoped to this one welcome-screen usage rather than changing
+ * Mascot.tsx itself, since every other consumer (message avatars, the widget FAB, VoiceAssistantOverlay)
+ * only ever renders one state at a time with no complaint about the transition. */
+function WelcomeMascot({ state, size }: { state: MascotState; size: number }) {
+  const [current, setCurrent] = useState(state);
+  const [outgoing, setOutgoing] = useState<MascotState | null>(null);
+  const lastState = useRef(state);
+
+  useEffect(() => {
+    if (state === lastState.current) return;
+    setOutgoing(lastState.current);
+    setCurrent(state);
+    lastState.current = state;
+    const timeout = window.setTimeout(() => setOutgoing(null), 500);
+    return () => window.clearTimeout(timeout);
+  }, [state]);
+
+  return (
+    <div className="ask-chat-welcome-mascot" style={{ height: size, width: size }}>
+      {outgoing && (
+        <div key={`out-${outgoing}`} className="ask-chat-welcome-mascot-layer ask-chat-welcome-mascot-out">
+          <Mascot state={outgoing} size={size} />
+        </div>
+      )}
+      <div key={`in-${current}`} className="ask-chat-welcome-mascot-layer ask-chat-welcome-mascot-in">
+        <Mascot state={current} size={size} />
+      </div>
+    </div>
+  );
+}
+
 export function AskJanMitraContent() {
   const { lang } = useUiLang();
   const { token } = useAuth();
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
-  const [locatingGps, setLocatingGps] = useState(false);
-  const [manualLocationInput, setManualLocationInput] = useState<string | null>(null);
-  const [manualLocationTargetId, setManualLocationTargetId] = useState<number | null>(null);
+  // Real, worker-backed wards -- the SAME list/component ReportIssue.tsx's "Report an Issue"
+  // wizard already uses (see LocationPicker.tsx's own docstring), reused here rather than a
+  // hand-rolled button list so a citizen actually gets a real dropdown of serviceable areas, not
+  // a generic "type something" box. Fetched once; this list changes rarely (only when an admin
+  // adds/removes a worker), same assumption ReportIssue.tsx already makes.
+  const [wards, setWards] = useState<string[]>([]);
+  const [locationPickerValue, setLocationPickerValue] = useState<LocationValue>({ ward: "", coords: null });
   const speech = useSpeechToText(lang);
   const [showSuccess, setShowSuccess] = useState(false);
   const [attachedImage, setAttachedImage] = useState<File[]>([]);
@@ -111,7 +151,7 @@ export function AskJanMitraContent() {
   // newest message is always what's in view, same as any chat app.
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages.length, loading, locatingGps]);
+  }, [messages.length, loading]);
 
   // Composer grows with content up to a cap, then scrolls internally -- never pushes the send
   // row off-screen on a long paste.
@@ -129,13 +169,34 @@ export function AskJanMitraContent() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!token) return;
+    api.listWards(token).then(setWards).catch(() => setWards([]));
+  }, [token]);
+
   // One mascot, real state in -> real expression out. No invented "error" expression: an error
   // already has its own text bubble, so the mascot just stays idle rather than performing an
   // emotion this 5-state set doesn't have.
   const mascotState: MascotState =
     speech.status === "recording" ? "listening" : loading ? "thinking" : showSuccess ? "success" : "idle";
 
-  async function runQuery(q: string, opts: { locationText?: string; lat?: number; lng?: number } = {}) {
+  // Ambient wave<->namaste loop, but ONLY for the pre-conversation welcome screen and ONLY while
+  // nothing real is actually happening (mascotState is genuinely "idle") -- ask.widget.greeting's
+  // bubble greeting stays a true one-shot per its own docstring; this is a separate, explicitly
+  // requested exception scoped to the empty state, done by re-applying the .mascot-greeting class
+  // on an interval rather than changing the underlying one-shot wave animation itself.
+  const [welcomeWave, setWelcomeWave] = useState(false);
+  useEffect(() => {
+    if (messages.length > 0 || mascotState !== "idle") return;
+    const interval = setInterval(() => setWelcomeWave((w) => !w), 2600);
+    return () => clearInterval(interval);
+  }, [messages.length, mascotState]);
+  const welcomeMascotState: MascotState = mascotState === "idle" && welcomeWave ? "greeting" : mascotState;
+
+  async function runQuery(
+    q: string,
+    opts: { locationText?: string; lat?: number; lng?: number; displayText?: string } = {}
+  ) {
     if (!token) return;
     const trimmed = q.trim();
     const imageToSend = attachedImage[0];
@@ -150,10 +211,21 @@ export function AskJanMitraContent() {
       imagePreview = URL.createObjectURL(imageToSend);
       imagePreviewUrlsRef.current.push(imagePreview);
     }
-    setMessages((prev) => [...prev, { id: nextId(), role: "user", text: trimmed, imagePreview }]);
+    // `opts.displayText`, when given, is what the citizen actually just DID (e.g. "Ward 22 —
+    // Kothrud, Pune" from the location picker, or a picked city name for an ambiguous-location
+    // reply) -- shown in the chat bubble AND sent as this turn's conversation-history content,
+    // instead of silently resending `trimmed` (the ORIGINAL complaint question, needed as the
+    // real `question` field for the backend) as if the citizen had typed it again. Real, reported
+    // bug this closes: "पानी के रिसाव की शिकायत कैसे करें?" appeared twice in a row after picking
+    // a ward from the dropdown, reading as if the citizen had retyped their own question, when
+    // they'd actually just answered "where". `historyForRequest` above is derived from `messages`
+    // (the visible transcript, see this component's own docstring on why there's no second,
+    // parallel history list) -- showing the real answer here also makes conversation_history read
+    // (and resolve, e.g. via nodes.py's own conversation-history location fallback) correctly on
+    // any LATER turn, rather than re-showing the original question a second time in history too.
+    setMessages((prev) => [...prev, { id: nextId(), role: "user", text: opts.displayText ?? trimmed, imagePreview }]);
     setQuestion("");
-    setManualLocationInput(null);
-    setManualLocationTargetId(null);
+    setLocationPickerValue({ ward: "", coords: null });
     setLoading(true);
 
     try {
@@ -199,6 +271,28 @@ export function AskJanMitraContent() {
 
   function handleSubmit(e?: FormEvent) {
     e?.preventDefault();
+    // Ground this in real conversation state, not a guess at the typed text's shape: if the
+    // AI's last message was SPECIFICALLY asking for a location (either the plain "what is the
+    // location?" shape -- follow_up_options includes "Use current location" -- or the ambiguous
+    // "which city, X or Y?" shape -- location.is_ambiguous), treat this reply as the answer to
+    // THAT question rather than a brand-new one. Real, reported problem this closes: a citizen
+    // typing a real city name (e.g. "Kolhapur") directly into the composer, instead of using the
+    // "Select location" button, got the identical location question back forever -- their answer
+    // was sent as a new `question` with no `location_text`, so it was never even considered a
+    // location. Every OTHER follow-up shape (category, status, unclear, image-no-text) has a
+    // distinct options shape that does NOT match this check, so this can't misfire on those --
+    // e.g. it won't treat a reply to "what issue would you like to report?" as a location.
+    const lastMsg = messages[messages.length - 1];
+    const lastAskedForLocation =
+      lastMsg?.role === "assistant" &&
+      lastMsg.response?.follow_up_required &&
+      (lastMsg.response.follow_up_options.includes("Use current location") || lastMsg.response.location?.is_ambiguous);
+    if (lastAskedForLocation && lastMsg.originalQuestion && question.trim() && attachedImage.length === 0) {
+      // Same displayText fix as handleLocationPickerSubmit below -- what's typed here (e.g.
+      // "Kolhapur") IS already the real answer, so show it, not the original question again.
+      runQuery(lastMsg.originalQuestion, { locationText: question.trim(), displayText: question.trim() });
+      return;
+    }
     runQuery(question);
   }
 
@@ -209,39 +303,21 @@ export function AskJanMitraContent() {
     }
   }
 
+  // Only ever reached for `location_ambiguous`'s real city-name options now (e.g. "Patiala" vs
+  // "Sahibzada Ajit Singh Nagar (Mohali)", see clarification_flow_node) -- the plain "which
+  // location?" case (`_LOCATION_CLARIFICATION_OPTIONS`) is handled entirely by the real
+  // `LocationPicker` below instead of this generic button-label resend, so a citizen actually
+  // gets a real dropdown of serviceable wards (see `handleLocationPickerSubmit`), not a button
+  // whose own label text ("Select location") used to get sent as if it were a place name.
   function handleFollowUpOption(msg: ChatMessage, option: string) {
     if (!msg.originalQuestion) return;
-    if (option === "Use current location") {
-      if (!("geolocation" in navigator)) return;
-      setLocatingGps(true);
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setLocatingGps(false);
-          runQuery(msg.originalQuestion!, { lat: pos.coords.latitude, lng: pos.coords.longitude });
-        },
-        () => {
-          setLocatingGps(false);
-          setMessages((prev) => [
-            ...prev,
-            { id: nextId(), role: "assistant", text: t(lang, "location.unavailable"), isError: true },
-          ]);
-        },
-        { timeout: 8000 }
-      );
-      return;
-    }
-    if (option === "Enter manually" || option === "Select city") {
-      setManualLocationInput("");
-      setManualLocationTargetId(msg.id);
-      return;
-    }
-    runQuery(msg.originalQuestion, { locationText: option });
+    runQuery(msg.originalQuestion, { locationText: option, displayText: option });
   }
 
-  function handleManualLocationSubmit(e: FormEvent, msg: ChatMessage) {
-    e.preventDefault();
-    if (!msg.originalQuestion || !manualLocationInput?.trim()) return;
-    runQuery(msg.originalQuestion, { locationText: manualLocationInput.trim() });
+  function handleLocationPickerSubmit(msg: ChatMessage) {
+    if (!msg.originalQuestion || !locationPickerValue.ward.trim()) return;
+    const ward = locationPickerValue.ward.trim();
+    runQuery(msg.originalQuestion, { locationText: ward, displayText: ward });
   }
 
   function askSuggested(key: (typeof SUGGESTED_KEYS)[number]) {
@@ -255,7 +331,7 @@ export function AskJanMitraContent() {
       <div className="ask-chat-messages">
         {messages.length === 0 && (
           <div className="ask-chat-empty">
-            <Mascot state={mascotState} size={64} />
+            <WelcomeMascot state={welcomeMascotState} size={130} />
             <h1 className="ask-chat-empty-title">{t(lang, "ask.title")}</h1>
             <p className="ask-chat-empty-sub">{t(lang, "ask.subtitle")}</p>
             <div className="ask-suggestions ask-suggestions-center">
@@ -272,7 +348,7 @@ export function AskJanMitraContent() {
           <div key={msg.id} className={`ask-chat-row ask-chat-row-${msg.role}`}>
             {msg.role === "assistant" && (
               <div className="ask-chat-avatar">
-                <Mascot state="idle" size={22} />
+                <Mascot state="idle" size={72} />
               </div>
             )}
 
@@ -305,40 +381,74 @@ export function AskJanMitraContent() {
                       {msg.response.follow_up_question && (
                         <div className="ask-sources-label">{t(lang, "ask.followUp.label")}</div>
                       )}
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
-                        {(msg.response.follow_up_options.length > 0
-                          ? msg.response.follow_up_options
-                          : ["Use current location", "Enter manually"]
-                        ).map((opt) => (
+                      {msg.response.follow_up_options.includes("Use current location") && !msg.response.location?.is_ambiguous ? (
+                        // The plain "what is the location?" case (`_LOCATION_CLARIFICATION_
+                        // OPTIONS`, see nodes.py) -- a real `LocationPicker` (GPS, or a dropdown
+                        // of the actual currently-staffed wards), the SAME component ReportIssue.
+                        // tsx's "Report an Issue" wizard already uses, instead of a hand-rolled
+                        // button list. Closes a real, reported gap: the raw backend option labels
+                        // ("Enter location"/"Select location") both used to open the identical
+                        // free-text box -- two buttons that looked like a choice but weren't one
+                        // -- when "Select location" was always meant to be a real dropdown (see
+                        // LocationPicker.tsx's own "Choose your ward or area from a list" hint,
+                        // which only this component actually delivers on).
+                        <div style={{ marginTop: 8 }}>
+                          <LocationPicker value={locationPickerValue} onChange={setLocationPickerValue} wards={wards} />
                           <button
-                            key={opt}
                             type="button"
-                            className="btn btn-ghost btn-sm"
-                            onClick={() => handleFollowUpOption(msg, opt)}
-                            disabled={locatingGps}
+                            className="btn btn-primary btn-sm"
+                            style={{ marginTop: 10 }}
+                            disabled={!locationPickerValue.ward.trim()}
+                            onClick={() => handleLocationPickerSubmit(msg)}
                           >
-                            {opt === "Use current location"
-                              ? t(lang, "location.useCurrent")
-                              : opt === "Select city" || opt === "Enter manually"
-                                ? t(lang, "location.selectManually")
-                                : opt}
-                          </button>
-                        ))}
-                      </div>
-                      {manualLocationTargetId === msg.id && manualLocationInput !== null && (
-                        <form onSubmit={(e) => handleManualLocationSubmit(e, msg)} style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                          <input
-                            type="text"
-                            value={manualLocationInput}
-                            onChange={(e) => setManualLocationInput(e.target.value)}
-                            placeholder={t(lang, "citizen.wardPlaceholder")}
-                            style={{ flex: 1 }}
-                            autoFocus
-                          />
-                          <button type="submit" className="btn btn-primary btn-sm" disabled={!manualLocationInput.trim()}>
                             {t(lang, "ask.submit")}
                           </button>
-                        </form>
+                        </div>
+                      ) : msg.response.follow_up_options.length > 0 ? (
+                        // location_ambiguous's real city-name candidates (e.g. "Patiala" vs
+                        // "Sahibzada Ajit Singh Nagar (Mohali)") or the category options -- a
+                        // short, fixed, already-meaningful list, where a plain button per option
+                        // is the correct UI (not a full ward-picker).
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+                          {msg.response.follow_up_options.map((opt) => (
+                            <button key={opt} type="button" className="btn btn-ghost btn-sm" onClick={() => handleFollowUpOption(msg, opt)}>
+                              {opt}
+                            </button>
+                          ))}
+                        </div>
+                      ) : msg.response.intent === "TYPE_C_STATUS" ? (
+                        // status_flow_node deliberately leaves follow_up_options empty here --
+                        // there's no fixed list of complaint numbers to offer, it wants a free-
+                        // typed one (the citizen can just type it in the composer as normal).
+                        // This used to fall through to the location-picker branch below, which
+                        // made a "what's your complaint number?" question show "Use current
+                        // location"/GPS buttons -- a real, reported bug. A link to the complaints
+                        // list matches the answer text's own "...or check your complaints list."
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+                          <Link to="/citizen/complaints" className="btn btn-ghost btn-sm">
+                            {t(lang, "ask.action.track")}
+                          </Link>
+                        </div>
+                      ) : msg.response.intent === "UNCLEAR" ? (
+                        // unclear_flow_node ALSO leaves follow_up_options empty (see nodes.py) --
+                        // the same bug the TYPE_C_STATUS branch above fixes, just a second real
+                        // occurrence caught later (a plain "hello" reproduced it live: the answer
+                        // correctly said "I didn't understand", but the UI still offered a "Use
+                        // current location" button underneath it, which makes no sense for a
+                        // greeting). There's no single right action to offer here -- the answer
+                        // text itself already says what to do ("What would you like help with?"),
+                        // so the citizen just types their real question in the composer. No
+                        // buttons is the honest UI for that, not a location picker.
+                        null
+                      ) : (
+                        // Defensive fallback only, for a genuinely unknown future case -- NOT a
+                        // location picker (see above: no real backend path with empty options has
+                        // ever actually meant "needs a location" -- every real location
+                        // clarification already populates follow_up_options via
+                        // clarification_flow_node's four branches). Rendering nothing is the safe
+                        // default; a specific new empty-options case should get its own branch
+                        // above, the same way TYPE_C_STATUS/UNCLEAR did, not a guessed-at button.
+                        null
                       )}
                     </div>
                   )}
@@ -368,10 +478,10 @@ export function AskJanMitraContent() {
           </div>
         ))}
 
-        {(loading || locatingGps) && (
+        {loading && (
           <div className="ask-chat-row ask-chat-row-assistant">
             <div className="ask-chat-avatar">
-              <Mascot state="thinking" size={22} />
+              <Mascot state="thinking" size={72} />
             </div>
             <div className="ask-chat-bubble ask-chat-thinking" aria-live="polite">
               <span className="ask-chat-thinking-dots" aria-hidden="true">
@@ -379,7 +489,7 @@ export function AskJanMitraContent() {
                 <span />
                 <span />
               </span>
-              {t(lang, locatingGps ? "location.locating" : "ask.loading")}
+              {t(lang, "ask.loading")}
             </div>
           </div>
         )}
@@ -399,14 +509,6 @@ export function AskJanMitraContent() {
         )}
 
         <div className="ask-chat-composer-row">
-          {/* Live mascot state, always visible next to the composer -- not just in the empty
-              state (which disappears after the first message) or the per-message avatars (fixed
-              "idle", so they don't show a live in-progress state). This is what keeps
-              listening/thinking/success connected to real app state throughout an entire
-              conversation, not just before it starts. */}
-          <div className="ask-chat-composer-mascot" aria-hidden="true">
-            <Mascot state={mascotState} size={26} />
-          </div>
           <button
             type="button"
             className={`ask-chat-icon-btn${showAttach || attachedImage.length > 0 ? " active" : ""}`}

@@ -124,6 +124,20 @@
 }
 .authtab.active { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm); }
 .worker-note { font-size: 11.5px; color: var(--ink-2); background: var(--status-progress-bg); border-radius: 8px; padding: 10px 12px; line-height: 1.45; margin-bottom: 14px; }
+/* Fixed-height by design: all 4 rows (state/city/ward/area) are always mounted, never
+   conditionally added -- see HomeLocationPicker.tsx's own docstring for the layout-shift bug
+   this replaced (the box used to grow taller three separate times as each step was picked). A
+   step not reachable yet renders as a disabled select instead of disappearing, so the box's
+   height stays constant throughout. */
+.home-location-picker { border: 1px solid var(--line); border-radius: 10px; padding: 14px 14px 2px; margin-bottom: 4px; background: var(--surface-2); }
+.home-location-picker.has-error { border-color: var(--status-critical); }
+.home-location-error { margin-bottom: 14px; }
+.home-location-heading { font-size: 12.5px; font-weight: 700; color: var(--ink); margin-bottom: 2px; }
+.home-location-subtitle { font-size: 11px; color: var(--ink-2); line-height: 1.4; margin-bottom: 12px; }
+.home-location-row { margin-bottom: 10px; }
+.home-location-row-last { margin-bottom: 12px; }
+.home-location-row select:disabled { opacity: 0.45; cursor: not-allowed; background: var(--surface-2); }
+.home-location-note { font-size: 10.5px; color: var(--ink-2); margin-top: 3px; }
 .switchline { text-align: center; font-size: 12.5px; color: var(--ink-2); margin-top: 14px; }
 .switchline a { color: var(--accent-fg); font-weight: 700; text-decoration: none; }
 .authcard .btn.full { width: 100%; justify-content: center; padding: 11px; font-size: 14px; }

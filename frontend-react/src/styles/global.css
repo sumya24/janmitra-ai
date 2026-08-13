@@ -484,7 +484,27 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
 .ask-chat-shell { flex: 1; min-height: 0; min-width: 0; display: flex; flex-direction: column; }
 .ask-chat-messages { flex: 1; min-height: 0; min-width: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 18px; padding: 4px 2px 12px; }
 
-.ask-chat-empty { display: flex; flex-direction: column; align-items: center; text-align: center; margin: auto 0; padding: 40px 16px; }
+.ask-chat-empty { display: flex; flex-direction: column; align-items: center; text-align: center; margin: auto 0; padding: 40px 16px; transform: translateY(-130px); }
+
+/* Crossfade wrapper for the welcome-screen mascot's idle<->greeting loop (WelcomeMascot in
+   AskJanMitra.tsx) -- the outgoing pose fades+settles out while the incoming one fades+eases in,
+   instead of the <img src> hard-swapping instantly, which read as a slideshow, not an animation. */
+.ask-chat-welcome-mascot { position: relative; margin: 0 auto; }
+.ask-chat-welcome-mascot-layer { position: absolute; top: 0; left: 50%; transform: translateX(-50%); }
+.ask-chat-welcome-mascot-in { animation: welcome-mascot-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.ask-chat-welcome-mascot-out { animation: welcome-mascot-out 0.5s ease both; }
+@keyframes welcome-mascot-in {
+  0% { opacity: 0; transform: translateX(-50%) translateY(5px) scale(0.94); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+@keyframes welcome-mascot-out {
+  0% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-4px) scale(0.96); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ask-chat-welcome-mascot-in, .ask-chat-welcome-mascot-out { animation: none; }
+  .ask-chat-welcome-mascot-out { display: none; }
+}
 .ask-chat-empty-title { font-size: 22px; margin: 14px 0 6px; }
 .ask-chat-empty-sub { color: var(--ink-2); font-size: 13.5px; margin: 0; max-width: 42ch; }
 .ask-suggestions-center { justify-content: center; margin-top: 22px; }
@@ -571,7 +591,6 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
   padding: 7px 8px; box-shadow: var(--shadow-sm);
 }
 .ask-chat-composer-row:focus-within { border-color: var(--accent-fg); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-fg) 16%, transparent); }
-.ask-chat-composer-mascot { flex-shrink: 0; display: flex; align-items: center; padding: 0 2px 0 4px; }
 
 .ask-chat-textarea {
   flex: 1; resize: none; border: none; background: transparent; color: var(--ink);
