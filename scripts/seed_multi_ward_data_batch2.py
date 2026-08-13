@@ -48,6 +48,7 @@ def main() -> None:
             r = requests.post(f"{BASE}/auth/signup", json={
                 "full_name": f"Resident {i}-{j} of {ward.split(chr(8212))[-1].strip()}",
                 "phone": citizen_phone, "password": "citizenpass123", "preferred_language": lang,
+                "ward": ward,
             })
             r.raise_for_status()
             citizen_token = r.json()["access_token"]
