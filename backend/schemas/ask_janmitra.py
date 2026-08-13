@@ -57,7 +57,7 @@ class Citation(BaseModel):
 class LocationInfo(BaseModel):
     city: str | None = None
     state: str | None = None
-    source: str = "none"  # "text" | "gps" | "none"
+    source: str = "none"  # "text" | "gps" | "conversation_history" | "citizen_home_ward" | "none"
     is_ambiguous: bool = False
     ambiguous_candidates: list[str] = Field(default_factory=list)
 
