@@ -176,8 +176,9 @@ def test_image_endpoint_owner_can_see_their_own_complaint_status(client, monkeyp
 # ---------------------------------------------------------------------------
 
 
-def test_image_complaint_is_stamped_with_the_authenticated_citizens_own_id(client, monkeypatch, db_session, make_citizen):
+def test_image_complaint_is_stamped_with_the_authenticated_citizens_own_id(client, monkeypatch, db_session, make_citizen, make_worker):
     _install_real_service(monkeypatch)
+    make_worker(phone="9000099306", ward="Mohali")
     token, citizen = make_citizen(phone="9000000306")
 
     response = _ask_image(client, token, "Street light near my home is not working.", location_text="Mohali")
@@ -199,8 +200,9 @@ def test_image_complaint_is_stamped_with_the_authenticated_citizens_own_id(clien
     db.close()
 
 
-def test_voice_complaint_is_stamped_with_the_authenticated_citizens_own_id(client, monkeypatch, db_session, make_citizen):
+def test_voice_complaint_is_stamped_with_the_authenticated_citizens_own_id(client, monkeypatch, db_session, make_citizen, make_worker):
     _install_real_service(monkeypatch)
+    make_worker(phone="9000099307", ward="Mohali")
     token, citizen = make_citizen(phone="9000000307")
 
     response = _ask_voice_with_image(client, token, location_text="Mohali")
@@ -220,11 +222,12 @@ def test_voice_complaint_is_stamped_with_the_authenticated_citizens_own_id(clien
     db.close()
 
 
-def test_image_endpoint_has_no_client_suppliable_citizen_id_field(client, monkeypatch, db_session, make_citizen):
+def test_image_endpoint_has_no_client_suppliable_citizen_id_field(client, monkeypatch, db_session, make_citizen, make_worker):
     """An attempt to smuggle a `citizen_id` form field through the image endpoint must have zero
     effect -- the complaint is still stamped with the real authenticated citizen, proving the
     field (if sent) is simply ignored, not read from anywhere in the request."""
     _install_real_service(monkeypatch)
+    make_worker(phone="9000099308", ward="Mohali")
     token, real_citizen = make_citizen(phone="9000000308")
     _, victim = make_citizen(phone="9000000309")
 

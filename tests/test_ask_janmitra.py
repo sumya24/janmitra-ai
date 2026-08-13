@@ -229,21 +229,33 @@ def test_explicit_state_and_city_resolves(client, monkeypatch, make_citizen):
     assert body["location"]["state"] == "Punjab"
 
 
-def test_gps_location_resolves_via_location_resolver(client, monkeypatch, make_citizen):
+def test_gps_location_resolves_via_location_resolver(client, monkeypatch, make_citizen, make_worker):
     """The GPS -> LocationResolver -> RAG gazetteer integration path (previously the documented
     gap, see docs/ask_janmitra_response_behavior.md §3) -- exercised with a fake geocoder so no
-    real network call happens, but the real matching logic runs end to end."""
-    from backend.services.location_resolver import LocationResolver, ResolvedLocation
+    real network call happens, but the real matching logic (including complaint_flow_node's own
+    worker-ward matching, see find_worker_ward_text) runs end to end.
 
-    fake_resolver = Mock()
-    fake_resolver.resolve_coordinates = lambda lat, lng: ResolvedLocation(
-        latitude=lat, longitude=lng, city_name="Mohali", state_name="Punjab"
-    )
+    A real `LocationResolver` wrapping a fake GEOCODER only -- not a bare `Mock()` for the whole
+    resolver -- is deliberate: `Mock()` auto-generates a return value for ANY method call,
+    including `find_worker_ward_text`/`resolve_ward_by_text`/`normalize_location`, none of which
+    this test means to fake. A bare Mock() previously caused complaint_flow_node's real
+    worker-matching logic to silently receive Mock objects instead of real strings/None. Faking
+    only the geocoder (the one genuinely-external, network-calling piece) keeps everything else
+    real and correctly exercised against the real test DB, matching how the class was designed to
+    be tested (see LocationResolver's own constructor-injected `geocoder` param)."""
+    from backend.services.location_resolver import LocationResolver
+
+    class _FakeGeocoder:
+        def reverse(self, latitude, longitude):
+            return {"city": "Mohali", "state": "Punjab"}
+
+    real_resolver = LocationResolver(geocoder=_FakeGeocoder())
     gazetteer = RagGazetteer(settings.RAG_DATA_DIR / "chunks" / "chunks.json")
-    extractor = LocationExtractor(gazetteer, location_resolver=fake_resolver)
-    service = _real_ask_janmitra_service(location_extractor=extractor)
+    extractor = LocationExtractor(gazetteer, location_resolver=real_resolver)
+    service = _real_ask_janmitra_service(location_extractor=extractor, location_resolver=real_resolver)
     monkeypatch.setattr(ask_janmitra_module, "_service", service)
 
+    make_worker(phone="9100099010", ward="Mohali")
     token, _ = make_citizen(phone="9100000010")
     resp = _ask(client, token, "Street light near me is not working.", latitude=30.7, longitude=76.7)
     body = resp.json()
@@ -536,8 +548,9 @@ def test_type_a_without_location_does_not_create_a_complaint_yet(client, monkeyp
     db.close()
 
 
-def test_type_a_with_full_info_creates_exactly_one_complaint(client, monkeypatch, db_session, make_citizen):
+def test_type_a_with_full_info_creates_exactly_one_complaint(client, monkeypatch, db_session, make_citizen, make_worker):
     _install_real_service(monkeypatch)
+    make_worker(phone="9100099028", ward="Mohali")
     token, _ = make_citizen(phone="9100000028")
     resp = _ask(client, token, "Street light not working in Mohali.", location_text="Mohali")
     assert resp.status_code == 200

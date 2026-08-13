@@ -5,6 +5,9 @@ there is no such option in the API to test against; sign-up always produces
 a citizen account (see routes/auth.py).
 """
 
+from backend.models import User
+from tests.test_location_system import _seed_full_hierarchy
+
 
 def test_signup_creates_citizen_and_returns_token(client):
     response = client.post(
@@ -54,6 +57,32 @@ def test_signup_rejects_duplicate_phone(client, make_citizen):
         },
     )
     assert response.status_code == 409
+
+
+def test_signup_rejects_non_numeric_phone(client):
+    """Real gap this closes: previously any non-empty string was accepted as a phone number."""
+    response = client.post(
+        "/auth/signup",
+        json={"full_name": "Priya", "phone": "not-a-phone", "password": "secret123", "preferred_language": "en", "ward": "Ward 14"},
+    )
+    assert response.status_code == 400
+
+
+def test_signup_rejects_phone_with_wrong_digit_count(client):
+    response = client.post(
+        "/auth/signup",
+        json={"full_name": "Priya", "phone": "12345", "password": "secret123", "preferred_language": "en", "ward": "Ward 14"},
+    )
+    assert response.status_code == 400
+
+
+def test_signup_rejects_phone_starting_with_invalid_digit(client):
+    """Indian mobile numbers start 6-9 -- a landline-shaped "0..." or "1..." number is rejected."""
+    response = client.post(
+        "/auth/signup",
+        json={"full_name": "Priya", "phone": "0123456789", "password": "secret123", "preferred_language": "en", "ward": "Ward 14"},
+    )
+    assert response.status_code == 400
 
 
 def test_signup_rejects_short_password(client):
@@ -121,5 +150,89 @@ def test_patch_me_rejects_unsupported_language(client, make_citizen):
     token, _user = make_citizen(phone="9000000001")
     response = client.patch(
         "/auth/me", headers={"Authorization": f"Bearer {token}"}, json={"preferred_language": "fr"}
+    )
+    assert response.status_code == 400
+
+
+# --- optional structured home_*_id fields (the new State/City/Ward/Area picker) -- see
+# routes/auth.py's SignupRequest and _resolve_home_location, and routes/locations.py.
+# Deliberately additive: none of the tests above (which never send these fields) needed any
+# change for this feature to land -- the existing `ward` free-text behavior is untouched. ---
+
+
+def test_signup_without_home_location_fields_still_works_unchanged(client, db_session):
+    """The common case today (only 6 of 36 states have real seeded data): a citizen signs up
+    with no home_*_id fields at all, exactly like before this feature existed."""
+    response = client.post(
+        "/auth/signup",
+        json={"full_name": "Priya", "phone": "9000000001", "password": "secret123", "preferred_language": "en", "ward": "Ward 14"},
+    )
+    assert response.status_code == 200
+    assert response.json()["user"]["ward"] == "Ward 14"
+
+    db = db_session()
+    user = db.query(User).filter(User.phone == "9000000001").first()
+    assert user.home_state_id is None
+    assert user.home_ward_id is None
+    db.close()
+
+
+def test_signup_with_home_ward_id_derives_full_parent_chain(client, db_session):
+    """Sending only the deepest selection (home_ward_id) is enough -- state/district/ulb are
+    derived server-side from it, not required from the client."""
+    db = db_session()
+    chain = _seed_full_hierarchy(db)
+    state_id, district_id, ulb_id, ward_id = chain["state"].id, chain["district"].id, chain["ulb"].id, chain["ward"].id
+    db.close()
+
+    response = client.post(
+        "/auth/signup",
+        json={
+            "full_name": "Priya", "phone": "9000000002", "password": "secret123",
+            "preferred_language": "en", "ward": "Ward 14", "home_ward_id": ward_id,
+        },
+    )
+    assert response.status_code == 200
+
+    db = db_session()
+    user = db.query(User).filter(User.phone == "9000000002").first()
+    assert user.home_state_id == state_id
+    assert user.home_district_id == district_id
+    assert user.home_ulb_id == ulb_id
+    assert user.home_ward_id == ward_id
+    # The existing free-text ward field is completely unaffected by the structured picker.
+    assert user.ward == "Ward 14"
+    db.close()
+
+
+def test_signup_with_home_locality_id_derives_ward_and_above(client, db_session):
+    db = db_session()
+    chain = _seed_full_hierarchy(db)
+    ward_id, locality_id = chain["ward"].id, chain["locality"].id
+    db.close()
+
+    response = client.post(
+        "/auth/signup",
+        json={
+            "full_name": "Priya", "phone": "9000000003", "password": "secret123",
+            "preferred_language": "en", "ward": "Ward 14", "home_locality_id": locality_id,
+        },
+    )
+    assert response.status_code == 200
+
+    db = db_session()
+    user = db.query(User).filter(User.phone == "9000000003").first()
+    assert user.home_ward_id == ward_id
+    assert user.home_locality_id == locality_id
+    db.close()
+
+
+def test_signup_with_nonexistent_home_ward_id_is_rejected(client):
+    response = client.post(
+        "/auth/signup",
+        json={
+            "full_name": "Priya", "phone": "9000000004", "password": "secret123",
+            "preferred_language": "en", "ward": "Ward 14", "home_ward_id": 999999,
+        },
     )
     assert response.status_code == 400

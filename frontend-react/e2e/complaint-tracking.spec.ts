@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { execSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { uniquePhone } from "./helpers";
+import { fillHomeLocationPicker, uniquePhone } from "./helpers";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../..");
@@ -71,15 +71,7 @@ test("full complaint lifecycle: reject reassigns to the next worker, accept unlo
   await page.getByLabel("Full name").fill("Tracking Test Citizen");
   await page.getByLabel("Phone number").fill(citizenPhone);
   await page.getByLabel("Password").fill("citizenpass123");
-  // Mandatory ward field -- see e2e/ask-janmitra.spec.ts's signUpAndReachCitizenHome for why
-  // this waits for the async GET /complaints/wards fetch (Signup.tsx) to settle first.
-  await page.waitForTimeout(600);
-  const wardField = page.getByLabel("Area / ward");
-  if ((await wardField.evaluate((el) => el.tagName)) === "SELECT") {
-    await wardField.selectOption({ index: 1 });
-  } else {
-    await wardField.fill("Test Ward");
-  }
+  await fillHomeLocationPicker(page);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/citizen$/);
 
