@@ -32,6 +32,12 @@ class AskJanMitraRequest(BaseModel):
     # it's the most deliberate signal (see ask_janmitra_service.py's location-resolution order).
     location_text: str | None = None
     conversation_history: list[ConversationTurn] = Field(default_factory=list)
+    # True when `question`'s text came from Mic 1 (useSpeechToText.ts filling the input, possibly
+    # then hand-edited) rather than being typed from scratch -- purely a LangSmith/observability
+    # signal (see orchestration/graph.py's root-run metadata "input_mode": "TEXT" vs "STT"), never
+    # read by any routing/business logic. Defaults False so older/unaware clients behave exactly
+    # as before this field existed.
+    was_voice_input: bool = False
 
 
 class Citation(BaseModel):
