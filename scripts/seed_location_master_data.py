@@ -67,7 +67,7 @@ WELL_KNOWN_GEOGRAPHY_SOURCE = {
     "source_url": None,
 }
 UNVERIFIED_SEED_SOURCE = {
-    "source_name": "Existing JanMitra demo/seed data (scripts/seed_multi_ward_data.py) -- "
+    "source_name": "Existing Sarthi demo/seed data (scripts/seed_multi_ward_data.py) -- "
     "ward-number-to-locality mapping authored for development purposes, NOT independently "
     "verified against an official ward-delimitation source.",
     "source_type": "UNVERIFIED_APP_SEED_DATA",

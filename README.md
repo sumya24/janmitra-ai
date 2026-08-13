@@ -1,4 +1,4 @@
-# JanMitra AI
+# JanSarthi AI
 
 A civic complaint app where a citizen can report a problem (starting with garbage collection) by speaking in their own language. The app transcribes, translates, and routes the complaint to the right worker — who sees it in their own language — without the citizen and worker ever needing to share a common language.
 

@@ -1,4 +1,4 @@
-"""LangSmith observability for the Ask JanMitra LangGraph pipeline.
+"""LangSmith observability for the Ask Sarthi LangGraph pipeline.
 
 **Manual, curated spans -- not automatic autotracing.** LangGraph's compiled graph is a
 LangChain `Runnable`, so simply setting `LANGSMITH_TRACING=true`/`LANGCHAIN_TRACING_V2=true` as
@@ -195,7 +195,7 @@ def _get_review_queue_id() -> "uuid.UUID | None":
         created = client.create_annotation_queue(
             name=settings.LANGSMITH_REVIEW_QUEUE_NAME,
             description=(
-                "Ask JanMitra requests where the knowledge base couldn't answer -- either "
+                "Ask Sarthi requests where the knowledge base couldn't answer -- either "
                 "insufficient_knowledge or an out-of-scope service. Each one is a real citizen "
                 "question the KB should potentially cover. See docs/"
                 "ask_janmitra_langsmith_observability.md's Annotation Queue section."
@@ -210,7 +210,7 @@ def _get_review_queue_id() -> "uuid.UUID | None":
 
 
 def enqueue_for_review(run: "_RunTree | None", reason: str) -> None:
-    """Adds `run` (the Ask JanMitra request's root span) to the knowledge-base-gap review queue
+    """Adds `run` (the Ask Sarthi request's root span) to the knowledge-base-gap review queue
     -- see `_get_review_queue_id()`. A no-op if `run` is `None` (tracing was disabled/unavailable)
     or the call fails; never raises. `reason` is logged locally only (not sent to LangSmith --
     the run itself already carries its own `routed_to`/`insufficient_knowledge` outputs, see

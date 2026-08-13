@@ -1,4 +1,4 @@
-# Ask JanMitra — Expected Response Behavior (Spec, Not Implemented)
+# Ask Sarthi — Expected Response Behavior (Spec, Not Implemented)
 
 **Status: this document describes required behavior for a future retrieval/chat feature. No
 chat UI, retrieval endpoint, embeddings, or vector store exist yet — this is architecture
@@ -70,7 +70,7 @@ Every answer sourced from a chunk must show, in this order:
 3. **Organization** — for VERIFIED chunks, the real publishing body (`source_organization` on the
    parent `KnowledgeRecord`, not currently duplicated onto `Chunk` — retrieval-layer work would
    need to either add it or join back to the record); for SYNTHETIC chunks, always exactly
-   `"JanMitra AI — synthetic representative record (not sourced from an official document)"`.
+   `"JanSarthi AI — synthetic representative record (not sourced from an official document)"`.
 4. **URL** — `chunk.source_url` if present (VERIFIED only; always `None` for SYNTHETIC, never
    fabricated) — rendered as `"According to [source title]..."` with a clickable link only when
    `source_url` is not null.

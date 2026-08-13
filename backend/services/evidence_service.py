@@ -2,7 +2,7 @@
 rows via backend.repositories.evidence_repository.
 
 Relocated, unmodified, from backend/routes/complaints.py (a pure move -- see git history for the
-original location) so the Ask JanMitra image-to-complaint flow (orchestration/nodes.py's
+original location) so the Ask Sarthi image-to-complaint flow (orchestration/nodes.py's
 complaint_flow_node) can reuse this exact validate/write/DB-row logic without a route module
 importing into a service module (the reverse of this project's normal layering) and without a
 second implementation of the same file-handling rules. backend/routes/complaints.py now imports

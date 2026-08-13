@@ -30,7 +30,7 @@ async function signUpAndReachCitizenHome(page: import("@playwright/test").Page) 
   await expect(page).toHaveURL(/\/signup$/);
 
   const phone = uniquePhone();
-  await page.getByLabel("Full name").fill("Ask JanMitra Voice+Image Tester");
+  await page.getByLabel("Full name").fill("Ask Sarthi Voice+Image Tester");
   await page.getByLabel("Phone number").fill(phone);
   await page.getByLabel("Password").fill("secret123");
   // Mandatory ward field -- same select-or-freetext handling as theme-and-voice.spec.ts's
@@ -49,9 +49,9 @@ async function signUpAndReachCitizenHome(page: import("@playwright/test").Page) 
   await expect(page).toHaveURL(/\/citizen$/);
 }
 
-test("Ask JanMitra voice overlay: a photo can be attached before speaking, previewed, and removed", async ({ page }) => {
+test("Ask Sarthi voice overlay: a photo can be attached before speaking, previewed, and removed", async ({ page }) => {
   await signUpAndReachCitizenHome(page);
-  await page.getByRole("button", { name: "Ask JanMitra" }).click();
+  await page.getByRole("button", { name: "Ask Sarthi" }).click();
   await page.getByRole("button", { name: "Voice Assistant" }).click();
 
   const overlay = page.locator(".voice-overlay-panel");

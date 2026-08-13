@@ -153,7 +153,7 @@
     "intent": "COMPLAINT",
     "service": "Street light repair -- no location given at all",
     "expected_data_source": "AMBIGUOUS -- 3 VERIFIED cities + 28 SYNTHETIC cities all have a STREETLIGHTS record; none can be selected without a location",
-    "expected_information": "The correct behavior is to ask the citizen which city/area they're in (per the requested Ask JanMitra behavior) rather than guessing or defaulting to any one city's figures.",
+    "expected_information": "The correct behavior is to ask the citizen which city/area they're in (per the requested Ask Sarthi behavior) rather than guessing or defaulting to any one city's figures.",
     "verification_requirement": "N/A -- location resolution required before retrieval",
     "answerability": "UNANSWERABLE_WITHOUT_CLARIFICATION",
     "notes": "Tests that the system does not silently pick e.g. Odisha's 10-day figure as a generic answer when no location was given -- there is no 'default city'."

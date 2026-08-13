@@ -1,16 +1,16 @@
-# JanMitra AI — Project Overview
+# JanSarthi AI — Project Overview
 
 *A ground-up walkthrough of what this codebase is, how its pieces fit together, and what every file in it does — written for someone opening the repository for the first time, whether or not you write code.*
 
-> Part of the JanMitra AI documentation set. See [`README.md`](../README.md) for a quick reference and setup instructions, and [`AI_AGENT.md`](AI_AGENT.md) for a deep dive specifically on the AI pipeline (speech-to-text, translation, summarization, and everything measured/learned about their real-world limits).
+> Part of the JanSarthi AI documentation set. See [`README.md`](../README.md) for a quick reference and setup instructions, and [`AI_AGENT.md`](AI_AGENT.md) for a deep dive specifically on the AI pipeline (speech-to-text, translation, summarization, and everything measured/learned about their real-world limits).
 
 ---
 
-## 1. What JanMitra AI actually is
+## 1. What JanSarthi AI actually is
 
 A civic complaint app — currently focused on garbage collection — built around one specific problem: **the citizen reporting a problem and the municipal worker fixing it often don't speak the same language.**
 
-In most Indian towns and cities, a citizen might be most comfortable speaking Marathi or Hindi, while the sanitation worker or ward office might work primarily in a different language — or the other way around. Ordinary complaint apps assume everyone involved shares one language. JanMitra AI doesn't: a citizen speaks or types a complaint in *their* language, and the app automatically translates it so a worker can read it in *theirs* — with no manual translation step for either person.
+In most Indian towns and cities, a citizen might be most comfortable speaking Marathi or Hindi, while the sanitation worker or ward office might work primarily in a different language — or the other way around. Ordinary complaint apps assume everyone involved shares one language. JanSarthi AI doesn't: a citizen speaks or types a complaint in *their* language, and the app automatically translates it so a worker can read it in *theirs* — with no manual translation step for either person.
 
 Under the hood it's a fairly conventional web app — a database, a backend API, a browser-based frontend — with one added ingredient: every complaint passes through a small pipeline of AI calls (speech-to-text, spelling cleanup, translation, summarization) provided by **Sarvam AI**, an Indian AI company that specializes in Indian-language models. That pipeline is covered in full in [`AI_AGENT.md`](AI_AGENT.md); this document covers everything else, plus how that pipeline fits into the whole.
 
@@ -28,7 +28,7 @@ That last row is deliberate, not an oversight: there is no button, form, or API 
 
 ## 2. System architecture
 
-![JanMitra AI system architecture: browser, FastAPI backend, database, Sarvam AI, uploads folder](diagrams/system-architecture.svg)
+![JanSarthi AI system architecture: browser, FastAPI backend, database, Sarvam AI, uploads folder](diagrams/system-architecture.svg)
 
 **What this shows:** the browser talks to exactly one thing — the FastAPI backend — over HTTPS, proving who it is with a signed token (a JWT, explained in [§6](#6-authentication-how-login-actually-works)) on every request. The backend is the only piece that talks to the database, to Sarvam AI, or to the folder of saved photos; the browser never reaches any of those directly.
 

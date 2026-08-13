@@ -123,7 +123,7 @@ day-to-day once it's live (rollback, logs, backups).
 ## Before you deploy anything: commit and push
 
 **A large amount of the current work is uncommitted and/or untracked** (`git status` shows ~30
-modified files and ~90 new untracked files, including the entire Ask JanMitra feature —
+modified files and ~90 new untracked files, including the entire Ask Sarthi feature —
 `backend/routes/ask_janmitra.py`, `backend/services/{rag_retriever,vector_store,...}.py`,
 `backend/schemas/`, the RAG data under `data/rag_knowledge_base/`, and matching tests). Neither
 CI nor CD in this setup can see any of that until it's committed and pushed — they operate on

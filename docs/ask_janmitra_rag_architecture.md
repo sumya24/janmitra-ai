@@ -1,4 +1,4 @@
-# Ask JanMitra — RAG Retrieval Architecture (Embeddings + ChromaDB)
+# Ask Sarthi — RAG Retrieval Architecture (Embeddings + ChromaDB)
 
 **Status: implemented and tested.** This is the second major revision of this document. The
 first (see git history) described a TF-IDF + in-memory brute-force retrieval prototype. This
@@ -418,7 +418,7 @@ passing):
 **A real, measured startup/latency issue found and fixed during validation**: `AskJanMitraService`'s
 embedding provider was originally fully lazy — the model loaded on the *first real request* after
 a backend restart, not at startup. Running the Playwright suite against a freshly-restarted
-backend caught this directly: the first live Ask JanMitra request paid the ~20-25s model-load cost
+backend caught this directly: the first live Ask Sarthi request paid the ~20-25s model-load cost
 inline, on top of normal retrieval+LLM latency, and exceeded the test's 30s timeout (a genuine
 failure, not flakiness — confirmed by re-running the same test immediately after with a now-warm
 model, which passed in 19.6s). **Fixed** by warming the embedding model in FastAPI's `lifespan`
@@ -505,7 +505,7 @@ in the production wiring. **There is exactly one production retrieval path: embe
                           USER
                            │
                            ▼
-                    ASK JANMITRA
+                     ASK SARTHI
               (POST /ask-janmitra, backend/routes/ask_janmitra.py)
                            │
                            ▼

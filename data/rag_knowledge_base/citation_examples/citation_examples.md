@@ -101,7 +101,7 @@ plausible-sounding but unsourced figure.
 
 **Citation block:**
 - **Source title:** Synthetic Representative Civic-Service Record
-- **Organization:** JanMitra AI — synthetic representative record (not sourced from an official document)
+- **Organization:** JanSarthi AI — synthetic representative record (not sourced from an official document)
 - **URL:** _(none — synthetic records never carry a URL)_
 - **Verification status:** SYNTHETIC
 
@@ -131,7 +131,7 @@ as fact.
 | | Source title | Organization | URL | Verification status |
 |---|---|---|---|---|
 | Odisha | Citizen's Charter (Draft) — Housing & Urban Development Department | Housing & Urban Development Department, Government of Odisha | https://urban.odisha.gov.in/sites/default/files/2021-05/Draft%20Citizen%20Charter_HUD_Final.pdf | VERIFIED |
-| Jaipur | Synthetic Representative Civic-Service Record | JanMitra AI — synthetic representative record (not sourced from an official document) | _(none)_ | SYNTHETIC |
+| Jaipur | Synthetic Representative Civic-Service Record | JanSarthi AI — synthetic representative record (not sourced from an official document) | _(none)_ | SYNTHETIC |
 
 **Backing records:** `OD_STATEWIDE_STREETLIGHTS_REPLACEMENT`, `SYN_rajasthan_jaipur_STREETLIGHTS`
 

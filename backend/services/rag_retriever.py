@@ -1,6 +1,6 @@
 """Retrieval layer: combines metadata filtering (service category + location) with semantic
 vector search, then a lightweight relevance/rerank pass -- the component everything else in the
-Ask JanMitra pipeline calls to actually get chunks back.
+Ask Sarthi pipeline calls to actually get chunks back.
 
 Filtering happens BEFORE ranking, always. This is the single most important design decision in
 this file: a chunk that doesn't match the requested service category or location is never a

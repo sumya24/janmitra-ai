@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { uniquePhone } from "./helpers";
 
 /**
- * E2E coverage for Ask JanMitra's voice-to-voice assistant ("Mic 2", phase 6 of the multimodal
+ * E2E coverage for Ask Sarthi's voice-to-voice assistant ("Mic 2", phase 6 of the multimodal
  * upgrade) against the REAL backend (POST /ask-janmitra/voice) -- not a mock. Uses the fake mic
  * device configured in playwright.config.ts, same as theme-and-voice.spec.ts's existing real
  * voice-complaint test -- and, like that test, tolerates either a real successful response or a
@@ -19,7 +19,7 @@ async function signUpAndReachCitizenHome(page: import("@playwright/test").Page) 
   await expect(page).toHaveURL(/\/signup$/);
 
   const phone = uniquePhone();
-  await page.getByLabel("Full name").fill("Ask JanMitra Voice Tester");
+  await page.getByLabel("Full name").fill("Ask Sarthi Voice Tester");
   await page.getByLabel("Phone number").fill(phone);
   await page.getByLabel("Password").fill("secret123");
   // Mandatory ward field -- same select-or-freetext handling as theme-and-voice.spec.ts's
@@ -38,11 +38,11 @@ async function signUpAndReachCitizenHome(page: import("@playwright/test").Page) 
   await expect(page).toHaveURL(/\/citizen$/);
 }
 
-test("Ask JanMitra: Mic 2 opens a distinct voice overlay from Mic 1, and a full turn never crashes or hangs", async ({ page }) => {
+test("Ask Sarthi: Mic 2 opens a distinct voice overlay from Mic 1, and a full turn never crashes or hangs", async ({ page }) => {
   test.setTimeout(90000);
 
   await signUpAndReachCitizenHome(page);
-  await page.getByRole("button", { name: "Ask JanMitra" }).click();
+  await page.getByRole("button", { name: "Ask Sarthi" }).click();
 
   // Mic 1 (voice-to-text) and Mic 2 (voice assistant) are two distinct, separately labeled
   // buttons -- not the same control wearing two hats.

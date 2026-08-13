@@ -106,7 +106,7 @@
 
 .hero-visual { position: relative; display: flex; flex-direction: column; align-items: center; align-self: center; gap: 22px; }
 /* A soft, slow "AI is here" glow behind the illustration -- the same restrained language as
-   Ask JanMitra's gradient accent, not a gaming-site glow. Spread wider than the illustration's
+   Ask Sarthi's gradient accent, not a gaming-site glow. Spread wider than the illustration's
    own two "phone" cards (inset goes negative) so it's visible spilling out around them instead
    of being almost entirely hidden behind their solid fill -- in light mode particularly, a
    glow fully behind an opaque white card was barely perceptible. */
@@ -259,7 +259,7 @@
 .feature-card p { font-size: 12.5px; color: var(--ink-2); line-height: 1.5; margin: 0; }
 
 /* This was the flattest part of the page -- static text on a plain background, no tie to the
-   AI-glow language used everywhere else (hero halo, flow line, Ask JanMitra accent). The shared
+   AI-glow language used everywhere else (hero halo, flow line, Ask Sarthi accent). The shared
    .landing-glow-region-bg above now carries that glow across this whole final stretch of the
    page; this section just needs to stay above it (z-index, set on the shared selector above) and
    keep its own content a readable width. */

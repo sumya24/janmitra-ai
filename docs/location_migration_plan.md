@@ -1,4 +1,4 @@
-# JanMitra Location Migration Plan
+# Sarthi Location Migration Plan
 
 **Status: written before implementation, validated against the live codebase and live database
 (not assumptions). Updated after implementation with actual outcomes — see the "Implementation

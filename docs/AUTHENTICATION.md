@@ -2,7 +2,7 @@
 
 *Written for someone who wants to actually understand this, not just skim it — including "why did you build it this way" answers you could give in an interview.*
 
-> Part of the JanMitra AI documentation set. See [`README.md`](../README.md) for the full index of every document.
+> Part of the JanSarthi AI documentation set. See [`README.md`](../README.md) for the full index of every document.
 
 ---
 
@@ -13,7 +13,7 @@ Two separate questions, easy to blur together but genuinely different:
 - **Authentication** — "who are you?" (proving your identity, usually with a password)
 - **Authorization** — "are you allowed to do this?" (once we know who you are, what can you actually access?)
 
-JanMitra AI handles authentication via phone number + password, and authorization via a `role` (citizen/worker/admin) attached to your account. Both are implemented in [`backend/services/auth_service.py`](../backend/services/auth_service.py) and enforced in [`backend/deps.py`](../backend/deps.py).
+JanSarthi AI handles authentication via phone number + password, and authorization via a `role` (citizen/worker/admin) attached to your account. Both are implemented in [`backend/services/auth_service.py`](../backend/services/auth_service.py) and enforced in [`backend/deps.py`](../backend/deps.py).
 
 ---
 

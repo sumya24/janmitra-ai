@@ -7,7 +7,7 @@ import { SERVICE_CATEGORY_DEFS } from "../lib/serviceCategories";
 
 /** Citizen Home — the dashboard's landing screen (P0, Task 1 of the Phase 1 spec). Header is
  * the existing TopBar as-is (logo/profile/theme/language live there already — see TopBar.tsx);
- * this page adds the hero + the 4 service-category entry points + the Ask JanMitra CTA. */
+ * this page adds the hero + the 4 service-category entry points + the Ask Sarthi CTA. */
 export default function CitizenHome() {
   const { lang } = useUiLang();
 

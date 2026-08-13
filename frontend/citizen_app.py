@@ -16,7 +16,7 @@ from backend.config import settings  # noqa: E402
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
 
-st.set_page_config(page_title="JanMitra AI - Citizen", page_icon="🗑️")
+st.set_page_config(page_title="JanSarthi AI - Citizen", page_icon="🗑️")
 st.title("🗑️ Report a Garbage Complaint")
 
 CITIZEN_ID = settings.HARDCODED_CITIZEN_ID

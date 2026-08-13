@@ -8,10 +8,10 @@ export default function AuthPanel({ lang }: { lang: LangCode }) {
   return (
     <div className="auth-panel">
       <div className="auth-panel-brand">
-        {/* Centered, no separate text beside it -- adding a duplicate "JanMitra AI" label next
+        {/* Centered, no separate text beside it -- adding a duplicate "JanSarthi AI" label next
          * to the image (which already has the wordmark baked in) read as redundant rather than
          * filling space well. The image alone, centered, is the cleaner result. */}
-        <img src="/brand/logo-lockup.png" alt="JanMitra AI" className="auth-panel-mark" />
+        <img src="/brand/logo-lockup.png" alt="JanSarthi AI" className="auth-panel-mark" />
       </div>
 
       <div className="auth-panel-body">

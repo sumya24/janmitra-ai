@@ -1,4 +1,4 @@
-"""POST /ask-janmitra — the Ask JanMitra retrieval endpoint.
+"""POST /ask-janmitra — the Ask Sarthi retrieval endpoint.
 
 Requires authentication (same as every other route in this app — see backend/deps.py) because
 TYPE_C complaint-status questions need to know who's asking (a citizen can only see their own
@@ -27,7 +27,7 @@ router = APIRouter(prefix="/ask-janmitra", tags=["ask-janmitra"])
 
 _service = AskJanMitraService()
 
-_GENERIC_UNAVAILABLE_DETAIL = "Ask JanMitra is temporarily unavailable. Please try again, or use the complaint form directly."
+_GENERIC_UNAVAILABLE_DETAIL = "Ask Sarthi is temporarily unavailable. Please try again, or use the complaint form directly."
 
 
 @router.post("", response_model=AskJanMitraResponse)
@@ -48,7 +48,7 @@ def ask_janmitra(
         # Defense-in-depth, matching the same principle applied to LocationResolver's call site
         # in routes/complaints.py: a bug anywhere in the RAG/LLM pipeline must produce a clear
         # error, never a stack trace leaked to the client and never a fabricated-looking answer.
-        logger.exception("Ask JanMitra request failed unexpectedly")
+        logger.exception("Ask Sarthi request failed unexpectedly")
         raise HTTPException(status_code=503, detail=_GENERIC_UNAVAILABLE_DETAIL) from exc
 
 
@@ -102,7 +102,7 @@ def ask_janmitra_with_image(
     except HTTPException:
         raise
     except Exception as exc:
-        logger.exception("Ask JanMitra image request failed unexpectedly")
+        logger.exception("Ask Sarthi image request failed unexpectedly")
         raise HTTPException(status_code=503, detail=_GENERIC_UNAVAILABLE_DETAIL) from exc
 
 
@@ -149,5 +149,5 @@ def ask_janmitra_voice(
     except HTTPException:
         raise
     except Exception as exc:
-        logger.exception("Ask JanMitra voice request failed unexpectedly")
+        logger.exception("Ask Sarthi voice request failed unexpectedly")
         raise HTTPException(status_code=503, detail=_GENERIC_UNAVAILABLE_DETAIL) from exc

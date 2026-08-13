@@ -19,7 +19,7 @@ for a fresh assignment, REASSIGNED after a rejection) and appends a `ComplaintSt
 two different call sites (initial creation, and rejection) and this function is what both already
 funnel through. Deliberately does NOT include a service-category label in the notification text
 (e.g. "Streetlight complaint") -- `Complaint` has no service-category field (that concept exists
-only in the separate Ask JanMitra/RAG intent classifier, over free-text questions, not over
+only in the separate Ask Sarthi/RAG intent classifier, over free-text questions, not over
 filed complaints), and adding one would mean either a schema change or reusing RAG-adjacent
 classification code for a notification-copy nicety, both out of scope for this phase (see the
 final report's "deferred" section). The notification message uses the complaint's own summary
