@@ -95,7 +95,21 @@ class ComplaintAgent:
         # back to the untouched text on failure rather than blocking complaint submission.
         normalized_text = self._normalization.normalize(original_text, language_code)
         translated_text = self._translation.to_english(normalized_text, language_code)
-        summary = self._summary.summarize(translated_text)
+        # Best-effort, same as normalization above -- unlike SummaryService.summarize()'s own
+        # documented contract (raises AIServiceError on any failure), a summary is a quality
+        # enhancement, not something worth losing the citizen's whole complaint over. This was a
+        # real, observed bug: sarvam-105b (a reasoning model) can burn its entire max_tokens
+        # budget on internal reasoning and return empty content (finish_reason="length") before
+        # ever producing the actual summary -- summarize() correctly treats that as a failure,
+        # but until this fix, that failure propagated all the way up through this uncaught call
+        # and the route's `except AIServiceError -> 502`, rejecting the whole submission. Falls
+        # back to a truncated version of the translated text -- still useful to a worker reading
+        # the complaint, unlike a generic "summary unavailable" placeholder.
+        try:
+            summary = self._summary.summarize(translated_text)
+        except AIServiceError as exc:
+            logger.warning("Summary generation failed, falling back to truncated text: %s", exc)
+            summary = translated_text if len(translated_text) <= 200 else translated_text[:197] + "..."
 
         complaint = Complaint(
             citizen_id=citizen_id,
