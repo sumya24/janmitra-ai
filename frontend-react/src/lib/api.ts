@@ -425,6 +425,10 @@ export const api = {
       longitude?: number | null;
       location_text?: string | null;
       conversation_history?: AskJanMitraConversationTurn[];
+      // True when `question` came from Mic 1 rather than typing -- an observability signal only
+      // (see backend/schemas/ask_janmitra.py's AskJanMitraRequest.was_voice_input); never changes
+      // routing/behavior.
+      was_voice_input?: boolean;
     }
   ) => request<AskJanMitraResponse>("/ask-janmitra", { method: "POST", token, body }),
 
@@ -442,6 +446,7 @@ export const api = {
       location_text?: string | null;
       conversation_history?: AskJanMitraConversationTurn[];
       image: File;
+      was_voice_input?: boolean;
     }
   ) => {
     const form = new FormData();
@@ -451,6 +456,7 @@ export const api = {
     if (body.longitude != null) form.append("longitude", String(body.longitude));
     if (body.location_text) form.append("location_text", body.location_text);
     form.append("conversation_history", JSON.stringify(body.conversation_history ?? []));
+    if (body.was_voice_input) form.append("was_voice_input", "true");
     form.append("image", body.image);
     return request<AskJanMitraResponse>("/ask-janmitra/image", { method: "POST", token, formData: form });
   },

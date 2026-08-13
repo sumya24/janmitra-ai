@@ -63,7 +63,12 @@ export interface AskJanMitraLocation {
   ambiguous_candidates: string[];
 }
 
-export type AskJanMitraIntent = "TYPE_A_COMPLAINT" | "TYPE_B_SERVICE_INFO" | "TYPE_C_STATUS";
+export type AskJanMitraIntent =
+  | "TYPE_A_COMPLAINT"
+  | "TYPE_B_SERVICE_INFO"
+  | "TYPE_C_STATUS"
+  | "CAPABILITIES"
+  | "UNCLEAR";
 
 export interface AskJanMitraResponse {
   answer: string;
