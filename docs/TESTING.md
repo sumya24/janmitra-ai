@@ -2,7 +2,7 @@
 
 *Written for someone who wants to actually understand this, not just skim it — including "why did you build it this way" answers you could give in an interview.*
 
-> Part of the JanMitra AI documentation set. See [`README.md`](../README.md) for the full index of every document.
+> Part of the JanSarthi AI documentation set. See [`README.md`](../README.md) for the full index of every document.
 
 ---
 

@@ -2,7 +2,7 @@
 
 *Written for someone who wants to actually understand this, not just skim it — including "why did you build it this way" answers you could give in an interview.*
 
-> Part of the JanMitra AI documentation set. See [`README.md`](../README.md) for the full index of every document.
+> Part of the JanSarthi AI documentation set. See [`README.md`](../README.md) for the full index of every document.
 
 ---
 
@@ -15,7 +15,7 @@ If you're newer to web development: a web app is really two programs talking to 
 
 This split exists because **you can never trust anything the browser sends you** — a user could, in principle, rewrite the frontend's JavaScript entirely and send whatever request they want. So every real rule (`only a citizen can create a complaint`, `only this complaint's assigned worker can resolve it`) has to be enforced on the backend, not just hidden by the frontend not showing a button.
 
-JanMitra AI's backend is written in **Python**, using a framework called **FastAPI**. Everything in this document lives under [`backend/`](../backend/).
+JanSarthi AI's backend is written in **Python**, using a framework called **FastAPI**. Everything in this document lives under [`backend/`](../backend/).
 
 ---
 

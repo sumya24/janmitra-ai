@@ -1,4 +1,4 @@
-# Ask JanMitra — LangGraph Orchestration Layer
+# Ask Sarthi — LangGraph Orchestration Layer
 
 **Status: implemented and tested.** This document covers the workflow-orchestration layer added
 on top of the already-complete RAG/embeddings/ChromaDB foundation (see
@@ -128,7 +128,7 @@ TYPE_B (service-information) questions, not TYPE_A (complaint-shaped) ones — s
 ## 9. Complaint integration — the one deliberate behavior change this phase
 
 **Before this phase**: a TYPE_A_COMPLAINT-classified message ("Street light not working near me")
-was answered by RAG — Ask JanMitra could describe relevant civic-service information about the
+was answered by RAG — Ask Sarthi could describe relevant civic-service information about the
 issue, but could not act on it. Filing an actual complaint required the separate complaint form.
 
 **This phase, confirmed with the user before implementing** (the alternative considered was
@@ -143,7 +143,7 @@ routes to `complaint_flow_node`, which:
 2. Checks location (already resolved by the shared `location_resolution` node). If ambiguous or
    missing: `needs_clarification=True`, `clarification_reason="location"` (or `"location_ambiguous"`).
 3. Once both are known, calls `ComplaintAgent.create_complaint()` — the SAME service the dedicated
-   complaint form uses — with `text` only (no photo, no audio: Ask JanMitra is a JSON chat
+   complaint form uses — with `text` only (no photo, no audio: Ask Sarthi is a JSON chat
    endpoint, not a multipart upload endpoint; a citizen who wants to attach a photo or record
    voice still uses the dedicated form, unchanged, per the "do not redesign the frontend"
    boundary).
@@ -183,7 +183,7 @@ the concern it already existed for.
 
 ## 12. Multi-turn clarification
 
-Ask JanMitra remains a **stateless-server, client-resends-history** API (unchanged design
+Ask Sarthi remains a **stateless-server, client-resends-history** API (unchanged design
 decision from the RAG phase — see `docs/ask_janmitra_rag_architecture.md`'s "why no server-side
 conversation store"). "Multi-turn" means: turn N's response asks a clarifying question and ends;
 turn N+1's request includes the updated `conversation_history`; the graph reruns from `START`,
@@ -208,12 +208,12 @@ other dependency is.
 
 ## 14. Voice/text integration
 
-Ask JanMitra's frontend page (`frontend-react/src/pages/AskJanMitra.tsx`) is **text-only** —
+Ask Sarthi's frontend page (`frontend-react/src/pages/AskJanMitra.tsx`) is **text-only** —
 checked directly before this phase began (no `useAudioRecorder`/voice import exists in that file).
 "Voice input" in this codebase exists only on the separate dedicated complaint form
 (`useAudioRecorder.ts` → `ComplaintAgent._transcribe_chunks`), unchanged and untouched this
 phase. `GraphState.input_type` (`"text"` | `"voice"`) exists structurally so a future
-voice-transcribed message entering Ask JanMitra (transcribed upstream by the same STT pipeline
+voice-transcribed message entering Ask Sarthi (transcribed upstream by the same STT pipeline
 the complaint form already uses, then handed to the graph as text) has a field to record which
 path it came from — this phase does not wire that frontend capability, since doing so would be a
 frontend change beyond this phase's explicit scope ("do not redesign the frontend"). No
