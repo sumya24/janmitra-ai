@@ -25,6 +25,16 @@ test("language gate -> landing -> signup validation -> citizen dashboard -> grac
   await page.getByLabel("पूर्ण नाव").fill("Priya Deshmukh");
   await page.getByLabel("फोन नंबर").fill(phone);
   await page.getByLabel("पासवर्ड").fill("secret123");
+  // Mandatory ward field -- the field starts as a text input and swaps to a <select> once the
+  // async GET /complaints/wards fetch resolves (Signup.tsx), so wait for that to settle first
+  // (same handling as e2e/ask-janmitra.spec.ts's signUpAndReachCitizenHome).
+  await page.waitForTimeout(600);
+  const wardField = page.getByLabel("क्षेत्र / प्रभाग");
+  if ((await wardField.evaluate((el) => el.tagName)) === "SELECT") {
+    await wardField.selectOption({ index: 1 });
+  } else {
+    await wardField.fill("Test Ward");
+  }
   await page.getByRole("button", { name: "खाते तयार करा" }).click();
 
   await expect(page).toHaveURL(/\/citizen$/);

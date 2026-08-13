@@ -26,18 +26,10 @@
 }
 .voice-overlay-close:hover { background: var(--surface-2); color: var(--ink); }
 
-.voice-overlay-mascot { margin-top: 6px; transition: transform var(--dur-fast) var(--ease-out); }
-
-/* Speaking: reuses the existing mascot-idle image (Mascot.tsx has no dedicated "speaking" pose
-   and this deliberately doesn't invent a new binary asset for it) with a CSS-only breathing
-   pulse, applied only while real TTS audio is genuinely firing the <audio> element's `playing`
-   event -- see VoiceAssistantOverlay.tsx, which adds/removes this class from real playback
-   state, never from `phase` alone. */
-.voice-speaking-pulse { animation: voice-speaking-pulse 1.1s ease-in-out infinite; }
-@keyframes voice-speaking-pulse {
-  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 color-mix(in srgb, var(--ai-to) 0%, transparent)); }
-  50% { transform: scale(1.06); filter: drop-shadow(0 0 12px color-mix(in srgb, var(--ai-to) 55%, transparent)); }
-}
+/* All of listening/thinking/speaking's actual animation lives on Mascot itself now (see
+   AskJanMitraWidget.css's .mascot-listening/.mascot-thinking/.mascot-speaking) -- this wrapper
+   just gives the character a little breathing room from the panel edges. */
+.voice-overlay-mascot { margin-top: 6px; }
 
 .voice-overlay-state {
   font-weight: 700; font-size: 15px; color: var(--ink);
@@ -72,7 +64,3 @@
 .voice-overlay-seconds { font-size: 13px; color: var(--ink-2); min-width: 32px; }
 
 .voice-overlay-note { font-size: 11px; color: var(--ink-2); margin-top: 10px; }
-
-@media (prefers-reduced-motion: reduce) {
-  .voice-speaking-pulse { animation: none; }
-}

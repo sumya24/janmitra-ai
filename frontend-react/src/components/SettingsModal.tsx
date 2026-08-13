@@ -48,6 +48,12 @@ export default function SettingsModal({ onClose, onLogout }: { onClose: () => vo
           <label htmlFor="settings-phone">{t(lang, "settings.phone")}</label>
           <input id="settings-phone" type="tel" value={user?.phone ?? ""} disabled />
         </div>
+        {user?.role === "citizen" && (
+          <div className="field">
+            <label htmlFor="settings-ward">{t(lang, "citizen.ward")}</label>
+            <input id="settings-ward" type="text" value={user?.ward || t(lang, "area.noWardSet")} disabled />
+          </div>
+        )}
         <div className="field">
           <label id="settings-language-label">{t(lang, "settings.preferredLanguage")}</label>
           <div className="langpills">

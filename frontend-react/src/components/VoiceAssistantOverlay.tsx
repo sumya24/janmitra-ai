@@ -23,10 +23,10 @@ type VoicePhase = "idle" | "listening" | "processing" | "speaking" | "error";
  * architecture change. The citizen explicitly stops their turn; the AI's full spoken response
  * plays before the next turn can start. Mute stops local playback only, never the backend call.
  *
- * The mascot's "speaking" visual is a CSS-only pulse (see VoiceAssistantOverlay.css's
- * .voice-speaking-pulse) applied ONLY while the <audio> element is actually firing `playing` --
- * removed on pause/ended/error -- so it never appears to speak without real audio playing.
- * Mascot.tsx's 5 existing states are unchanged; this overlay never asks for a 6th.
+ * The mascot's "speaking" state (Mascot.tsx's own `.mascot-speaking` pulse) is applied ONLY
+ * while the <audio> element is actually firing `playing` -- removed again on pause/ended/error
+ * (see the `audioPlaying` state below, set only from those real events) -- so it never appears
+ * to speak without real audio playing, and never for a fixed/guessed duration.
  */
 export default function VoiceAssistantOverlay({ onClose }: { onClose: () => void }) {
   const { lang } = useUiLang();
@@ -165,7 +165,10 @@ export default function VoiceAssistantOverlay({ onClose }: { onClose: () => void
   }
 
   const mascotState: MascotState =
-    phase === "listening" ? "listening" : phase === "processing" ? "thinking" : "idle";
+    phase === "listening" ? "listening"
+    : phase === "processing" ? "thinking"
+    : audioPlaying ? "speaking"
+    : "idle";
 
   return (
     <div className="voice-overlay-backdrop" onClick={handleEnd}>
@@ -185,7 +188,7 @@ export default function VoiceAssistantOverlay({ onClose }: { onClose: () => void
           ✕
         </button>
 
-        <div className={`voice-overlay-mascot${audioPlaying ? " voice-speaking-pulse" : ""}`}>
+        <div className="voice-overlay-mascot">
           <Mascot state={mascotState} size={80} />
         </div>
 

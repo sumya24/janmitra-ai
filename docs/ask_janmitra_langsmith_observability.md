@@ -50,10 +50,30 @@ ask_janmitra_graph (root span)
 
 | Span | Created in | Captures |
 |---|---|---|
-| `ask_janmitra_graph` | `orchestration/graph.py`'s `run_graph()` | The citizen's question (redacted, see §6), language, input type, turn count on the way in; on the way out: intent, `routed_to`, service category, verification status, `insufficient_knowledge`, `follow_up_required`, complaint id, the generated answer (redacted), and total latency. Errors (if the graph raised) are recorded before re-raising. The root run's `metadata` also carries `input_mode` (`"TEXT"` \| `"STT"` \| `"VOICE_ASSISTANT"` \| `"IMAGE"`) and `has_image` (bool) — added for the multimodal/voice upgrade (see `ask_janmitra_service.py`'s `ask()`/`ask_with_image()`/`ask_voice()`) so traces are filterable by input mode. Both are purely categorical/boolean — never the image itself, its caption, or any audio (see §7). |
+| `ask_janmitra_graph` | `orchestration/graph.py`'s `run_graph()` | The citizen's question (redacted, see §6), language, input type, turn count on the way in; on the way out: intent, `routed_to`, service category, verification status, `insufficient_knowledge`, `follow_up_required`, complaint id, the generated answer (redacted), and total latency. Errors (if the graph raised) are recorded before re-raising. The root run's `metadata` also carries, added for the multimodal/voice upgrade: `input_mode` (`"TEXT"` \| `"STT"` \| `"IMAGE"` \| `"IMAGE_STT"` \| `"VOICE_ASSISTANT"` \| `"IMAGE_VOICE_ASSISTANT"` — `"STT"`/`"IMAGE_STT"` mean the text came from Mic 1, `AskJanMitraRequest.was_voice_input`, not that any transcription happens inside the graph itself), `has_image`/`vision_used` (bool, identical signal, `vision_used` kept as its own key so a LangSmith filter reads naturally), and `tts_used` (bool — this request's mode *will attempt* TTS; whether synthesis actually succeeded is separately visible via `AskVoiceResponse.audio_base64` in the application response, not duplicated into tracing). All four are purely categorical/boolean — never the image itself, its caption, or any audio (see §7). |
 | `rag_retrieval` | `orchestration/nodes.py`'s `rag_flow_node()` | The query (redacted), service category, city/state filter in; result count, top relevance score, `insufficient_knowledge`, and the reason out. |
 | `answer_generation` | same | The question (redacted), target language, number of context chunks in; whether the LLM actually generated the answer (`answer_was_llm_generated`) vs. the raw-excerpt fallback, and the answer itself (redacted) out. |
 | `complaint_creation` | `orchestration/nodes.py`'s `complaint_flow_node()` | Service category and language in; the new complaint's id/status out, or the error if creation failed. |
+| `vision_processing` | `ask_janmitra_service.py`'s `ask_with_image()`/`ask_voice()` | `{"has_image": true}` in; `caption_produced` (bool) and `caption_length` (int) out -- never the caption text itself or the image. Real span duration, not folded into the graph's own timing -- this is where the vision model's real, measured latency (see docs/... performance notes) actually shows up. |
+| `speech_to_text` | `ask_janmitra_service.py`'s `ask_voice()` | `segment_count` in; `transcript_length` and the transcript itself (redacted) out, or the error if every chunk failed. |
+| `text_to_speech` | same | `answer_length` in; `audio_produced` (bool) out -- never the audio itself. |
+
+Child-span nesting for image/voice requests genuinely matches the flow a reviewer would expect to
+see in the LangSmith UI:
+
+```
+IMAGE:  ask_janmitra_graph (root) -> vision_processing -> [rag_retrieval/answer_generation OR complaint_creation]
+VOICE:  ask_janmitra_graph (root) -> speech_to_text -> [rag_retrieval/... OR complaint_creation] -> text_to_speech
+VOICE+IMAGE:  ask_janmitra_graph (root) -> speech_to_text -> vision_processing -> [...] -> text_to_speech
+```
+
+`vision_processing`/`speech_to_text`/`text_to_speech` are real children of the SAME
+`ask_janmitra_graph` root run the RAG/complaint spans belong to, not a separate trace and not
+just inferred from `input_mode` metadata. This required `run_graph()` to accept an already-started
+root run (see its own docstring for exactly how ownership/ending is negotiated between it and the
+service layer) -- `graph.py` exposes `root_run_inputs_and_metadata()`/`root_run_outputs()` so both
+the internal (text/STT, no image) and external (image/voice) root-run lifecycles build the
+identical inputs/metadata/outputs shape.
 
 This is **manual, curated instrumentation** — see §6 for why it's deliberately not automatic
 LangChain-callback tracing (`LANGCHAIN_TRACING_V2`/blanket `LANGSMITH_TRACING` autotracing), even

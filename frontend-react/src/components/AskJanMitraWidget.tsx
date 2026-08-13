@@ -76,7 +76,13 @@ export default function AskJanMitraWidget() {
         {everOpened && <AskJanMitraContent />}
       </div>
 
-      <div className="ask-widget-anchor">
+      {/* Hidden while the panel is open, not just visually behind it -- its z-index (96) sits
+          above the panel's (95) so the "Complaint submitted"-style toast layer can still surface
+          over an open panel, which put the FAB's own hit area above the panel's bottom-right
+          corner too. The chat composer's send button now lives in exactly that corner (a fixed
+          persistent composer, unlike the old form layout), so leaving the FAB visible+clickable
+          there blocked it. Standard behavior for a launcher button once its own panel is open. */}
+      <div className={`ask-widget-anchor${open ? " ask-widget-anchor-hidden" : ""}`}>
         <div className={`ask-widget-greeting ${showGreeting && !open ? "visible" : ""}`}>
           <Mascot state="greeting" size={20} />
           {t(lang, "ask.widget.greeting")}
@@ -85,7 +91,7 @@ export default function AskJanMitraWidget() {
             recording (see Mascot.tsx's docstring); "listening" only ever appears inside
             AskJanMitraContent, driven by useSpeechToText's real status. */}
         <button type="button" className="ask-widget-fab" onClick={handleToggle} aria-label={t(lang, "nav.askJanmitra")} aria-haspopup="dialog" aria-expanded={open}>
-          <Mascot state="idle" size={30} />
+          <Mascot state="idle" size={58} />
         </button>
       </div>
     </>

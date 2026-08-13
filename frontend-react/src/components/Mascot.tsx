@@ -13,13 +13,22 @@
  * character ALONE; any accompanying text (the greeting bubble, etc.) stays real, translated UI
  * text rendered next to the image, same as before.
  *
- * Each state is real application state, never a proxy -- see AskJanMitraWidget.tsx and
- * AskJanMitra.tsx's AskJanMitraContent for exactly what drives each one. There is deliberately
- * no "error" state: an error is already communicated by the existing text error banner, so the
- * mascot just stays idle rather than performing an emotion this 5-state set doesn't have.
+ * Each state is real application state, never a proxy -- see AskJanMitraWidget.tsx,
+ * AskJanMitra.tsx's AskJanMitraContent, and VoiceAssistantOverlay.tsx for exactly what drives
+ * each one ("speaking" specifically comes from the real HTMLAudioElement's playing/pause/ended
+ * events during TTS playback, not a timer). There is deliberately no "error" state: an error is
+ * already communicated by the existing text error banner, so the mascot just stays idle rather
+ * than performing an emotion this state set doesn't have.
+ *
+ * Every state gets its own CSS animation (loop or one-shot; see AskJanMitraWidget.css, the sole
+ * home for `.mascot-*` animation rules regardless of which component renders <Mascot>) so the
+ * character reads as alive rather than a static photo swap -- transform/filter only (GPU-
+ * friendly), nothing that fakes lip-sync by distorting the whole image, and every animation is
+ * disabled under prefers-reduced-motion (the state itself still visibly changes via the pose
+ * swap; only the extra motion drops).
  */
 
-export type MascotState = "idle" | "greeting" | "thinking" | "listening" | "success";
+export type MascotState = "idle" | "greeting" | "thinking" | "listening" | "speaking" | "success";
 
 // Each source crop has its own natural aspect ratio (a person, not a square icon) -- rather than
 // stretch/pad every state to a fixed square, `size` below controls height and each image keeps
@@ -29,13 +38,31 @@ const ASPECT: Record<MascotState, number> = {
   greeting: 126 / 240,
   thinking: 92 / 240,
   listening: 108 / 240,
+  speaking: 126 / 240,
   success: 142 / 240,
+};
+
+// "speaking" deliberately has no asset of its own -- the approved character sheet only ever had
+// 5 crops (see this file's module docstring), and the brief for this state is explicit: never
+// invent new character art. It reuses "greeting"'s image (open smile, mid-gesture -- the closest
+// existing pose to "actively talking", clearly more so than idle's calm folded-hands look). The
+// two states stay visually and behaviorally distinct through their own CSS animation class
+// (mascot-greeting: one-shot wave, plays once; mascot-speaking: continuous pulse, gated on real
+// TTS <audio> playback -- see AskJanMitraWidget.css and VoiceAssistantOverlay.tsx) even though
+// they share a picture.
+const IMAGE_FOR_STATE: Record<MascotState, Exclude<MascotState, "speaking">> = {
+  idle: "idle",
+  greeting: "greeting",
+  thinking: "thinking",
+  listening: "listening",
+  speaking: "greeting",
+  success: "success",
 };
 
 export default function Mascot({ state, size = 40 }: { state: MascotState; size?: number }) {
   return (
     <img
-      src={`/mascot/mascot-${state}.png`}
+      src={`/mascot/mascot-${IMAGE_FOR_STATE[state]}.png`}
       alt=""
       className={`mascot mascot-${state}`}
       style={{ height: size, width: size * ASPECT[state], display: "block", objectFit: "contain" }}

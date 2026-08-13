@@ -15,6 +15,7 @@ end to end, including the "image with no spoken text" clarification path.
 from unittest.mock import Mock
 
 import backend.routes.ask_janmitra as ask_janmitra_module
+import backend.services.observability.tracing as tracing_module
 from backend.config import settings
 from backend.models import Complaint
 from backend.services.ask_janmitra_service import AskJanMitraService
@@ -289,4 +290,91 @@ def test_voice_plus_image_can_file_a_real_complaint_with_evidence(client, monkey
     on_disk = Path(settings.UPLOAD_FOLDER) / complaint.photo_path
     assert on_disk.is_file()
     db.close()
-    db.close()
+
+
+# ---------------------------------------------------------------------------
+# Phase 7 (combined-flow spec, item 7.6): missing/empty input, no image
+# ---------------------------------------------------------------------------
+
+
+def test_voice_with_empty_transcript_and_no_image_never_crashes_or_fabricates(client, monkeypatch, make_citizen):
+    """A voice turn whose audio transcribes to nothing usable (e.g. silence) and has no image
+    attached must never crash and must never fabricate an answer -- it's just an empty question
+    routed through the same real classification/clarification path an empty typed question would
+    hit (the image-no-text special case in nodes.py's input_processing_node does NOT apply here,
+    since there's no image -- this proves the two "empty input" paths don't get confused)."""
+    _install_real_service(monkeypatch, transcript="")
+    token, _ = make_citizen(phone="9000000214")
+
+    response = _ask_voice(client, token)
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["question"] == ""
+    # Some real, honest response came back (most likely a category clarification, since an empty
+    # message can't be classified into a service) -- never a routed_to implying a fabricated
+    # complaint/answer was produced from nothing.
+    assert body["routed_to"] != "COMPLAINT_CREATED"
+
+
+# ---------------------------------------------------------------------------
+# Phase 9 (LangSmith §9.1): speech_to_text and text_to_speech are real child
+# spans of the SAME trace as the graph's own spans, not separate/missing ones.
+# ---------------------------------------------------------------------------
+
+
+def test_voice_request_creates_stt_and_tts_child_spans_of_the_same_root_run(client, monkeypatch, make_citizen):
+    start_root_calls = []
+    start_child_calls = []
+    monkeypatch.setattr(
+        tracing_module, "start_root_run",
+        lambda name, **kw: start_root_calls.append((name, kw)) or "FAKE_ROOT",
+    )
+    monkeypatch.setattr(
+        tracing_module, "start_child_run",
+        lambda parent, name, run_type="chain", **kw: start_child_calls.append((parent, name, kw)) or name,
+    )
+    end_calls = []
+    monkeypatch.setattr(tracing_module, "end_run", lambda run, **kw: end_calls.append((run, kw)))
+
+    _install_real_service(monkeypatch)
+    token, _ = make_citizen(phone="9000000216")
+
+    response = _ask_voice(client, token)
+
+    assert response.status_code == 200, response.text
+    assert len(start_root_calls) == 1
+    assert start_root_calls[0][1]["metadata"]["input_mode"] == "VOICE_ASSISTANT"
+    assert start_root_calls[0][1]["metadata"]["tts_used"] is True
+
+    child_names = [c[1] for c in start_child_calls]
+    assert "speech_to_text" in child_names
+    assert "text_to_speech" in child_names
+    for parent, _name, _kw in start_child_calls:
+        assert parent == "FAKE_ROOT"  # both nest under the exact same trace, not a separate one
+
+    # The root run itself is ended exactly once, after TTS (not before) -- proves ask_voice()
+    # correctly deferred it via end_root_run=False rather than double-ending or leaking it open.
+    root_end_calls = [c for c in end_calls if c[0] == "FAKE_ROOT"]
+    assert len(root_end_calls) == 1
+
+
+def test_voice_plus_image_request_creates_all_three_child_spans_in_order(client, monkeypatch, make_citizen):
+    start_child_calls = []
+    monkeypatch.setattr(tracing_module, "start_root_run", lambda name, **kw: "FAKE_ROOT")
+    monkeypatch.setattr(
+        tracing_module, "start_child_run",
+        lambda parent, name, run_type="chain", **kw: start_child_calls.append(name) or name,
+    )
+    monkeypatch.setattr(tracing_module, "end_run", lambda run, **kw: None)
+
+    _install_real_service(monkeypatch)
+    token, _ = make_citizen(phone="9000000217")
+
+    response = _ask_voice(client, token, image_bytes=_JPEG_BYTES)
+
+    assert response.status_code == 200, response.text
+    # STT before vision before TTS -- matches docs/ask_janmitra_langsmith_observability.md §9.1's
+    # "Ask JanMitra Voice -> STT -> Vision -> LangGraph -> ... -> TTS" diagram.
+    assert start_child_calls.index("speech_to_text") < start_child_calls.index("vision_processing")
+    assert start_child_calls.index("vision_processing") < start_child_calls.index("text_to_speech")

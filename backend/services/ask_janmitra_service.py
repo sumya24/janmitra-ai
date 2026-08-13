@@ -47,12 +47,13 @@ from backend.services.evidence_service import SavedFile, validate_and_write
 from backend.services.location_extractor import LocationExtractor, RagGazetteer
 from backend.services.location_resolver import LocationResolver
 from backend.services.observability import tracing
-from backend.services.orchestration.graph import build_graph, run_graph
+from backend.services.orchestration.graph import build_graph, root_run_inputs_and_metadata, root_run_outputs, run_graph
 from backend.services.orchestration.nodes import GraphDeps, RequestContext
 from backend.services.orchestration.state import GraphState
 from backend.services.rag_retriever import RagRetriever
 from backend.services.sarvam_client import AIServiceError, SarvamClient
 from backend.services.stt_service import transcribe_chunks
+from backend.services.translation_service import TranslationService
 from backend.services.vector_store import ChromaVectorStore
 from backend.services.vision_service import VisionService, VisionServiceError
 
@@ -100,6 +101,10 @@ class AskJanMitraService:
         # Sarvam client, matching how ComplaintAgent already owns its own single SarvamClient
         # instance for the same two purposes (STT there; translation here for TTS as well).
         self._sarvam_client = sarvam_client or SarvamClient()
+        # Reuses self._sarvam_client (see comment above) -- so clarification/out-of-scope nodes
+        # can localize their hardcoded English text into the citizen's language without a second
+        # Sarvam client instance.
+        self._translation_service = TranslationService(self._sarvam_client)
 
         self._deps = GraphDeps(
             retriever=self._retriever,
@@ -107,6 +112,7 @@ class AskJanMitraService:
             answer_service=self._answer_service,
             complaint_agent=self._complaint_agent,
             location_resolver=self._location_resolver,
+            translation_service=self._translation_service,
         )
         self._graph = build_graph()
 
@@ -162,9 +168,10 @@ class AskJanMitraService:
             question=request.question,
             language=request.language,
             conversation_history=request.conversation_history,
-            input_mode="TEXT",
+            input_mode="STT" if request.was_voice_input else "TEXT",
         )
-        return self._run(db, ctx, initial_state, request.language)
+        response, _final_state, _latency_ms = self._run(db, ctx, initial_state, request.language)
+        return response
 
     def ask_with_image(
         self,
@@ -178,6 +185,7 @@ class AskJanMitraService:
         location_text: str | None,
         conversation_history: list[ConversationTurn],
         image: UploadFile,
+        was_voice_input: bool = False,
     ) -> AskJanMitraResponse:
         """Same pipeline as `ask()`, plus an attached image. Validates and saves the image to
         disk via the same `evidence_service.validate_and_write()` every other photo upload in
@@ -191,8 +199,33 @@ class AskJanMitraService:
         a complaint as real evidence, it just doesn't enrich the text (matches this codebase's
         "never crash over an optional AI feature" pattern, e.g. SentenceTransformerEmbeddingProvider/
         ChromaVectorStore's own load-failure handling above).
+
+        LangSmith (see docs/ask_janmitra_langsmith_observability.md §9.1): the root run is
+        started here, BEFORE the graph runs, so `_process_image()`'s real vision-model call shows
+        up as its own `vision_processing` child span (real duration, not folded into the graph's
+        own timing) -- the same trace as the graph's `rag_retrieval`/`complaint_creation` spans,
+        not a separate one. `_run()` reuses this root run via `run_graph()`'s `root_run` param
+        (see that function) and ends it once the graph completes, since (unlike `ask_voice()`)
+        there's no post-graph step here that still needs it open.
         """
+        input_mode = "IMAGE_STT" if was_voice_input else "IMAGE"
+        trace_id = uuid.uuid4()
+        request_id = trace_id.hex[:12]
+        prelim_state = self._build_initial_state(
+            question=question, language=language, conversation_history=conversation_history,
+            input_mode=input_mode, has_image=True,
+        )
+        inputs, metadata = root_run_inputs_and_metadata(prelim_state, request_id)
+        root_run = tracing.start_root_run(
+            "ask_janmitra_graph", run_id=trace_id, inputs=inputs, metadata=metadata, tags=["ask_janmitra"],
+        )
+
+        vision_span = tracing.start_child_run(root_run, "vision_processing", "tool", inputs={"has_image": True})
         saved, image_description = self._process_image(image)
+        tracing.end_run(
+            vision_span,
+            outputs={"caption_produced": image_description is not None, "caption_length": len(image_description or "")},
+        )
 
         ctx = RequestContext(
             db=db,
@@ -206,11 +239,14 @@ class AskJanMitraService:
             question=question,
             language=language,
             conversation_history=conversation_history,
-            input_mode="IMAGE",
+            input_mode=input_mode,
             has_image=True,
             image_description=image_description,
         )
-        return self._run(db, ctx, initial_state, language)
+        response, _final_state, _latency_ms = self._run(
+            db, ctx, initial_state, language, root_run=root_run, trace_id=trace_id, request_id=request_id,
+        )
+        return response
 
     def ask_voice(
         self,
@@ -237,15 +273,52 @@ class AskJanMitraService:
         (never a fabricated/empty answer). TTS failure IS best-effort: a synthesis failure is
         logged and swallowed, not raised -- the citizen still gets the real text answer with
         `audio_base64=None` (never fake/placeholder audio) rather than the whole turn failing.
+
+        LangSmith (see docs/ask_janmitra_langsmith_observability.md §9.1): the root run is
+        started here, before STT even runs, so `speech_to_text` (and `vision_processing`, if an
+        image is attached too) and the eventual `text_to_speech` span all nest under the SAME
+        trace as the graph's own spans -- "Ask JanMitra Voice -> STT -> [Vision ->] LangGraph ->
+        ... -> TTS", not three separate traces. `_run()` is told NOT to end the root run itself
+        (`end_root_run=False`) since TTS still needs it open; this method ends it once TTS (best-
+        effort) is done, via the same `graph.root_run_outputs()` helper `run_graph()`'s own
+        internal end-of-run path uses, so the shape is identical either way.
         """
         if not audio_segments:
             raise ValueError("At least one audio segment is required.")
 
         bcp47 = to_bcp47(language)
-        question = transcribe_chunks(self._sarvam_client, audio_segments, bcp47)
+        has_image = image is not None and bool(image.filename)
+        input_mode = "IMAGE_VOICE_ASSISTANT" if has_image else "VOICE_ASSISTANT"
+        trace_id = uuid.uuid4()
+        request_id = trace_id.hex[:12]
 
-        saved, image_description = self._process_image(image)
-        has_image = saved is not None
+        prelim_state = self._build_initial_state(
+            question="", language=language, conversation_history=conversation_history,
+            input_mode=input_mode, has_image=has_image,
+        )
+        inputs, metadata = root_run_inputs_and_metadata(prelim_state, request_id)
+        root_run = tracing.start_root_run(
+            "ask_janmitra_graph", run_id=trace_id, inputs=inputs, metadata=metadata, tags=["ask_janmitra"],
+        )
+
+        stt_span = tracing.start_child_run(root_run, "speech_to_text", "tool", inputs={"segment_count": len(audio_segments)})
+        try:
+            question = transcribe_chunks(self._sarvam_client, audio_segments, bcp47)
+        except AIServiceError as exc:
+            tracing.end_run(stt_span, error=str(exc))
+            tracing.end_run(root_run, error=str(exc))
+            raise
+        tracing.end_run(stt_span, outputs={"transcript_length": len(question), "transcript": tracing.redact_text(question)})
+
+        if has_image:
+            vision_span = tracing.start_child_run(root_run, "vision_processing", "tool", inputs={"has_image": True})
+            saved, image_description = self._process_image(image)
+            tracing.end_run(
+                vision_span,
+                outputs={"caption_produced": image_description is not None, "caption_length": len(image_description or "")},
+            )
+        else:
+            saved, image_description = None, None
 
         ctx = RequestContext(
             db=db,
@@ -259,17 +332,24 @@ class AskJanMitraService:
             question=question,
             language=language,
             conversation_history=conversation_history,
-            input_mode="VOICE_ASSISTANT",
+            input_mode=input_mode,
             has_image=has_image,
             image_description=image_description,
         )
-        base_response = self._run(db, ctx, initial_state, language)
+        base_response, final_state, latency_ms = self._run(
+            db, ctx, initial_state, language, root_run=root_run, trace_id=trace_id, request_id=request_id, end_root_run=False,
+        )
 
         audio_base64: str | None = None
+        tts_span = tracing.start_child_run(root_run, "text_to_speech", "tool", inputs={"answer_length": len(base_response.answer)})
         try:
             audio_base64 = self._sarvam_client.synthesize_speech(base_response.answer, bcp47)
+            tracing.end_run(tts_span, outputs={"audio_produced": True})
         except AIServiceError as exc:
             logger.warning("Ask JanMitra voice flow: TTS failed, returning text-only: %s", exc)
+            tracing.end_run(tts_span, outputs={"audio_produced": False}, error=str(exc))
+
+        tracing.end_run(root_run, outputs=root_run_outputs(final_state, latency_ms))
 
         return AskVoiceResponse(**base_response.model_dump(), question=question, audio_base64=audio_base64)
 
@@ -314,6 +394,8 @@ class AskJanMitraService:
             "input_type": "text",
             "conversation_history": [{"role": t.role, "content": t.content} for t in conversation_history],
             "input_mode": input_mode,
+            "vision_used": has_image,
+            "tts_used": input_mode in ("VOICE_ASSISTANT", "IMAGE_VOICE_ASSISTANT"),
         }
         if has_image:
             state["has_image"] = True
@@ -327,27 +409,49 @@ class AskJanMitraService:
         ctx: RequestContext,
         initial_state: GraphState,
         language: str,
-    ) -> AskJanMitraResponse:
-        """Shared tail end of `ask()`/`ask_with_image()`: run the graph, record the AiRequestLog
-        row, translate the final state into `AskJanMitraResponse`. Extracted so every Ask JanMitra
-        entry point invokes the exact same `run_graph()` call and logs identically -- no parallel
-        pipeline per input mode."""
-        trace_id = uuid.uuid4()
+        *,
+        root_run: object | None = None,
+        trace_id: uuid.UUID | None = None,
+        request_id: str | None = None,
+        end_root_run: bool = True,
+    ) -> tuple[AskJanMitraResponse, GraphState, float]:
+        """Shared tail end of `ask()`/`ask_with_image()`/`ask_voice()`: run the graph, record the
+        AiRequestLog row, translate the final state into `AskJanMitraResponse`. Extracted so every
+        Ask JanMitra entry point invokes the exact same `run_graph()` call and logs identically --
+        no parallel pipeline per input mode.
+
+        Returns `(response, final_state, latency_ms)` -- callers that don't need the latter two
+        (every caller except `ask_voice()`, which needs `final_state`/`latency_ms` to end its own
+        deferred root run after TTS via `graph.root_run_outputs()`) just discard them.
+
+        `root_run`/`trace_id`/`request_id`: normally all `None`, in which case this method creates
+        its own trace id and lets `run_graph()` own the root run's full lifecycle exactly as
+        before. `ask_with_image()`/`ask_voice()` pass an already-started root run instead (see
+        those methods) so their own vision/STT/TTS spans nest under the SAME trace; `end_root_run`
+        controls whether THIS method ends that externally-owned root run when the graph completes
+        (`ask_with_image()`, nothing runs after) or leaves it open (`ask_voice()`, TTS runs after).
+        On an exception, an externally-owned root run is always ended here with the error --
+        there's no "later" for a raised exception to still add a TTS span to.
+        """
+        trace_id = trace_id or uuid.uuid4()
+        request_id = request_id or trace_id.hex[:12]
         start = time.perf_counter()
 
         try:
             final_state = run_graph(
-                self._graph, self._deps, ctx, initial_state, request_id=trace_id.hex[:12], trace_id=trace_id
+                self._graph, self._deps, ctx, initial_state, request_id=request_id, trace_id=trace_id, root_run=root_run,
             )
         except Exception as exc:
             latency_ms = (time.perf_counter() - start) * 1000
+            if root_run is not None:
+                tracing.end_run(root_run, error=str(exc))
             # A mid-request exception may have left `db`'s transaction in a failed state (e.g. a
             # DB error inside a node) -- roll back before attempting to write the log row, so that
             # write doesn't itself fail because of the earlier one.
             db.rollback()
             ai_request_log_repository.record_ai_request(
                 db,
-                request_id=trace_id.hex[:12],
+                request_id=request_id,
                 langsmith_trace_id=str(trace_id) if tracing.is_enabled() else None,
                 conversation_id=None,
                 intent=None,
@@ -364,9 +468,11 @@ class AskJanMitraService:
             raise
 
         latency_ms = (time.perf_counter() - start) * 1000
+        if root_run is not None and end_root_run:
+            tracing.end_run(root_run, outputs=root_run_outputs(final_state, latency_ms))
         ai_request_log_repository.record_ai_request(
             db,
-            request_id=trace_id.hex[:12],
+            request_id=request_id,
             langsmith_trace_id=str(trace_id) if tracing.is_enabled() else None,
             conversation_id=final_state.get("conversation_id"),
             intent=final_state.get("intent"),
@@ -390,7 +496,7 @@ class AskJanMitraService:
 
         sources = [Citation(**s) for s in final_state.get("sources", [])]
 
-        return AskJanMitraResponse(
+        response = AskJanMitraResponse(
             answer=final_state.get("response_text", "I'm not sure how to help with that yet."),
             intent=final_state.get("intent", "TYPE_A_COMPLAINT"),
             service_category=final_state.get("service_category"),
@@ -406,3 +512,4 @@ class AskJanMitraService:
             answer_was_llm_generated=final_state.get("answer_was_llm_generated", False),
             complaint_id=final_state.get("complaint_id"),
         )
+        return response, final_state, latency_ms

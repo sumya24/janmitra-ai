@@ -36,6 +36,15 @@ test("citizen can switch to voice input, record a complaint, and submit it", asy
   await page.getByLabel("Full name").fill("Voice User");
   await page.getByLabel("Phone number").fill(phone);
   await page.getByLabel("Password").fill("voice-pass1");
+  // Mandatory ward field -- see e2e/ask-janmitra.spec.ts's signUpAndReachCitizenHome for why
+  // this waits for the async GET /complaints/wards fetch (Signup.tsx) to settle first.
+  await page.waitForTimeout(600);
+  const signupWardField = page.getByLabel("Area / ward");
+  if ((await signupWardField.evaluate((el) => el.tagName)) === "SELECT") {
+    await signupWardField.selectOption({ index: 1 });
+  } else {
+    await signupWardField.fill("Test Ward");
+  }
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/citizen$/);
 

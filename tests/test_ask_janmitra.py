@@ -551,6 +551,59 @@ def test_classifier_out_of_scope_electricity_not_streetlights():
     assert result.service_category is None
 
 
+# --- CAPABILITIES / UNCLEAR: real, user-reported bug -- two completely different questions
+# ("What is my name?" and "Which services do you provide?") both silently fell through to
+# TYPE_A_COMPLAINT/service_category=None and got the exact same "What issue would you like to
+# report?" clarification, regardless of what was actually asked. See intent_classifier.py's
+# QuestionIntent.CAPABILITIES/UNCLEAR docstrings and nodes.py's capabilities_flow_node/
+# unclear_flow_node for the fix. ---
+
+
+def test_classifier_capabilities_question_is_not_a_complaint():
+    result = classify("Which services do you provide?")
+    assert result.intent == QuestionIntent.CAPABILITIES
+    assert result.service_category is None
+
+
+def test_classifier_genuinely_unclear_question_is_not_a_disguised_complaint():
+    result = classify("What is my name?")
+    assert result.intent == QuestionIntent.UNCLEAR
+    assert result.service_category is None
+
+
+def test_classifier_real_complaint_with_no_category_still_type_a():
+    """Guards the exact phrase the multi-turn clarification test relies on -- 'complain' is a
+    substring of 'complaint', so this must still be treated as a real (if underspecified)
+    complaint, not UNCLEAR."""
+    result = classify("I want to file a complaint.")
+    assert result.intent == QuestionIntent.TYPE_A_COMPLAINT
+
+
+def test_capabilities_and_unclear_questions_get_different_real_answers_not_the_same_clarification(client, monkeypatch, make_citizen):
+    """End-to-end reproduction of the user-reported bug: two unrelated questions must no longer
+    produce byte-for-byte the same response."""
+    _install_real_service(monkeypatch)
+    token, _ = make_citizen(phone="9100000090")
+
+    capabilities_resp = _ask(client, token, "Which services do you provide?")
+    assert capabilities_resp.status_code == 200
+    capabilities_body = capabilities_resp.json()
+    assert capabilities_body["intent"] == "CAPABILITIES"
+    assert "garbage" in capabilities_body["answer"].lower()
+    assert "streetlight" in capabilities_body["answer"].lower()
+
+    unclear_resp = _ask(client, token, "What is my name?")
+    assert unclear_resp.status_code == 200
+    unclear_body = unclear_resp.json()
+    assert unclear_body["intent"] == "UNCLEAR"
+    assert "not sure i understood" in unclear_body["answer"].lower()
+
+    # The actual bug: these used to be identical.
+    assert capabilities_body["answer"] != unclear_body["answer"]
+    assert "What issue would you like to report?" not in capabilities_body["answer"]
+    assert "What issue would you like to report?" not in unclear_body["answer"]
+
+
 # --- Hinglish/Romanized service-info classification (KB-expansion phase) ---
 #
 # Regression tests for the exact bug caught while live-testing this phase: Romanized Hindi
