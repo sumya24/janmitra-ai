@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import TopBar from "../components/TopBar";
 import StatusBadge from "../components/StatusBadge";
 import ReportModal from "../components/ReportModal";
+import SummaryModal from "../components/SummaryModal";
 import DownloadReportButton from "../components/DownloadReportButton";
 import { useAuth } from "../lib/auth";
 import { useUiLang } from "../lib/uiLang";
@@ -44,6 +45,7 @@ export default function AdminWorkerDetail() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [reportTargetId, setReportTargetId] = useState<number | null>(null);
+  const [summaryComplaint, setSummaryComplaint] = useState<Complaint | null>(null);
   const [filter, setFilter] = useState<WorkerComplaintFilter>("all");
 
   async function load() {
@@ -193,6 +195,9 @@ export default function AdminWorkerDetail() {
                         <td style={{ padding: "8px 16px", borderBottom: "1px solid var(--line)", whiteSpace: "nowrap" }}>
                           {c.status === "resolved" && (
                             <div style={{ display: "flex", gap: 4, justifyContent: "flex-end" }}>
+                              <button className="btn btn-ghost btn-sm" onClick={() => setSummaryComplaint(c)}>
+                                {t(lang, "worker.viewSummary")}
+                              </button>
                               <button className="btn btn-ghost btn-sm" onClick={() => setReportTargetId(c.id)}>
                                 {t(lang, "worker.viewReport")}
                               </button>
@@ -211,6 +216,13 @@ export default function AdminWorkerDetail() {
       </div>
 
       {reportTargetId !== null && <ReportModal complaintId={reportTargetId} onClose={() => setReportTargetId(null)} />}
+      {summaryComplaint && (
+        <SummaryModal
+          complaint={summaryComplaint}
+          statusLabel={t(lang, COMPLAINT_STATUS_LABEL_KEY[summaryComplaint.status])}
+          onClose={() => setSummaryComplaint(null)}
+        />
+      )}
     </div>
   );
 }

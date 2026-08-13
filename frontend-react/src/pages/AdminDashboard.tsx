@@ -5,6 +5,7 @@ import ConfirmModal from "../components/ConfirmModal";
 import AssignWorkerModal from "../components/AssignWorkerModal";
 import StatusBadge from "../components/StatusBadge";
 import ReportModal from "../components/ReportModal";
+import SummaryModal from "../components/SummaryModal";
 import { useAuth } from "../lib/auth";
 import { useUiLang } from "../lib/uiLang";
 import { t } from "../lib/i18n";
@@ -92,6 +93,7 @@ export default function AdminDashboard() {
   const [deleteComplaintTarget, setDeleteComplaintTarget] = useState<Complaint | null>(null);
   const [assignComplaintTarget, setAssignComplaintTarget] = useState<Complaint | null>(null);
   const [reportTargetId, setReportTargetId] = useState<number | null>(null);
+  const [summaryComplaint, setSummaryComplaint] = useState<Complaint | null>(null);
   const [actionSaving, setActionSaving] = useState(false);
 
   // Bulk selection -- a plain id Set (not "select all filtered/paged") so a selection made on
@@ -356,6 +358,11 @@ export default function AdminDashboard() {
                               </button>
                             )}
                             {c.status === "resolved" && (
+                              <button className="btn btn-ghost btn-sm" onClick={() => setSummaryComplaint(c)}>
+                                {t(lang, "worker.viewSummary")}
+                              </button>
+                            )}
+                            {c.status === "resolved" && (
                               <button className="btn btn-ghost btn-sm" onClick={() => setReportTargetId(c.id)}>
                                 {t(lang, "worker.viewReport")}
                               </button>
@@ -449,6 +456,13 @@ export default function AdminDashboard() {
       )}
 
       {reportTargetId !== null && <ReportModal complaintId={reportTargetId} onClose={() => setReportTargetId(null)} />}
+      {summaryComplaint && (
+        <SummaryModal
+          complaint={summaryComplaint}
+          statusLabel={t(lang, COMPLAINT_STATUS_LABEL_KEY[summaryComplaint.status])}
+          onClose={() => setSummaryComplaint(null)}
+        />
+      )}
     </div>
   );
 }
