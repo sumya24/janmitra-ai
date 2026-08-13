@@ -88,6 +88,14 @@ export interface UserProfile {
   ward: string | null;
 }
 
+// One selectable node at any level of the State/City/Ward/Area hierarchy (backend/routes/
+// locations.py) -- same {id, name} shape at every level, so one generic picker step works for
+// all four.
+export interface LocationOption {
+  id: number;
+  name: string;
+}
+
 export interface AuthResponse {
   access_token: string;
   user: UserProfile;
@@ -293,9 +301,13 @@ export interface AiRequestLogEntry {
 
 export const api = {
   // ward is mandatory, one-time-at-signup -- see SignupRequest.ward's docstring (backend/routes/
-  // auth.py). Not present on updateMe below: it's deliberately not editable later.
-  signup: (body: { full_name: string; phone: string; password: string; preferred_language: string; ward: string }) =>
-    request<AuthResponse>("/auth/signup", { method: "POST", body }),
+  // auth.py). Not present on updateMe below: it's deliberately not editable later. The four
+  // home_*_id fields are optional and additive (see the same docstring) -- only the deepest one
+  // the citizen's cascading picker actually reached needs to be sent.
+  signup: (body: {
+    full_name: string; phone: string; password: string; preferred_language: string; ward: string;
+    home_state_id?: number; home_district_id?: number; home_ward_id?: number; home_locality_id?: number;
+  }) => request<AuthResponse>("/auth/signup", { method: "POST", body }),
 
   login: (body: { phone: string; password: string }) =>
     request<AuthResponse>("/auth/login", { method: "POST", body }),
@@ -316,6 +328,15 @@ export const api = {
   // Deliberately no required token -- GET /complaints/wards is unauthenticated (see its own
   // docstring), since Signup needs this list before the citizen has one at all.
   listWards: (token?: string) => request<string[]>("/complaints/wards", token ? { token } : {}),
+
+  // The optional State/City/Ward/Area cascading picker on Signup (backend/routes/locations.py) --
+  // also unauthenticated for the same reason as listWards above. Each step is only ever called
+  // after its parent was chosen, so an empty result means "no real data for this one yet" (see
+  // that route module's docstring) -- the caller falls back to free text, it never means an error.
+  listStates: () => request<LocationOption[]>("/locations/states", {}),
+  listCitiesForState: (stateId: number) => request<LocationOption[]>(`/locations/states/${stateId}/cities`, {}),
+  listWardsForCity: (districtId: number) => request<LocationOption[]>(`/locations/cities/${districtId}/wards`, {}),
+  listLocalitiesForWard: (wardId: number) => request<LocationOption[]>(`/locations/wards/${wardId}/localities`, {}),
 
   getAreaSummary: (token: string, lang?: string) =>
     request<AreaSummary>(`/complaints/area-summary${lang ? `?lang=${lang}` : ""}`, { token }),
