@@ -237,6 +237,9 @@ export default function Landing() {
         </div>
       </div>
 
+      <div className="landing-glow-region">
+        <div className="landing-glow-region-bg" aria-hidden="true" />
+
       <section className="landing-section">
         <Reveal as="div" className="section-heading">
           <div className="eyebrow">{t(lang, "landing.howItWorks.eyebrow")}</div>
@@ -297,12 +300,13 @@ export default function Landing() {
       </section>
 
       <Reveal as="section" className="landing-cta">
-        <div className="landing-cta-glow" aria-hidden="true" />
-        <h2 className="display">{t(lang, "landing.finalCta.title")}</h2>
-        <p>{t(lang, "landing.finalCta.body")}</p>
-        <Link to="/signup" className="btn btn-primary landing-cta-btn">
-          {t(lang, "hero.cta.primary")}
-        </Link>
+        <div className="landing-cta-content">
+          <h2 className="display">{t(lang, "landing.finalCta.title")}</h2>
+          <p>{t(lang, "landing.finalCta.body")}</p>
+          <Link to="/signup" className="btn btn-primary landing-cta-btn">
+            {t(lang, "hero.cta.primary")}
+          </Link>
+        </div>
       </Reveal>
 
       <footer className="landing-footer">
@@ -312,6 +316,7 @@ export default function Landing() {
         </div>
         <p>{t(lang, "landing.footer.tagline")}</p>
       </footer>
+      </div>
     </div>
   );
 }

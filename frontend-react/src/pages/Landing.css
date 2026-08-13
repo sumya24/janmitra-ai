@@ -1,6 +1,17 @@
 /* Full-bleed: logo touching the true left edge, actions touching the true right edge, at any
    viewport width -- not boxed into the same centered column as the hero/sections below it. */
-.landingnav { border-bottom: 1px solid var(--line); }
+/* Darker than plain --line (which barely shows against the light-tinted glow behind the page
+   content) -- ink-mixed so it stays visible in both themes rather than just bumping one fixed
+   gray value. */
+/* Same ambient AI-glow tint as the rest of the page (.landing-glow-region-bg below) -- previously
+   plain, uncolored page background, which read as a flat white bar against everything else now
+   carrying that color. */
+.landingnav {
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+  background:
+    radial-gradient(circle at 15% 50%, color-mix(in srgb, var(--ai-to) 10%, transparent), transparent 70%),
+    radial-gradient(circle at 85% 50%, color-mix(in srgb, var(--ai-from) 8%, transparent), transparent 70%);
+}
 .landingnav-inner {
   display: flex; align-items: center; justify-content: space-between; padding: 16px 32px;
 }
@@ -132,8 +143,30 @@
 }
 
 /* ============ How it works / Features / CTA / Footer ============ */
+/* One continuous ambient glow behind everything from "How it works" through the footer (was:
+   only the final CTA card had it, isolated in its own small box) -- .landing-glow-region-bg is a
+   single absolutely-positioned wash covering the whole wrapped region, so the color reads as one
+   flowing section instead of stacked separately-colored/bordered blocks. */
+.landing-glow-region { position: relative; overflow: hidden; }
+.landing-glow-region-bg {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  /* Six low-opacity spots spread down the (much taller than the old single-card version) region
+     so coverage stays even top to bottom rather than fading out partway down. */
+  background:
+    radial-gradient(circle at 15% 8%, color-mix(in srgb, var(--ai-to) 9%, transparent), transparent 40%),
+    radial-gradient(circle at 85% 15%, color-mix(in srgb, var(--ai-from) 7%, transparent), transparent 40%),
+    radial-gradient(circle at 20% 45%, color-mix(in srgb, var(--ai-from) 7%, transparent), transparent 38%),
+    radial-gradient(circle at 80% 55%, color-mix(in srgb, var(--ai-to) 8%, transparent), transparent 38%),
+    radial-gradient(circle at 25% 85%, color-mix(in srgb, var(--ai-to) 8%, transparent), transparent 42%),
+    radial-gradient(circle at 80% 95%, color-mix(in srgb, var(--ai-from) 7%, transparent), transparent 42%);
+  filter: blur(70px);
+  animation: cta-glow-drift 14s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) { .landing-glow-region-bg { animation: none; opacity: 0.75; } }
+.landing-section, .landing-cta, .landing-footer { position: relative; z-index: 1; }
 .landing-section { max-width: 1440px; margin: 0 auto; padding: 6px 32px 70px; }
-.landing-section-alt { background: var(--surface); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); max-width: none; }
+.landing-section-alt { max-width: none; }
 .landing-section-alt > * { max-width: 1440px; margin-left: auto; margin-right: auto; }
 .section-heading { text-align: center; margin-bottom: 40px; }
 .section-heading h2 { font-size: 28px; }
@@ -225,26 +258,17 @@
 .feature-card h3 { font-size: 14.5px; margin-bottom: 6px; }
 .feature-card p { font-size: 12.5px; color: var(--ink-2); line-height: 1.5; margin: 0; }
 
-/* This was the flattest section on the page -- static text on a plain background, no tie to the
-   AI-glow language used everywhere else (hero halo, flow line, Ask JanMitra accent). A quiet
-   ambient glow plus a pulsing "beacon" on the final button gives the page's last conversion
-   point some of that same visual energy instead of trailing off silently. */
-.landing-cta { position: relative; overflow: hidden; max-width: 720px; margin: 0 auto; padding: 70px 32px; text-align: center; }
-.landing-cta-glow {
-  position: absolute; inset: -30% -10% auto -10%; height: 180%; z-index: 0; pointer-events: none;
-  background:
-    radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--ai-to) 22%, transparent), transparent 60%),
-    radial-gradient(circle at 25% 75%, color-mix(in srgb, var(--ai-from) 16%, transparent), transparent 55%);
-  filter: blur(50px);
-  animation: cta-glow-drift 10s ease-in-out infinite alternate;
-  will-change: transform;
-}
+/* This was the flattest part of the page -- static text on a plain background, no tie to the
+   AI-glow language used everywhere else (hero halo, flow line, Ask JanMitra accent). The shared
+   .landing-glow-region-bg above now carries that glow across this whole final stretch of the
+   page; this section just needs to stay above it (z-index, set on the shared selector above) and
+   keep its own content a readable width. */
+.landing-cta { width: 100%; padding: 70px 32px; text-align: center; }
+.landing-cta-content { max-width: 720px; margin: 0 auto; }
 @keyframes cta-glow-drift {
   from { transform: translate(-2%, 0) scale(1); }
   to { transform: translate(2%, -2%) scale(1.08); }
 }
-@media (prefers-reduced-motion: reduce) { .landing-cta-glow { animation: none; opacity: 0.75; } }
-.landing-cta h2, .landing-cta p, .landing-cta-btn { position: relative; z-index: 1; }
 .landing-cta h2 { font-size: 30px; margin-bottom: 12px; }
 .landing-cta p { color: var(--ink-2); font-size: 14.5px; margin-bottom: 24px; }
 /* Same radiating-ring language as .ai-dot.active, scaled up for a button instead of a 9px dot,
@@ -257,7 +281,7 @@
 @media (prefers-reduced-motion: reduce) { .landing-cta-btn { animation: none; } }
 
 .landing-footer {
-  border-top: 1px solid var(--line); padding: 28px 32px; display: flex; align-items: center; justify-content: space-between;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 18%, transparent); padding: 28px 32px; display: flex; align-items: center; justify-content: space-between;
   flex-wrap: wrap; gap: 12px; max-width: 1440px; margin: 0 auto;
 }
 .landing-footer p { color: var(--ink-3); font-size: 12px; margin: 0; }
