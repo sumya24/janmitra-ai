@@ -46,15 +46,22 @@ async function signUpAndReachCitizenHome(page: import("@playwright/test").Page) 
 
 test("Ask JanMitra: attaching a real photo previews it, removing it works, and sending with a question still returns a grounded answer", async ({ page }) => {
   // Real backend round-trip PLUS a real local vision-language model call (VisionService,
-  // ~1.9B params, CPU inference) -- on a cold backend process this pays a genuine one-time model
-  // load from disk (already-downloaded weights, not a network fetch) on top of the usual RAG
-  // round-trip. Measured directly (multiple real, non-mocked HTTP round trips against a cold
-  // process during this feature's development): 208s and 239s. 360s gives real headroom above
-  // that measured range rather than guessing.
-  test.setTimeout(360000);
+  // ~1.9B params, CPU inference) -- this is genuinely slow and highly variable under load, not a
+  // fixed cold-load cost: direct measurements during this feature's development ranged from 92s
+  // (warm, quiet machine) to ~334s (full Playwright suite + browser + backend all competing for
+  // CPU at once -- confirmed via backend log timestamps for this exact scenario). 600s gives real
+  // headroom above the worst case actually observed, not a guess. This is a documented, known
+  // production concern (see the final report's performance section), not something a longer
+  // timeout "fixes" -- it only keeps this test honest about what the backend actually did.
+  test.setTimeout(600000);
 
   await signUpAndReachCitizenHome(page);
   await page.getByRole("button", { name: "Ask JanMitra" }).click();
+
+  // The composer's attach panel (MultiPhotoUpload, and so its <input type=file>) is only in the
+  // DOM once the "+" attach button is opened -- a deliberate ChatGPT-style composer change (see
+  // AskJanMitra.tsx), not present in the old always-visible form layout this replaced.
+  await page.getByRole("button", { name: "Add a photo" }).click();
 
   // Select a real image through the actual <input type=file> the MultiPhotoUpload component
   // renders -- not a mocked file object.
@@ -62,7 +69,8 @@ test("Ask JanMitra: attaching a real photo previews it, removing it works, and s
   await expect(page.locator(".multi-photo-thumb")).toHaveCount(1);
 
   // Remove it, then re-attach -- proves both the preview and the remove control are wired to
-  // real state, not just a one-shot render.
+  // real state, not just a one-shot render. The attach panel stays open across the remove (only
+  // a successful send closes it), so the file input is still there for the second attach.
   await page.locator(".multi-photo-remove").click();
   await expect(page.locator(".multi-photo-thumb")).toHaveCount(0);
   await page.locator('input[type="file"]').setInputFiles({ name: "streetlight.jpg", mimeType: "image/jpeg", buffer: JPEG_1PX });
@@ -73,9 +81,9 @@ test("Ask JanMitra: attaching a real photo previews it, removing it works, and s
   await page.getByPlaceholder(/Ask about a civic service/i).fill("Who do I contact about street lights in Mohali?");
   await page.getByRole("button", { name: "Ask", exact: true }).click();
 
-  // Larger than ask-janmitra.spec.ts's 30s -- a cold backend process pays a one-time real model
-  // load (see the test-level comment above) on top of the usual RAG round-trip.
-  await expect(page.locator(".ask-answer-text")).toBeVisible({ timeout: 330000 });
+  // Larger than ask-janmitra.spec.ts's 30s -- see the test-level comment above for the real,
+  // measured latency range this accommodates.
+  await expect(page.locator(".ask-chat-row-assistant .ask-chat-text").last()).toBeVisible({ timeout: 560000 });
   await expect(page.getByText("Official source", { exact: true })).toBeVisible();
 
   // The attached photo is cleared after a successful send (see AskJanMitra.tsx's runQuery) --
@@ -90,6 +98,7 @@ test("Ask JanMitra: the submit button is enabled with only an image attached, no
   const submitButton = page.getByRole("button", { name: "Ask", exact: true });
   await expect(submitButton).toBeDisabled();
 
+  await page.getByRole("button", { name: "Add a photo" }).click();
   await page.locator('input[type="file"]').setInputFiles({ name: "photo.jpg", mimeType: "image/jpeg", buffer: JPEG_1PX });
 
   await expect(submitButton).toBeEnabled();

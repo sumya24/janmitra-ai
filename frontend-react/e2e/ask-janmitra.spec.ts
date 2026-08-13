@@ -57,7 +57,7 @@ test("Ask JanMitra: a located, in-scope information question returns a grounded 
   await page.getByRole("button", { name: "Ask", exact: true }).click();
 
   // Real backend round-trip (RAG retrieval + LLM answer generation) — give it real time.
-  await expect(page.locator(".ask-answer-text")).toBeVisible({ timeout: 30000 });
+  await expect(page.locator(".ask-chat-row-assistant .ask-chat-text").last()).toBeVisible({ timeout: 30000 });
 
   // A source card should render for this VERIFIED, city-resolved question, with a real
   // clickable official-source link (not a fabricated one, not absent).
@@ -86,8 +86,8 @@ test("Ask JanMitra: a complaint-shaped question with location files a real compl
   // rendered (not hidden) while its panel is open.
   await page.getByRole("button", { name: "Ask", exact: true }).click();
 
-  await expect(page.locator(".ask-answer-text")).toBeVisible({ timeout: 30000 });
-  await expect(page.locator(".ask-answer-text")).toContainText(/complaint/i);
+  await expect(page.locator(".ask-chat-row-assistant .ask-chat-text").last()).toBeVisible({ timeout: 30000 });
+  await expect(page.locator(".ask-chat-row-assistant .ask-chat-text").last()).toContainText(/complaint/i);
   // No RAG source card for a filed complaint -- this response didn't come from retrieval.
   await expect(page.getByText("Official source", { exact: true })).toHaveCount(0);
 });
@@ -127,9 +127,10 @@ test("Ask JanMitra: the floating widget shows the mascot, and voice input toggle
     return Boolean(w.SpeechRecognition || w.webkitSpeechRecognition);
   });
 
-  // Selected by the aria-pressed attribute (present in both states) rather than by accessible
-  // name, since the name itself changes between "Speak your question" and "Stop recording".
-  const micButton = page.locator("form.surface-card button[aria-pressed]");
+  // Selected by a dedicated class (ask-chat-mic1-btn) rather than by accessible name (which
+  // changes between "Speak your question"/"Stop recording") or by [aria-pressed] alone (the
+  // composer's attach button also has aria-pressed now, for its own open/closed state).
+  const micButton = page.locator("form.ask-chat-composer button.ask-chat-mic1-btn");
 
   if (!supportsSpeechRecognition) {
     await expect(micButton).toHaveCount(0);
@@ -142,14 +143,16 @@ test("Ask JanMitra: the floating widget shows the mascot, and voice input toggle
 
   await micButton.click();
   // Real recording state, not a fake indicator -- the button flips to "pressed" and the
-  // heading's mascot genuinely switches to its listening expression at the same time (see
-  // AskJanMitra.tsx's mascotState derivation, driven by useSpeechToText's actual status).
+  // composer's own persistent mascot indicator (ask-chat-composer-mascot -- always visible,
+  // unlike the empty-state mascot which disappears once a conversation starts) genuinely
+  // switches to its listening expression at the same time (see AskJanMitra.tsx's mascotState
+  // derivation, driven by useSpeechToText's actual status).
   await expect(micButton).toHaveAttribute("aria-pressed", "true");
-  await expect(page.locator(".page-head img.mascot-listening")).toBeVisible();
+  await expect(page.locator(".ask-chat-composer-mascot img.mascot-listening")).toBeVisible();
 
   await micButton.click();
   await expect(micButton).toHaveAttribute("aria-pressed", "false");
-  await expect(page.locator(".page-head img.mascot-listening")).toHaveCount(0);
+  await expect(page.locator(".ask-chat-composer-mascot img.mascot-listening")).toHaveCount(0);
 });
 
 test("Ask JanMitra: an out-of-scope service question says so honestly, with no fabricated source", async ({ page }) => {
@@ -165,8 +168,8 @@ test("Ask JanMitra: an out-of-scope service question says so honestly, with no f
   // rendered (not hidden) while its panel is open.
   await page.getByRole("button", { name: "Ask", exact: true }).click();
 
-  await expect(page.locator(".ask-answer-text")).toBeVisible({ timeout: 15000 });
-  await expect(page.locator(".ask-answer-text")).toContainText(/don't currently have/i);
+  await expect(page.locator(".ask-chat-row-assistant .ask-chat-text").last()).toBeVisible({ timeout: 15000 });
+  await expect(page.locator(".ask-chat-row-assistant .ask-chat-text").last()).toContainText(/don't currently have/i);
   // No source cards should render for an out-of-scope, unanswered question.
   await expect(page.getByText("Official source", { exact: true })).not.toBeVisible();
   await expect(page.getByText("Synthetic / prototype data", { exact: true })).not.toBeVisible();
