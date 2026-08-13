@@ -87,6 +87,15 @@ jobs:
             echo "BACKEND_IMAGE=${{ env.BACKEND_IMAGE }}:${{ github.sha }}" >> .env
             echo "FRONTEND_IMAGE=${{ env.FRONTEND_IMAGE }}:${{ github.sha }}" >> .env
 
+            # Prune BEFORE pulling too, not just after: `docker image prune -f` (no -a) only ever
+            # removed dangling (untagged) layers, never the previous deploy's still-tagged image
+            # -- those accumulated deploy over deploy until the VM's disk filled up and pull
+            # itself started failing with "no space left on device", which then skipped the
+            # prune-after-deploy step entirely (this script exits on error), making the next
+            # deploy fail the same way. `-a` removes any image not used by a running container,
+            # so this is safe to run right before `pull` swaps in the new one.
+            docker image prune -af
+
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d
-            docker image prune -f
+            docker image prune -af
