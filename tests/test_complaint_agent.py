@@ -111,3 +111,65 @@ def test_create_complaint_from_audio_chunks_stores_the_joined_transcript(db_sess
 
     assert complaint.original_text == "Garbage near the market. Please send someone."
     assert complaint.summary == "Garbage complaint near the market."
+
+
+def test_summary_failure_falls_back_to_truncated_text_not_blocking_submission(db_session):
+    """Real, observed bug: sarvam-105b can burn its whole token budget on internal reasoning and
+    return empty content, which SummaryService.summarize() correctly raises AIServiceError for.
+    That must not block the complaint from being saved -- same "best-effort" contract normalization
+    already has, just enforced here at the call site since summarize() itself is documented to
+    raise rather than swallow failures."""
+    normalization_service = Mock()
+    normalization_service.normalize.side_effect = lambda text, language_code: text
+    translation_service = Mock()
+    translation_service.to_english.side_effect = lambda text, language_code: text
+    summary_service = Mock()
+    summary_service.summarize.side_effect = AIServiceError("Summary service returned an empty response.")
+
+    agent = ComplaintAgent(
+        sarvam_client=Mock(),
+        translation_service=translation_service,
+        summary_service=summary_service,
+        normalization_service=normalization_service,
+    )
+    db = db_session()
+
+    complaint = agent.create_complaint(
+        db,
+        citizen_id="1",
+        language_code="en",
+        text="There is a large pothole blocking traffic here.",
+        audio_chunks=None,
+        photo_path=None,
+    )
+
+    # Submission succeeded despite the summary failure -- the whole point of this fix.
+    assert complaint.id is not None
+    # Falls back to the (truncated, if needed) translated text rather than a generic
+    # "unavailable" placeholder -- still useful to a worker reading the complaint.
+    assert complaint.summary == "There is a large pothole blocking traffic here."
+
+
+def test_summary_failure_fallback_is_truncated_for_long_text(db_session):
+    normalization_service = Mock()
+    normalization_service.normalize.side_effect = lambda text, language_code: text
+    translation_service = Mock()
+    long_text = "A" * 250
+    translation_service.to_english.side_effect = lambda text, language_code: long_text
+    summary_service = Mock()
+    summary_service.summarize.side_effect = AIServiceError("empty response")
+
+    agent = ComplaintAgent(
+        sarvam_client=Mock(),
+        translation_service=translation_service,
+        summary_service=summary_service,
+        normalization_service=normalization_service,
+    )
+    db = db_session()
+
+    complaint = agent.create_complaint(
+        db, citizen_id="1", language_code="en", text="x", audio_chunks=None, photo_path=None,
+    )
+
+    assert len(complaint.summary) == 200
+    assert complaint.summary.endswith("...")
