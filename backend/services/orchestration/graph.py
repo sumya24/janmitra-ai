@@ -14,10 +14,17 @@ language_detection  (identity -- language already validated by the route)
   |                                                     input_processing_node/
   |                                                     clarification_flow_node)
   v
-intent_classification  (wraps intent_classifier.classify() -- unchanged)
+intent_classification  (wraps intent_classifier.classify())
   |
   +-- TYPE_C_STATUS --------------------------------> status_flow
   +-- out_of_scope_service set ---------------------> out_of_scope_flow
+  +-- CAPABILITIES ("what can you do?") ------------> capabilities_flow (real, static answer --
+  |                                                    see nodes.py's capabilities_flow_node)
+  +-- UNCLEAR (no signal matched at all) -----------> unclear_flow (honest "I didn't understand
+  |                                                    that", never a disguised complaint
+  |                                                    clarification -- see nodes.py's
+  |                                                    unclear_flow_node docstring for the bug
+  |                                                    this replaced)
   +-- else ------------------------------------------> location_resolution
                                                              |
                                                              v
@@ -31,7 +38,8 @@ intent_classification  (wraps intent_classifier.classify() -- unchanged)
                              complaint_flow --(else)-------------------> response_generation
                                      |
                                      v
-        rag_flow / status_flow / clarification_flow / out_of_scope_flow / complaint_flow
+   rag_flow / status_flow / clarification_flow / out_of_scope_flow / capabilities_flow /
+                        unclear_flow / complaint_flow
                                      |
                                      v
                             response_generation
@@ -64,6 +72,7 @@ from backend.services.observability import tracing
 from backend.services.orchestration.nodes import (
     GraphDeps,
     RequestContext,
+    capabilities_flow_node,
     clarification_flow_node,
     complaint_flow_node,
     input_processing_node,
@@ -74,6 +83,7 @@ from backend.services.orchestration.nodes import (
     rag_flow_node,
     response_generation_node,
     status_flow_node,
+    unclear_flow_node,
 )
 from backend.services.orchestration.state import GraphState
 
@@ -97,6 +107,10 @@ def _route_after_intent(state: GraphState) -> str:
         return "status_flow"
     if state.get("out_of_scope_service"):
         return "out_of_scope_flow"
+    if state.get("intent") == QuestionIntent.CAPABILITIES.value:
+        return "capabilities_flow"
+    if state.get("intent") == QuestionIntent.UNCLEAR.value:
+        return "unclear_flow"
     return "location_resolution"
 
 
@@ -135,6 +149,8 @@ def build_graph() -> CompiledStateGraph:
     graph.add_node("status_flow", status_flow_node)
     graph.add_node("clarification_flow", clarification_flow_node)
     graph.add_node("out_of_scope_flow", out_of_scope_flow_node)
+    graph.add_node("capabilities_flow", capabilities_flow_node)
+    graph.add_node("unclear_flow", unclear_flow_node)
     graph.add_node("response_generation", response_generation_node)
 
     graph.add_edge(START, "input_processing")
@@ -148,7 +164,13 @@ def build_graph() -> CompiledStateGraph:
     graph.add_conditional_edges(
         "intent_classification",
         _route_after_intent,
-        {"status_flow": "status_flow", "out_of_scope_flow": "out_of_scope_flow", "location_resolution": "location_resolution"},
+        {
+            "status_flow": "status_flow",
+            "out_of_scope_flow": "out_of_scope_flow",
+            "capabilities_flow": "capabilities_flow",
+            "unclear_flow": "unclear_flow",
+            "location_resolution": "location_resolution",
+        },
     )
     graph.add_conditional_edges(
         "location_resolution",
@@ -165,9 +187,51 @@ def build_graph() -> CompiledStateGraph:
     graph.add_edge("status_flow", "response_generation")
     graph.add_edge("clarification_flow", "response_generation")
     graph.add_edge("out_of_scope_flow", "response_generation")
+    graph.add_edge("capabilities_flow", "response_generation")
+    graph.add_edge("unclear_flow", "response_generation")
     graph.add_edge("response_generation", END)
 
     return graph.compile()
+
+
+def root_run_inputs_and_metadata(initial_state: GraphState, request_id: str) -> tuple[dict, dict]:
+    """Shared by `run_graph()`'s own root-run creation and `ask_janmitra_service.py`'s (for the
+    image/voice entry points that need the root run to exist BEFORE the graph starts, so vision/
+    STT/TTS can attach as real child spans under it -- see those methods and
+    docs/ask_janmitra_langsmith_observability.md §9.1's trace-structure diagrams)."""
+    inputs = {
+        "question": tracing.redact_text(initial_state.get("user_message")),
+        "language": initial_state.get("original_language"),
+        "input_type": initial_state.get("input_type"),
+        "conversation_turns": len(initial_state.get("conversation_history") or []),
+    }
+    metadata = {
+        "request_id": request_id,
+        # Categorical signals only -- never the raw image/caption itself (see
+        # docs/ask_janmitra_langsmith_observability.md's redaction policy).
+        "input_mode": initial_state.get("input_mode", "TEXT"),
+        "has_image": bool(initial_state.get("has_image")),
+        "vision_used": bool(initial_state.get("vision_used")),
+        "tts_used": bool(initial_state.get("tts_used")),
+    }
+    return inputs, metadata
+
+
+def root_run_outputs(merged_state: GraphState, total_ms: float) -> dict:
+    """Shared by `run_graph()`'s own root-run end and `ask_janmitra_service.py`'s deferred one
+    (`ask_voice()`, which keeps the root run open through its post-graph `text_to_speech` span --
+    see `run_graph()`'s `root_run` parameter docstring)."""
+    return {
+        "intent": merged_state.get("intent"),
+        "routed_to": merged_state.get("routed_to"),
+        "service_category": merged_state.get("service_category"),
+        "verification_status": merged_state.get("verification_status"),
+        "insufficient_knowledge": merged_state.get("insufficient_knowledge"),
+        "follow_up_required": merged_state.get("follow_up_required"),
+        "complaint_id": merged_state.get("complaint_id"),
+        "answer": tracing.redact_text(merged_state.get("response_text")),
+        "total_ms": round(total_ms, 1),
+    }
 
 
 def run_graph(
@@ -177,6 +241,7 @@ def run_graph(
     initial_state: GraphState,
     request_id: str | None = None,
     trace_id: uuid.UUID | None = None,
+    root_run: object | None = None,
 ) -> GraphState:
     """Runs one full graph invocation and returns the final merged state.
 
@@ -196,26 +261,23 @@ def run_graph(
     for why this is manual/curated rather than automatic full-state tracing). A no-op with zero
     behavior change whenever tracing is disabled/unconfigured -- `tracing.start_root_run()`
     returns `None` in that case, and every other `tracing.*` call treats `None` as a no-op.
+
+    `root_run`: normally `None`, in which case this function creates AND ends its own root run
+    exactly as before (every existing caller/test keeps working unchanged). The image/voice entry
+    points (`ask_janmitra_service.py`'s `ask_with_image()`/`ask_voice()`) pass an
+    already-started root run instead, so their own `vision_processing`/`speech_to_text`/
+    `text_to_speech` child spans (created before/after this call) nest under the SAME trace as
+    this graph's `rag_retrieval`/`complaint_creation` spans, not a separate one -- when `root_run`
+    is passed in, this function does not end it; the caller does, once its own post-processing
+    (e.g. TTS) is also done.
     """
     request_id = request_id or uuid.uuid4().hex[:12]
-    root_run = tracing.start_root_run(
-        "ask_janmitra_graph",
-        run_id=trace_id,
-        inputs={
-            "question": tracing.redact_text(initial_state.get("user_message")),
-            "language": initial_state.get("original_language"),
-            "input_type": initial_state.get("input_type"),
-            "conversation_turns": len(initial_state.get("conversation_history") or []),
-        },
-        metadata={
-            "request_id": request_id,
-            # Categorical signals only -- never the raw image/caption itself (see
-            # docs/ask_janmitra_langsmith_observability.md's redaction policy).
-            "input_mode": initial_state.get("input_mode", "TEXT"),
-            "has_image": bool(initial_state.get("has_image")),
-        },
-        tags=["ask_janmitra"],
-    )
+    owns_root_run = root_run is None
+    if owns_root_run:
+        inputs, metadata = root_run_inputs_and_metadata(initial_state, request_id)
+        root_run = tracing.start_root_run(
+            "ask_janmitra_graph", run_id=trace_id, inputs=inputs, metadata=metadata, tags=["ask_janmitra"],
+        )
     config = {"configurable": {"deps": deps, "ctx": ctx, "trace_root": root_run}}
 
     merged: dict[str, Any] = dict(initial_state)
@@ -235,7 +297,8 @@ def run_graph(
                 merged.update(update)
     except Exception as exc:
         logger.exception("ask_janmitra_graph request_id=%s failed unexpectedly", request_id)
-        tracing.end_run(root_run, error=str(exc))
+        if owns_root_run:
+            tracing.end_run(root_run, error=str(exc))
         raise
 
     total_ms = (time.perf_counter() - start) * 1000
@@ -243,26 +306,14 @@ def run_graph(
         "ask_janmitra_graph request_id=%s complete intent=%s routed_to=%s total_ms=%.1f",
         request_id, merged.get("intent"), merged.get("routed_to"), total_ms,
     )
-    tracing.end_run(
-        root_run,
-        outputs={
-            "intent": merged.get("intent"),
-            "routed_to": merged.get("routed_to"),
-            "service_category": merged.get("service_category"),
-            "verification_status": merged.get("verification_status"),
-            "insufficient_knowledge": merged.get("insufficient_knowledge"),
-            "follow_up_required": merged.get("follow_up_required"),
-            "complaint_id": merged.get("complaint_id"),
-            "answer": tracing.redact_text(merged.get("response_text")),
-            "total_ms": round(total_ms, 1),
-        },
-    )
+    if owns_root_run:
+        tracing.end_run(root_run, outputs=root_run_outputs(merged, total_ms))
 
     # A knowledge-base-gap review queue (see tracing.py's enqueue_for_review()): every trace
     # where the pipeline genuinely couldn't answer -- either it ran out of relevant knowledge, or
     # the classifier detected a known-but-unsupported service -- is a real citizen question the
     # KB should potentially cover. Routed here, not scored/blocked in any way; a no-op whenever
-    # tracing is disabled.
+    # tracing is disabled. Fires regardless of who owns the root run's lifecycle.
     if merged.get("insufficient_knowledge") or merged.get("routed_to") == "NONE_OUT_OF_SCOPE":
         tracing.enqueue_for_review(root_run, reason=merged.get("routed_to") or "insufficient_knowledge")
 

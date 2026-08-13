@@ -47,7 +47,17 @@ class GraphState(TypedDict, total=False):
     #     precedent as input_type's STT-happens-upstream note above) ---
     has_image: bool  # an image was attached at all, regardless of whether captioning succeeded
     image_description: str | None  # VisionService's best-effort caption, or None
-    input_mode: str  # "TEXT" | "STT" | "VOICE_ASSISTANT" | "IMAGE" -- LangSmith metadata only
+    # "TEXT" | "STT" | "IMAGE" | "IMAGE_STT" | "VOICE_ASSISTANT" | "IMAGE_VOICE_ASSISTANT" --
+    # LangSmith metadata only (see graph.py's run_graph()), never read by routing/business logic.
+    # "STT"/"IMAGE_STT" distinguish Mic-1-produced text from typed text (AskJanMitraRequest.
+    # was_voice_input); "IMAGE_VOICE_ASSISTANT" is Mic 2 with an attached image.
+    input_mode: str
+    vision_used: bool  # == has_image; named separately so a LangSmith filter doesn't need to
+                        # know has_image is the same signal
+    tts_used: bool  # this request's mode will attempt TTS (VOICE_ASSISTANT/IMAGE_VOICE_ASSISTANT)
+                     # -- whether synthesis actually SUCCEEDED is separately visible via
+                     # AskVoiceResponse.audio_base64, not duplicated into tracing (see §7 of
+                     # docs/ask_janmitra_langsmith_observability.md)
 
     # --- classification (intent_node) ---
     intent: str  # QuestionIntent.value, e.g. "TYPE_A_COMPLAINT"

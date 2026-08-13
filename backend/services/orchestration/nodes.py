@@ -44,6 +44,7 @@ from backend.services.observability import tracing
 from backend.services.orchestration.state import GraphState
 from backend.services.rag_retriever import RagRetriever
 from backend.services.sarvam_client import AIServiceError
+from backend.services.translation_service import TranslationService
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +79,11 @@ class GraphDeps:
     answer_service: AnswerGenerationService
     complaint_agent: ComplaintAgent
     location_resolver: LocationResolver
+    # Optional (defaults to None, matching RequestContext.image_saved's own optional-field
+    # precedent below) so existing tests that build GraphDeps with only the five fields above
+    # keep working unchanged. When unset, `_localize()` just returns text untranslated -- the
+    # same honest degradation as a translation call that fails.
+    translation_service: TranslationService | None = None
 
 
 @dataclass
@@ -106,6 +112,32 @@ def _deps(config: RunnableConfig) -> GraphDeps:
 
 def _ctx(config: RunnableConfig) -> RequestContext:
     return config["configurable"]["ctx"]
+
+
+def _localize(text: str, state: GraphState, config: RunnableConfig) -> str:
+    """Translates a hardcoded English response (clarification questions, out-of-scope notices)
+    into the citizen's `response_language`, via the existing `TranslationService`/`SarvamClient`
+    (same service `complaint_agent.py`/`ask_janmitra_service.py` already use for worker-facing
+    complaint translation -- no new client, no new logic). Unlike `rag_flow_node`'s answers,
+    these strings never went through an LLM prompted to answer in the target language in the
+    first place, so without this they stay in English even in a fully Marathi/Hindi/etc.
+    conversation -- confirmed via a live Marathi voice-assistant session where the transcript and
+    every UI label were in Marathi but this exact clarification text came back in English.
+
+    English is a no-op (skips a needless network call on the common case). A translation failure
+    degrades to the original English text -- same honest fallback `AnswerGenerationService` and
+    the voice flow's own TTS step already use -- never blocks the response."""
+    language = state.get("response_language") or "en"
+    if language == "en":
+        return text
+    deps = _deps(config)
+    if deps.translation_service is None:
+        return text
+    try:
+        return deps.translation_service.to_language(text, language)
+    except AIServiceError as exc:
+        logger.warning("Ask JanMitra: localizing response text to %s failed, keeping English: %s", language, exc)
+        return text
 
 
 def _trace_root(config: RunnableConfig):
@@ -173,12 +205,35 @@ def language_node(state: GraphState, config: RunnableConfig) -> dict[str, Any]:
 
 def intent_node(state: GraphState, config: RunnableConfig) -> dict[str, Any]:
     """Wraps the EXISTING `intent_classifier.classify()` -- no reimplementation, no new keyword
-    lists. See this module's docstring for how the three existing `QuestionIntent` values map
-    onto this graph's five routes."""
+    lists. See this module's docstring for how the `QuestionIntent` values map onto this graph's
+    routes."""
     text = state.get("normalized_message") or state.get("user_message", "")
     result = classify(text)
+    intent = result.intent
+    ctx = config.get("configurable", {}).get("ctx")
+    has_gps = bool(ctx and ctx.latitude is not None and ctx.longitude is not None)
+    if intent == QuestionIntent.UNCLEAR and (state.get("conversation_history") or state.get("has_image") or has_gps):
+        # classify() is deliberately a pure, single-turn, text-only function (see its own
+        # docstring) -- it has no way to see that a short reply like "Streetlight." or "Use my
+        # current location." carries real meaning from the conversation so far, that a vague
+        # caption-only message has an attached photo behind it, or that "Use my current
+        # location." arrived with real GPS coordinates attached. Zero keyword signal in THIS
+        # turn's text alone isn't the same as the request being genuinely unclear in these three
+        # cases, so this falls back to TYPE_A_COMPLAINT -- handing off to machinery that already
+        # exists for exactly this: complaint_flow_node's _recover_category_from_history for the
+        # conversation case, clarification_flow_node's _image_context_prefix for the image case,
+        # and location_node's existing GPS-resolution path for the coordinates case. A real
+        # regression this exact override was added for: without it, EVERY reply in a multi-turn
+        # complaint conversation whose own text has no keyword ("Use my current location.") broke
+        # out of the flow entirely (caught by
+        # test_multi_turn_complaint_filing_category_then_location), and a GPS-only "use current
+        # location" message never reached location_resolution at all (caught by
+        # test_scenario_5_use_current_location_resolves_via_gps). A genuinely fresh, standalone,
+        # no-context, no-image, no-GPS message (e.g. "What is my name?") has none of these and
+        # correctly stays UNCLEAR.
+        intent = QuestionIntent.TYPE_A_COMPLAINT
     return {
-        "intent": result.intent.value,
+        "intent": intent.value,
         "service_category": result.service_category.value if result.service_category else None,
         "out_of_scope_service": result.out_of_scope_service,
         "requests_new_connection": result.requests_new_connection,
@@ -249,12 +304,60 @@ def out_of_scope_flow_node(state: GraphState, config: RunnableConfig) -> dict[st
     topic = _OUT_OF_SCOPE_TOPIC_NAMES.get(
         state.get("out_of_scope_service") or "", (state.get("out_of_scope_service") or "").lower()
     )
+    text = (
+        f"I don't currently have reliable information for {topic} in JanMitra. "
+        f"This may be available in a future update."
+    )
     return {
-        "response_text": (
-            f"I don't currently have reliable information for {topic} in JanMitra. "
-            f"This may be available in a future update."
-        ),
+        "response_text": _localize(text, state, config),
         "routed_to": "NONE_OUT_OF_SCOPE",
+        "insufficient_knowledge": True,
+        "sources": [],
+    }
+
+
+# ------------------------------------------------------------------
+# capabilities flow -- "what can you do?" is a real, in-domain, fully-answerable question about
+# JanMitra's own scope (see QuestionIntent.CAPABILITIES's docstring). A static, accurate answer,
+# not a RAG lookup -- what JanMitra supports is a fixed fact about this deployment, not something
+# to search a knowledge base for.
+# ------------------------------------------------------------------
+
+
+def capabilities_flow_node(state: GraphState, config: RunnableConfig) -> dict[str, Any]:
+    text = (
+        "I can help you report a civic issue (garbage or waste, water or drainage, roads or "
+        "potholes, and streetlights), check the status of a complaint you've already filed, or "
+        "answer questions about local civic services. What would you like help with?"
+    )
+    return {
+        "response_text": _localize(text, state, config),
+        "routed_to": "NONE_CAPABILITIES",
+        "sources": [],
+    }
+
+
+# ------------------------------------------------------------------
+# unclear flow -- genuinely no signal matched (see QuestionIntent.UNCLEAR's own docstring for the
+# bug this replaces: every unrecognized question, regardless of what it actually asked, used to
+# get the exact same complaint-shaped "what issue would you like to report?" clarification).
+# ------------------------------------------------------------------
+
+
+def unclear_flow_node(state: GraphState, config: RunnableConfig) -> dict[str, Any]:
+    question = (
+        "I'm not sure I understood that. I can help you report a civic issue (garbage, water, "
+        "roads, or streetlights), check the status of a complaint, or answer questions about "
+        "local civic services. What would you like help with?"
+    )
+    return {
+        "response_text": _localize(question, state, config),
+        # Genuinely ends in a question the citizen is expected to answer next -- same
+        # follow_up_required semantics clarification_flow_node already uses, not a one-shot
+        # answer like rag_flow_node's.
+        "follow_up_required": True,
+        "follow_up_question": question,
+        "routed_to": "NONE_UNCLEAR",
         "insufficient_knowledge": True,
         "sources": [],
     }
@@ -263,6 +366,22 @@ def out_of_scope_flow_node(state: GraphState, config: RunnableConfig) -> dict[st
 # ------------------------------------------------------------------
 # clarification flow
 # ------------------------------------------------------------------
+
+
+def _image_context_prefix(state: GraphState) -> str:
+    """A short, honest acknowledgment of an attached image, prepended to whichever clarification
+    question actually fires while an image is attached. Without this, a citizen who attached a
+    photo but got routed to the category/location/location_ambiguous reason (because they also
+    typed text, so the `image_no_text` case below never triggers) would see a generic question
+    with no sign the photo was looked at at all -- even though it genuinely was (VisionService
+    already ran, see ask_janmitra_service.py's `_process_image()`). Real, not padding: says
+    honestly that the read wasn't clear if captioning failed, never invents a description."""
+    if not state.get("has_image"):
+        return ""
+    description = state.get("image_description")
+    if description:
+        return f"I can see the photo you attached (it looks like: {description}). "
+    return "I can see you've attached a photo, though I couldn't get a clear read on it. "
 
 
 def clarification_flow_node(state: GraphState, config: RunnableConfig) -> dict[str, Any]:
@@ -285,7 +404,7 @@ def clarification_flow_node(state: GraphState, config: RunnableConfig) -> dict[s
         )
         question = prompt + "Would you like to report an issue, or would you like information about what's shown?"
         return {
-            "response_text": question,
+            "response_text": _localize(question, state, config),
             "follow_up_required": True,
             "follow_up_question": question,
             "follow_up_options": ["Report an issue", "What is this?"],
@@ -294,10 +413,11 @@ def clarification_flow_node(state: GraphState, config: RunnableConfig) -> dict[s
         }
 
     if reason == "category":
+        question = "What issue would you like to report?"
         return {
-            "response_text": "What issue would you like to report?",
+            "response_text": _localize(_image_context_prefix(state) + question, state, config),
             "follow_up_required": True,
-            "follow_up_question": "What issue would you like to report?",
+            "follow_up_question": question,
             "follow_up_options": _CATEGORY_CLARIFICATION_OPTIONS,
             "routed_to": "NONE_CLARIFICATION_NEEDED",
             "sources": [],
@@ -305,8 +425,9 @@ def clarification_flow_node(state: GraphState, config: RunnableConfig) -> dict[s
 
     if reason == "location_ambiguous":
         candidates = state.get("location_ambiguous_candidates", [])
+        question = f"Which city are you asking about — {', '.join(candidates)}?"
         return {
-            "response_text": f"Which city are you asking about — {', '.join(candidates)}?",
+            "response_text": _localize(_image_context_prefix(state) + question, state, config),
             "follow_up_required": True,
             "follow_up_question": "Which city/area are you in?",
             "follow_up_options": candidates,
@@ -315,8 +436,9 @@ def clarification_flow_node(state: GraphState, config: RunnableConfig) -> dict[s
         }
 
     # Default: location missing entirely.
+    question = "What is the location? This helps me give you the correct local information."
     return {
-        "response_text": "What is the location? This helps me give you the correct local information.",
+        "response_text": _localize(_image_context_prefix(state) + question, state, config),
         "follow_up_required": True,
         "follow_up_question": "What is the location?",
         "follow_up_options": _LOCATION_CLARIFICATION_OPTIONS,
@@ -337,8 +459,9 @@ def status_flow_node(state: GraphState, config: RunnableConfig) -> dict[str, Any
 
     match = _COMPLAINT_NUMBER_PATTERN.search(text)
     if not match:
+        question = "Which complaint would you like the status of? Please give the complaint number, or check your complaints list."
         return {
-            "response_text": "Which complaint would you like the status of? Please give the complaint number, or check your complaints list.",
+            "response_text": _localize(question, state, config),
             "follow_up_required": True,
             "follow_up_question": "What is your complaint number?",
             "routed_to": "COMPLAINT_STATUS_API",
@@ -351,7 +474,7 @@ def status_flow_node(state: GraphState, config: RunnableConfig) -> dict[str, Any
         # Same message for "doesn't exist" and "not yours" -- never leaks which IDs exist to a
         # citizen who isn't the owner.
         return {
-            "response_text": f"I couldn't find complaint #{complaint_id} for your account.",
+            "response_text": _localize(f"I couldn't find complaint #{complaint_id} for your account.", state, config),
             "routed_to": "COMPLAINT_STATUS_API",
             "sources": [],
         }
@@ -363,7 +486,7 @@ def status_flow_node(state: GraphState, config: RunnableConfig) -> dict[str, Any
         "resolved": "marked resolved.",
     }.get(complaint.status, complaint.status)
     return {
-        "response_text": f"Complaint #{complaint.id} is {status_text}",
+        "response_text": _localize(f"Complaint #{complaint.id} is {status_text}", state, config),
         "routed_to": "COMPLAINT_STATUS_API",
         "sources": [],
     }
@@ -431,8 +554,9 @@ def rag_flow_node(state: GraphState, config: RunnableConfig) -> dict[str, Any]:
     if outcome.insufficient_knowledge or not outcome.results:
         reason = outcome.reason or "No information available."
         place = state.get("location_city") or state.get("location_state") or "this area"
+        text = f"I don't currently have reliable information for this in {place}. ({reason})"
         return {
-            "response_text": f"I don't currently have reliable information for this in {place}. ({reason})",
+            "response_text": _localize(text, state, config),
             "routed_to": "RAG",
             "insufficient_knowledge": True,
             "sources": [],
@@ -552,8 +676,9 @@ def complaint_flow_node(state: GraphState, config: RunnableConfig) -> dict[str, 
     except (ValueError, AIServiceError) as exc:
         logger.warning("Ask JanMitra complaint_flow: complaint creation failed: %s", exc)
         tracing.end_run(creation_span, error=str(exc))
+        text = "I couldn't file that complaint right now. Please try again, or use the complaint form directly."
         return {
-            "response_text": "I couldn't file that complaint right now. Please try again, or use the complaint form directly.",
+            "response_text": _localize(text, state, config),
             "routed_to": "COMPLAINT_CREATION_FAILED",
             "error": str(exc),
             "sources": [],
@@ -632,7 +757,7 @@ def complaint_flow_node(state: GraphState, config: RunnableConfig) -> dict[str, 
         response_text = f"Your {category_label} complaint has been filed (complaint #{complaint.id}). It's pending assignment to a worker in your area."
 
     return {
-        "response_text": response_text,
+        "response_text": _localize(response_text, state, config),
         "routed_to": "COMPLAINT_CREATED",
         "complaint_id": complaint.id,
         "complaint_data": {"id": complaint.id, "status": complaint.status, "ward": complaint.ward},
@@ -656,7 +781,7 @@ def complaint_flow_node(state: GraphState, config: RunnableConfig) -> dict[str, 
 def response_generation_node(state: GraphState, config: RunnableConfig) -> dict[str, Any]:
     defaults: dict[str, Any] = {}
     if "response_text" not in state:
-        defaults["response_text"] = "I'm not sure how to help with that yet."
+        defaults["response_text"] = _localize("I'm not sure how to help with that yet.", state, config)
     if "sources" not in state:
         defaults["sources"] = []
     if "routed_to" not in state:
