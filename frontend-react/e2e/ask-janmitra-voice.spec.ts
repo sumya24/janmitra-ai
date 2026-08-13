@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { uniquePhone } from "./helpers";
+import { fillHomeLocationPicker, uniquePhone } from "./helpers";
 
 /**
  * E2E coverage for Ask Sarthi's voice-to-voice assistant ("Mic 2", phase 6 of the multimodal
@@ -22,18 +22,7 @@ async function signUpAndReachCitizenHome(page: import("@playwright/test").Page) 
   await page.getByLabel("Full name").fill("Ask Sarthi Voice Tester");
   await page.getByLabel("Phone number").fill(phone);
   await page.getByLabel("Password").fill("secret123");
-  // Mandatory ward field -- same select-or-freetext handling as theme-and-voice.spec.ts's
-  // own ward step, since whether any real wards are seeded yet varies by test run.
-  const wardField = page.getByLabel("Area / ward");
-  // The field starts as a text input and swaps to a <select> once the async GET
-  // /complaints/wards fetch resolves (Signup.tsx) -- wait for that swap to settle first, or a
-  // fill() started against the input can race a mid-flight re-render and hit a detached node.
-  await page.waitForTimeout(600);
-  if ((await wardField.evaluate((el) => el.tagName)) === "SELECT") {
-    await wardField.selectOption({ index: 1 });
-  } else {
-    await wardField.fill("Test Ward");
-  }
+  await fillHomeLocationPicker(page);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/citizen$/);
 }

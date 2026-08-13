@@ -72,12 +72,20 @@ class ClassificationResult:
 
 
 # --- TYPE_C: personal complaint status/tracking -- checked first, highest priority ---
+# gu/bn added after a live stress-test survey found this project's 6 supported UI languages
+# (see frontend-react/src/lib/i18n.ts) only ever had keyword coverage for 4 of them (en/hi/mr/or)
+# -- Gujarati and Bengali had ZERO entries in every dict in this file, so a clear complaint typed
+# in either language (e.g. "મારા ઘર પાસે સ્ટ્રીટ લાઈટ બંધ છે" -- "the streetlight near my house is
+# off") fell all the way through to UNCLEAR. Real, measured gap, not hypothetical -- reproduced
+# live against the running backend before this fix.
 _STATUS_KEYWORDS: dict[str, list[str]] = {
     "en": ["status", "track", "tracking", "has my complaint", "when will my", "assigned to",
            "complaint id", "complaint number", "complaint #", "resolved yet", "my complaint"],
     "hi": ["स्थिति", "ट्रैक", "मेरी शिकायत", "मेरा कंप्लेंट"],
     "mr": ["स्थिती", "माझी तक्रार", "ट्रॅक"],
     "or": ["ସ୍ଥିତି", "ମୋ ଅଭିଯୋଗ", "ଟ୍ରାକ୍"],
+    "gu": ["સ્થિતિ", "ટ્રેક", "મારી ફરિયાદ"],
+    "bn": ["অবস্থা", "ট্র্যাক", "আমার অভিযোগ"],
 }
 _STATUS_NUMBER_PATTERN = re.compile(r"complaint\s*#?\s*\d+|#\d+", re.IGNORECASE)
 
@@ -101,6 +109,35 @@ _SERVICE_INFO_KEYWORDS: dict[str, list[str]] = {
            # matched) instead of TYPE_B_SERVICE_INFO before this fix. Same category of real,
            # measured false negative as the NEW_CONNECTION_KEYWORDS fix below -- not hypothetical.
            "what documents", "which documents", "documents do i need", "documents needed",
+           # Plain English fee/cost questions ("What is the water connection fee in Patiala?")
+           # had NO English keyword at all here -- only the Hinglish equivalents below ("kitni
+           # fees") were covered. A real, measured failure caught by this project's own live
+           # testing: with zero service-info match and zero complaint-verb match, such a question
+           # fell to classify()'s bare-category-only default (TYPE_A_COMPLAINT) and ACTUALLY FILED
+           # A COMPLAINT for someone who only asked what something costs. `complaint_matches` still
+           # wins if a genuine complaint mentions a fee too (e.g. "I was overcharged, please look
+           # into this") -- classify() checks `service_info_matches and not complaint_matches`
+           # before falling here, so this fix only catches pure info-seeking phrasing.
+           "fee", "fees", "cost of", "how much does", "how much is", "how much will", "charges for",
+           "what does it cost", "what is the cost", "what is the charge", "price of",
+           # Same gap, same fix pattern, for schedule/timing questions -- "When does garbage
+           # collection resume?" is exactly as info-seeking as a fee question, but had the
+           # identical zero-English-keyword gap (only the Hinglish "schedule kya hai" below was
+           # covered). Real, measured: caught live filing an actual phantom complaint for someone
+           # who only asked when a service runs. "when will" is intentionally NOT added bare here
+           # -- it's already a TYPE_C status keyword ("when will my"), checked first in classify()
+           # and would win regardless, so adding it here would be redundant, not a fix.
+           "when does", "what time does", "what time is", "how often does", "how often is",
+           "resume collection", "collection schedule", "pickup schedule", "next collection",
+           "when is collection", "maintenance schedule", "cleaning schedule",
+           # Same gap, same fix pattern, caught by testing this project's own built-in suggested
+           # prompts (frontend-react/src/lib/i18n.ts's "ask.suggested.pothole"/"garbage"/
+           # "streetlight", shown to every new user) -- process/policy questions with zero
+           # matching keyword, so a bare category match ("garbage"/"pothole") alone forced
+           # TYPE_A_COMPLAINT.
+           "how are potholes prioritized", "prioritized for repair", "how is repair prioritized",
+           "collection was skipped", "garbage collection was skipped", "if collection is skipped",
+           "how long does a repair take", "how long does repair take", "how long does a streetlight repair take",
            # Romanized/Hinglish phrasing -- caught via the KB-expansion phase's live testing:
            # "Mujhe naya water connection chahiye, documents kya lagenge?" misclassified as
            # TYPE_A_COMPLAINT because none of the keyword lists above have any Latin-script Hindi
@@ -120,14 +157,34 @@ _SERVICE_INFO_KEYWORDS: dict[str, list[str]] = {
            "kitne paise", "kitna paisa", "paise lagenge", "fees kitni", "kitni fees",
            "kaunsa department", "department kaunsa", "responsible department",
            "schedule kya hai", "kya schedule hai", "maintenance kaun karta hai", "kaun karta hai"],
-    "hi": ["नया कनेक्शन", "नया पानी कनेक्शन", "आवेदन", "दस्तावेज", "संपर्क नंबर", "कैसे लगवाएं"],
-    "mr": ["नवीन कनेक्शन", "नवीन पाणी कनेक्शन", "अर्ज", "कागदपत्रे"],
+    "hi": ["नया कनेक्शन", "नया पानी कनेक्शन", "आवेदन", "दस्तावेज", "संपर्क नंबर", "कैसे लगवाएं",
+           # Same class of bug as the English fee/schedule fixes above, caught the same way (this
+           # time by testing the app's own built-in "How are potholes prioritized for repair?" /
+           # "What if garbage collection was skipped?" / "How long does a streetlight repair
+           # take?" suggested prompts, shown to every new user, in every one of this project's 6
+           # languages -- not hypothetical). These are genuine info-seeking process/policy
+           # questions with no English-style keyword coverage at all for any non-English language,
+           # so a bare category match ("कचरा"/"गड्ढा"/...) alone forced TYPE_A_COMPLAINT, or
+           # nothing matched at all and it fell through to UNCLEAR.
+           "प्राथमिकता कैसे तय होती है", "संग्रह छूट जाए", "छूट जाए तो क्या करें",
+           "मरम्मत में कितना समय लगता है", "कितना समय लगता है"],
+    "mr": ["नवीन कनेक्शन", "नवीन पाणी कनेक्शन", "अर्ज", "कागदपत्रे",
+           "प्राधान्य कसे ठरवले जाते", "संकलन चुकल्यास", "चुकल्यास काय करावे",
+           "दुरुस्तीला किती वेळ लागतो", "किती वेळ लागतो"],
     # "ନୂଆ ପାଣି ସଂଯୋଗ" ("new water connection") is NOT just "ନୂଆ ସଂଯୋଗ" ("new connection") with a
     # word removed -- the service noun sits between "new" and "connection" in natural Odia
     # phrasing, same as English/Hindi/Marathi. A bare "ନୂଆ ସଂଯୋଗ" substring never matches real
     # sentences and was a genuine bug (caught by test_multilingual_odia_new_connection_is_type_b),
     # not a hypothetical -- list the full phrases actually used instead of assuming adjacency.
-    "or": ["ନୂଆ ପାଣି ସଂଯୋଗ", "ନୂଆ ସଂଯୋଗ", "ଆବେଦନ"],
+    "or": ["ନୂଆ ପାଣି ସଂଯୋଗ", "ନୂଆ ସଂଯୋଗ", "ଆବେଦନ",
+           "କିପରି ପ୍ରାଥମିକତା ସ୍ଥିର ହୁଏ", "ସଂଗ୍ରହ ଛାଡ଼ି", "ଛାଡ଼ି ଦିଆଗଲେ କଣ କରିବି",
+           "ମରାମତିରେ କେତେ ସମୟ ଲାଗେ", "କେତେ ସମୟ ଲାଗେ"],
+    "gu": ["નવું પાણી જોડાણ", "નવું જોડાણ", "અરજી", "દસ્તાવેજો", "સંપર્ક નંબર",
+           "કેવી રીતે પ્રાથમિકતા અપાય છે", "ઉપાડવાનું ચૂકી", "ચૂકી ગયું હોય તો શું કરવું",
+           "સમારકામમાં કેટલો સમય લાગે છે", "કેટલો સમય લાગે છે"],
+    "bn": ["নতুন পানির সংযোগ", "নতুন সংযোগ", "আবেদন", "কাগজপত্র", "যোগাযোগ নম্বর",
+           "কীভাবে অগ্রাধিকার ঠিক করা হয়", "সংগ্রহ বাদ পড়লে", "বাদ পড়লে কী করব",
+           "মেরামত করতে কত সময় লাগে", "কত সময় লাগে"],
 }
 
 # --- CAPABILITIES: "what can this app do?" -- a real, in-domain, answerable question about
@@ -145,16 +202,75 @@ _CAPABILITIES_KEYWORDS: dict[str, list[str]] = {
     "hi": ["आप क्या कर सकते हैं", "कौन सी सेवाएं", "कौनसी सेवाएं", "जनमित्र क्या है"],
     "mr": ["तुम्ही काय करू शकता", "कोणत्या सेवा", "जनमित्र म्हणजे काय"],
     "or": ["ଆପଣ କଣ କରିପାରିବେ", "କେଉଁ ସେବା", "ଜନମିତ୍ର କଣ"],
+    "gu": ["તમે શું કરી શકો છો", "કઈ સેવાઓ", "જનમિત્ર શું છે"],
+    "bn": ["আপনি কী করতে পারেন", "কোন পরিষেবা", "জনমিত্র কী"],
 }
 
 
 # --- TYPE_A: complaint/issue -- "something is wrong" phrasing ---
-_COMPLAINT_VERB_KEYWORDS: dict[str, list[str]] = {
-    "en": ["not working", "broken", "not collected", "problem", "issue", "report", "complain",
+#
+# Split into two tiers -- STATE (an active problem is being described: "not working"/"leaking"/
+# टूटा/ভাঙা/...) vs META (a word ABOUT the act of complaining/reporting itself: "report"/
+# "complain"/शिकायत/तक्रार/ଅଭିଯୋଗ/ફરિયાદ/অভিযোগ) -- after a real, reported bug: "पानी के रिसाव की
+# शिकायत कैसे करें?" ("How do I file a complaint about a water leak?") is a citizen asking about
+# the PROCESS, not reporting anything right now, but शिकायत alone matched the old undivided list
+# exactly like a genuine complaint would, so combined with the "पानी" category match it silently
+# FILED AND ASSIGNED a real complaint (#39) for someone who only wanted to know how. Confirmed
+# systemic, not Hindi-specific: "How do I report a water leakage?"/"How can I file a complaint
+# about garbage?" hit the identical bug in English via "report"/"complain" -- and every one of
+# this file's 6 languages has the same bare complaint-noun in its old list. A genuine STATE verb
+# ("How do I fix my leaking pipe") still means TYPE_A unconditionally -- only a bare META word
+# combined with explicit how-to framing (see `_HOW_TO_FILE_COMPLAINT_KEYWORDS` below) is
+# downgraded, in `classify()`.
+_COMPLAINT_STATE_KEYWORDS: dict[str, list[str]] = {
+    "en": ["not working", "broken", "not collected", "problem", "issue",
            "leaking", "leak", "overflow", "near my house", "near my home", "near me"],
-    "hi": ["काम नहीं कर रहा", "खराब है", "शिकायत", "टूटा"],
-    "mr": ["काम करत नाही", "तक्रार", "बंद आहे"],
-    "or": ["କାମ କରୁନାହିଁ", "ଅଭିଯୋଗ", "ଖରାପ"],
+    "hi": ["काम नहीं कर रहा", "खराब है", "टूटा"],
+    "mr": ["काम करत नाही", "बंद आहे"],
+    "or": ["କାମ କରୁନାହିଁ", "ଖରାପ"],
+    "gu": ["કામ કરતું નથી", "તૂટેલું"],
+    "bn": ["কাজ করছে না", "ভাঙা"],
+}
+_COMPLAINT_META_KEYWORDS: dict[str, list[str]] = {
+    "en": ["report", "complain"],
+    "hi": ["शिकायत"],
+    "mr": ["तक्रार"],
+    "or": ["ଅଭିଯୋଗ"],
+    "gu": ["ફરિયાદ"],
+    "bn": ["অভিযোগ"],
+}
+# Union of the two tiers -- kept so every EXISTING caller/test that reasons about "did some
+# complaint-shaped keyword match at all" (matched_keywords, the out-of-scope/service-info
+# interplay below) keeps working unchanged; only `classify()`'s own TYPE_A decision needs the
+# tiers kept separate.
+_COMPLAINT_VERB_KEYWORDS: dict[str, list[str]] = {
+    lang: _COMPLAINT_STATE_KEYWORDS[lang] + _COMPLAINT_META_KEYWORDS[lang] for lang in _COMPLAINT_STATE_KEYWORDS
+}
+
+# "How do I report/file a complaint?" -- explicitly asking about Sarthi's OWN process, not
+# reporting an issue. Deliberately paired phrases (word for "how" + word for "complaint/report"
+# together), never a bare "how"/"कैसे" alone, which would be far too generic and risk swallowing
+# unrelated questions (see this file's own established convention of specific multi-word phrases
+# over single generic words, e.g. the Hinglish entries above).
+_HOW_TO_FILE_COMPLAINT_KEYWORDS: dict[str, list[str]] = {
+    "en": ["how do i report", "how do i file", "how can i report", "how can i file",
+           "how to report", "how to file", "how do i complain", "how can i complain",
+           "how to complain", "how do i lodge", "how to lodge", "how do i raise", "how to raise a complaint"],
+    "hi": ["शिकायत कैसे करें", "शिकायत कैसे करूं", "शिकायत कैसे दर्ज करें", "कैसे शिकायत करें",
+           "कैसे शिकायत दर्ज करें", "शिकायत कैसे दर्ज करूं"],
+    "mr": ["तक्रार कशी करावी", "तक्रार कशी करू", "तक्रार कशी नोंदवावी", "कशी तक्रार करावी"],
+    # or/gu/bn: the app's own real suggested-prompt strings (frontend-react/src/lib/i18n.ts's
+    # "ask.suggested.waterLeak") use "report"/"inform" wording (ରିପୋର୍ଟ/જાણ/রিপোর্ট), NOT
+    # "complaint" (ଅଭିଯୋଗ/ફરિયાদ/অভিযোগ) -- an earlier version of this fix only covered the
+    # "complaint"-word phrasing (an unverified guess), missing these entirely: `how_to_file_
+    # matches` came back empty for the app's own real "ପାଣି ଲିକେଜ୍ କିପରି ରିପୋର୍ଟ କରିବି?"/"પાણીના
+    # લીકેજની જાણ કેવી રીતે કરવી?"/"জলের লিকেজ কীভাবে রিপোর্ট করব?" prompts, so the override never
+    # fired and the bare "ପାଣି/પાણી/পানি" (water) category match alone still forced
+    # TYPE_A_COMPLAINT -- caught live by testing the app's OWN built-in prompts, not a hypothetical.
+    "or": ["ଅଭିଯୋଗ କିପରି କରିବେ", "କିପରି ଅଭିଯୋଗ କରିବେ", "କିପରି ରିପୋର୍ଟ କରିବି", "ରିପୋର୍ଟ କିପରି କରିବି",
+           "କିପରି ରିପୋର୍ଟ କରିବେ", "ରିପୋର୍ଟ କିପରି କରିବେ"],
+    "gu": ["ફરિયાદ કેવી રીતે કરવી", "કેવી રીતે ફરિયાદ કરવી", "જાણ કેવી રીતે કરવી", "કેવી રીતે જાણ કરવી"],
+    "bn": ["অভিযোগ কীভাবে করব", "কীভাবে অভিযোগ করব", "রিপোর্ট কীভাবে করব", "কীভাবে রিপোর্ট করব"],
 }
 
 # --- Service category detection (own keyword sets, deliberately NOT reusing
@@ -181,10 +297,12 @@ _CATEGORY_KEYWORDS: dict[ServiceCategory, dict[str, list[str]]] = {
     ServiceCategory.WASTE_SANITATION: {
         "en": ["garbage", "waste", "trash", "sanitation", "dump", "litter", "rubbish"],
         "hi": ["कचरा", "कचरे", "कूड़ा", "कूड़े"], "mr": ["कचरा", "कचऱ्या"], "or": ["ଆବର୍ଜନା"],
+        "gu": ["કચરો", "કચરાની"], "bn": ["আবর্জনা", "ময়লা"],
     },
     ServiceCategory.WATER_DRAINAGE: {
         "en": ["water", "drain", "drainage", "sewage", "sewer", "pipeline", "pipe connection", "flood"],
         "hi": ["पानी", "नाला", "नाले", "पाइप"], "mr": ["पाणी", "पाण्या"], "or": ["ପାଣି"],
+        "gu": ["પાણી", "ગટર"], "bn": ["পানি", "জল", "নর্দমা"],
     },
     ServiceCategory.ROADS_POTHOLES: {
         "en": ["road", "pothole", "footpath", "pavement", "civil work"],
@@ -200,10 +318,23 @@ _CATEGORY_KEYWORDS: dict[ServiceCategory, dict[str, list[str]]] = {
         # substring still catches the real gap ("रस्त्याची तक्रार") without swallowing every
         # other complaint that merely happens to be located on a road.
         "hi": ["सड़क", "गड्ढा", "गड्ढे"], "mr": ["रस्ता", "रस्त्याच", "खड्डा", "खड्ड्या"], "or": ["ରାସ୍ତା"],
+        # gu "રસ્તાન" (genitive-only stem, covers રસ્તાની/રસ્તાનો/રસ્તાનું -- "of the road"),
+        # same narrowing as mr "रस्त्याच" above and for the same reason: Gujarati masculine nouns
+        # ending in -ો shift to oblique -ા before a postposition (દીકરો -> દીકરાની, "of the son"),
+        # so રસ્તો ("road") has the identical bare-nominative-only gap પાણી/रस्ता had -- but its
+        # locative form "રસ્તા પર" ("on the road") is just as common a way to locate an unrelated
+        # complaint, confirmed by this fix's own regression check ("રસ્તા પર કચરો છે" correctly
+        # stayed WASTE_SANITATION, not ROADS_POTHOLES, precisely because "રસ્તાન" does NOT match
+        # the locative "રસ્તા પર"/"રસ્તામાં" forms). ખાડાની ("of the pothole") added as a literal
+        # rather than a stem, matching કચરાની's precedent above -- ખાડો has no comparable
+        # generic-location idiom, so the extra caution wasn't needed there.
+        "gu": ["રસ્તો", "રસ્તાન", "ખાડો", "ખાડાની"],
+        "bn": ["রাস্তা", "গর্ত"],
     },
     ServiceCategory.STREETLIGHTS: {
         "en": ["streetlight", "street light", "street lamp", "lamp post"],
         "hi": ["स्ट्रीट लाइट", "बत्ती"], "mr": ["स्ट्रीट लाइट", "दिवा", "दिव्या"], "or": ["ଆଲୋକ"],
+        "gu": ["સ્ટ્રીટ લાઈટ", "બત્તી"], "bn": ["স্ট্রিট লাইট", "বাতি"],
     },
 }
 
@@ -213,6 +344,18 @@ _CATEGORY_KEYWORDS: dict[ServiceCategory, dict[str, list[str]]] = {
 _OUT_OF_SCOPE_KEYWORDS: dict[str, list[str]] = {
     "en": ["electricity", "electric connection", "electric meter", "power connection", "power supply"],
     "hi": ["बिजली"], "mr": ["वीज"], "or": ["ବିଦ୍ୟୁତ"],
+    "gu": ["વીજળી"],
+    # bn: বিদ্যুৎ ("electricity") ends in the letter ৎ (khanda ta), which Bengali sandhi rules
+    # regularly change to ত when a vowel-initial suffix follows -- বিদ্যুৎ + এর ("of electricity")
+    # surfaces as বিদ্যুতের, not বিদ্যুতেরৎ. Unlike Marathi/Gujarati's vowel-final noun mutation
+    # (this file's other oblique-case fixes), Bengali is otherwise agglutinative -- most nouns here
+    # (রাস্তা/গর্ত/আবর্জনা) keep their own shape intact under a suffix, confirmed by this fix's own
+    # regression check. বিদ্যুৎ is the one specific exception found: without this entry,
+    # "বিদ্যুতের নতুন সংযোগ চাই" ("I want a new electricity connection") missed the ELECTRICITY
+    # out-of-scope flag entirely and fell to the generic "new connection" label instead -- still
+    # correctly kept out of RAG, but with a less specific/honest response than the dedicated
+    # "don't have electricity" message this KB is supposed to give.
+    "bn": ["বিদ্যুৎ", "বিদ্যুতে"],
 }
 
 # Bare "new connection" (utility unspecified) -- checked separately from the category detector
@@ -245,6 +388,8 @@ _NEW_CONNECTION_KEYWORDS: dict[str, list[str]] = {
     "hi": ["नया कनेक्शन"],
     "mr": ["नवीन कनेक्शन"],
     "or": ["ନୂଆ ସଂଯୋଗ"],
+    "gu": ["નવું જોડાણ"],
+    "bn": ["নতুন সংযোগ"],
 }
 
 # Detects "this question is specifically about a NEW water/sewerage connection" regardless of
@@ -261,6 +406,8 @@ _NEW_CONNECTION_TOPIC_KEYWORDS: dict[str, list[str]] = {
     "hi": ["नया पानी कनेक्शन"],
     "mr": ["नवीन पाणी कनेक्शन"],
     "or": ["ନୂଆ ପାଣି ସଂଯୋଗ"],
+    "gu": ["નવું પાણી જોડાણ"],
+    "bn": ["নতুন পানির সংযোগ"],
 }
 
 
@@ -300,6 +447,7 @@ def classify(question: str) -> ClassificationResult:
 
     service_info_matches = _any_match(text, _SERVICE_INFO_KEYWORDS)
     complaint_matches = _any_match(text, _COMPLAINT_VERB_KEYWORDS)
+    how_to_file_matches = _any_match(text, _HOW_TO_FILE_COMPLAINT_KEYWORDS)
 
     category = None
     category_matches: list[str] = []
@@ -320,6 +468,34 @@ def classify(question: str) -> ClassificationResult:
             service_category=None,
             out_of_scope_service=out_of_scope_label,
             matched_keywords=out_of_scope_matches,
+            requests_new_connection=requests_new_connection,
+        )
+
+    # "How do I file a complaint?" -- asking about the PROCESS, not reporting anything right now.
+    # Deliberately wins UNCONDITIONALLY once a how-to-file phrase matches, even over a `state_
+    # matches` hit -- an earlier version of this fix required `not state_matches`, which produced
+    # a real, caught-before-shipping inconsistency: "How do I report a water leakage?" kept
+    # returning TYPE_A_COMPLAINT (because "leak" is also a state keyword, matched inside
+    # "leakage") while its own word-for-word Hindi equivalent, "पानी के रिसाव की शिकायत कैसे
+    # करें?", correctly became CAPABILITIES (Hindi's state list has no "leak"-equivalent generic
+    # topic-noun to false-positive on). Both phrasings mean exactly the same thing and must behave
+    # identically. The `_HOW_TO_FILE_COMPLAINT_KEYWORDS` phrases are all specifically "how [do/
+    # can] I [report/file/complain/lodge/raise]" -- a genuine, immediate complaint essentially
+    # never uses that interrogative construction ("Street light not working near my house" has no
+    # "how do i ..." in it at all, so this branch is never even reached for it); a state keyword
+    # co-occurring with an explicit how-to-file phrase is far more often "leak" used as a bare
+    # topic noun than a real active-problem report.  Checked before service_info/category so a
+    # bare category mention (e.g. "पानी") inside the how-to question can't force TYPE_A_COMPLAINT
+    # via the `complaint_matches or category` fallback further below -- exactly the mechanism that
+    # produced the real, reported bug this closes. CAPABILITIES already gives an accurate, honest
+    # answer to this ("just describe your issue and location, and I'll create the complaint for
+    # you") without a RAG lookup that has no "how to use this app" content to find.
+    if how_to_file_matches:
+        return ClassificationResult(
+            intent=QuestionIntent.CAPABILITIES,
+            service_category=None,
+            out_of_scope_service=None,
+            matched_keywords=how_to_file_matches,
             requests_new_connection=requests_new_connection,
         )
 

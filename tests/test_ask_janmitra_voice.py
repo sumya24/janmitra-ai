@@ -193,8 +193,9 @@ def test_voice_requires_authentication(client, monkeypatch):
     assert response.status_code in (401, 403)
 
 
-def test_voice_can_file_a_real_complaint_from_the_transcribed_text(client, monkeypatch, make_citizen, db_session):
+def test_voice_can_file_a_real_complaint_from_the_transcribed_text(client, monkeypatch, make_citizen, db_session, make_worker):
     fake_sarvam = _install_real_service(monkeypatch, transcript="Street light near my home is not working.")
+    make_worker(phone="9000099207", ward="Mohali")
     token, _ = make_citizen(phone="9000000207")
 
     response = _ask_voice(client, token, location_text="Mohali")
@@ -263,7 +264,7 @@ def test_voice_plus_image_caption_failure_still_produces_a_real_spoken_clarifica
     assert body["audio_base64"] is not None
 
 
-def test_voice_plus_image_can_file_a_real_complaint_with_evidence(client, monkeypatch, make_citizen, db_session):
+def test_voice_plus_image_can_file_a_real_complaint_with_evidence(client, monkeypatch, make_citizen, db_session, make_worker):
     """The evidence system is reused identically for a voice-originated complaint with a photo --
     same ComplaintEvidence row, same real file on disk, as the text/image endpoint's own test."""
     from pathlib import Path
@@ -271,6 +272,7 @@ def test_voice_plus_image_can_file_a_real_complaint_with_evidence(client, monkey
     from backend.models import ComplaintEvidence
 
     _install_real_service(monkeypatch, transcript="Street light near my home is not working.")
+    make_worker(phone="9000099211", ward="Mohali")
     token, _ = make_citizen(phone="9000000211")
 
     response = _ask_voice(client, token, image_bytes=_JPEG_BYTES, location_text="Mohali")

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { uniquePhone } from "./helpers";
+import { fillHomeLocationPicker, uniquePhone } from "./helpers";
 
 /**
  * E2E coverage for Ask Sarthi against the REAL backend (POST /ask-janmitra) — not a mock.
@@ -22,18 +22,7 @@ async function signUpAndReachCitizenHome(page: import("@playwright/test").Page) 
   await page.getByLabel("Full name").fill("Ask Sarthi Tester");
   await page.getByLabel("Phone number").fill(phone);
   await page.getByLabel("Password").fill("secret123");
-  // Mandatory ward field -- same select-or-freetext handling as theme-and-voice.spec.ts's
-  // own ward step, since whether any real wards are seeded yet varies by test run.
-  const wardField = page.getByLabel("Area / ward");
-  // The field starts as a text input and swaps to a <select> once the async GET
-  // /complaints/wards fetch resolves (Signup.tsx) -- wait for that swap to settle first, or a
-  // fill() started against the input can race a mid-flight re-render and hit a detached node.
-  await page.waitForTimeout(600);
-  if ((await wardField.evaluate((el) => el.tagName)) === "SELECT") {
-    await wardField.selectOption({ index: 1 });
-  } else {
-    await wardField.fill("Test Ward");
-  }
+  await fillHomeLocationPicker(page);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/citizen$/);
 }
@@ -93,7 +82,42 @@ test("Ask Sarthi: a complaint-shaped question with location files a real complai
 });
 
 test("Ask Sarthi: a question with no location asks for clarification instead of guessing", async ({ page }) => {
-  await signUpAndReachCitizenHome(page);
+  // Deliberately NOT fillHomeLocationPicker() here: that helper just picks whichever state
+  // happens to be first alphabetically, and since the location-resolution fallback chain
+  // includes the citizen's own registered ward as a last resort (see nodes.py's
+  // _resolve_location), landing on a state/city seeded for one of the RAG knowledge base's 30
+  // covered cities (e.g. Ahmedabad/Kolkata/Bengaluru) would resolve a real location and this
+  // test would no longer be testing what its name says -- caught live when this test started
+  // failing after that fallback shipped (the app correctly stopped asking, because it correctly
+  // now knows where the citizen lives). This test's actual job is verifying the "nothing
+  // resolves anywhere, including the account" case, so it needs a ward that's real (seeded,
+  // satisfies the mandatory signup field) but genuinely NOT one of the RAG gazetteer's 30 cities
+  // -- Pune is seeded in this project's own multi-ward test data (real State->City->Ward
+  // hierarchy, see backend/routes/locations.py) but is not in that 30-city list (see
+  // location_extractor.py's module docstring on the two separate, differently-sized location
+  // datasets), so explicitly picking it here (rather than an arbitrary index) keeps this test's
+  // premise deterministic.
+  await page.goto("/");
+  await page.getByRole("button", { name: "English" }).click();
+  await expect(page).toHaveURL(/\/welcome$/);
+  await page.getByRole("link", { name: "Sign up" }).click();
+  await expect(page).toHaveURL(/\/signup$/);
+  const phone = uniquePhone();
+  await page.getByLabel("Full name").fill("Ask Sarthi Tester");
+  await page.getByLabel("Phone number").fill(phone);
+  await page.getByLabel("Password").fill("secret123");
+  const stateField = page.locator("#signup-home-state");
+  await expect.poll(() => stateField.locator("option").count()).toBeGreaterThan(1);
+  await stateField.selectOption({ label: "Maharashtra" });
+  const cityField = page.locator("#signup-home-city");
+  await expect.poll(() => cityField.isEnabled()).toBe(true);
+  await cityField.selectOption({ label: "Pune" });
+  const wardField = page.locator("#signup-home-ward");
+  await expect.poll(() => wardField.isEnabled()).toBe(true);
+  await wardField.selectOption({ index: 1 });
+  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(page).toHaveURL(/\/citizen$/);
+
   // Ask Sarthi is a floating widget (opens a slide-out panel), not a nav tab -- see
   // CitizenNav.tsx/AskJanMitraWidget.tsx. No route change on open, so no toHaveURL assertion
   // here the way there used to be.

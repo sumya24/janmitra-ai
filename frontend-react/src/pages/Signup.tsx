@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUiLang } from "../lib/uiLang";
 import { useAuth } from "../lib/auth";
@@ -7,6 +7,7 @@ import { api, ApiError } from "../lib/api";
 import ThemeToggle from "../components/ThemeToggle";
 import AuthPanel from "../components/AuthPanel";
 import AuthFormBrand from "../components/AuthFormBrand";
+import HomeLocationPicker, { type HomeLocationValue } from "../components/HomeLocationPicker";
 import "./Auth.css";
 
 export default function Signup() {
@@ -17,21 +18,12 @@ export default function Signup() {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
-  const [ward, setWard] = useState("");
-  const [wards, setWards] = useState<string[]>([]);
+  // The State/City/Ward/Area picker below IS the "Area / ward" field -- see
+  // HomeLocationPicker.tsx's own docstring for why this used to be two separate sections.
+  const [homeLocation, setHomeLocation] = useState<HomeLocationValue>({ ward: "" });
   const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  // Fetched without a token -- GET /complaints/wards is unauthenticated specifically so this
-  // list is available before the citizen has signed up at all. Same real, worker-backed ward
-  // list ReportIssue's LocationPicker already uses -- never a name that doesn't route anywhere.
-  // Mandatory, one-time-at-signup, not editable later (no ward field in Settings) -- so every
-  // citizen account is guaranteed to have one, and "My Area" (MyArea.tsx) never has to explain
-  // a missing-ward state to an account that could have set it and didn't.
-  useEffect(() => {
-    api.listWards().then(setWards).catch(() => setWards([]));
-  }, []);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -40,8 +32,9 @@ export default function Signup() {
     const errors: Record<string, boolean> = {};
     if (!fullName.trim()) errors.fullName = true;
     if (!phone.trim()) errors.phone = true;
+    else if (!/^[6-9]\d{9}$/.test(phone.trim())) errors.phone = true;
     if (!password) errors.password = true;
-    if (!ward.trim()) errors.ward = true;
+    if (!homeLocation.ward.trim()) errors.ward = true;
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
 
@@ -52,7 +45,8 @@ export default function Signup() {
         phone: phone.trim(),
         password,
         preferred_language: lang,
-        ward: ward.trim(),
+        ...homeLocation,
+        ward: homeLocation.ward.trim(),
       });
       setSession(access_token, user);
       navigate("/citizen");
@@ -89,29 +83,19 @@ export default function Signup() {
             <div className={`field ${fieldErrors.phone ? "has-error" : ""}`}>
               <label htmlFor="signup-phone">{t(lang, "auth.field.phone")}</label>
               <input id="signup-phone" type="tel" placeholder="98xxxxxxxx" value={phone} onChange={(e) => setPhone(e.target.value)} />
-              {fieldErrors.phone && <div className="field-error">{t(lang, "common.fieldRequired")}</div>}
+              {fieldErrors.phone && (
+                <div className="field-error">
+                  {t(lang, phone.trim() ? "common.invalidPhone" : "common.fieldRequired")}
+                </div>
+              )}
             </div>
             <div className={`field ${fieldErrors.password ? "has-error" : ""}`}>
               <label htmlFor="signup-password">{t(lang, "auth.field.password")}</label>
               <input id="signup-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
               {fieldErrors.password && <div className="field-error">{t(lang, "common.fieldRequired")}</div>}
             </div>
-            <div className={`field ${fieldErrors.ward ? "has-error" : ""}`}>
-              <label htmlFor="signup-ward">{t(lang, "citizen.ward")}</label>
-              {wards.length > 0 ? (
-                <select id="signup-ward" value={ward} onChange={(e) => setWard(e.target.value)}>
-                  <option value="">{t(lang, "citizen.wardSelectPlaceholder")}</option>
-                  {wards.map((w) => (
-                    <option key={w} value={w}>
-                      {w}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input id="signup-ward" type="text" value={ward} onChange={(e) => setWard(e.target.value)} placeholder={t(lang, "citizen.wardPlaceholder")} />
-              )}
-              {fieldErrors.ward && <div className="field-error">{t(lang, "common.fieldRequired")}</div>}
-            </div>
+            <HomeLocationPicker lang={lang} onChange={setHomeLocation} hasError={fieldErrors.ward} />
+            {fieldErrors.ward && <div className="field-error home-location-error">{t(lang, "signup.homeLocation.required")}</div>}
 
             <div className="worker-note">{t(lang, "auth.signup.workernote")}</div>
 
