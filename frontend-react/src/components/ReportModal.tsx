@@ -5,6 +5,7 @@ import { t } from "../lib/i18n";
 import { api, ApiError, type ComplaintReport } from "../lib/api";
 import ComplaintReportView from "./ComplaintReportView";
 import DownloadReportButton from "./DownloadReportButton";
+import ShareReportButton from "./ShareReportButton";
 
 /** "View Report" -- only ever rendered by a caller that already knows the complaint is
  * RESOLVED; the backend independently re-enforces this (404 if it isn't, surfaced here as a
@@ -47,6 +48,7 @@ export default function ReportModal({ complaintId, onClose }: { complaintId: num
           <button type="button" className="btn btn-ghost" onClick={onClose}>
             {t(lang, "common.close")}
           </button>
+          {report && <ShareReportButton complaintId={complaintId} className="btn btn-ghost" />}
           {report && <DownloadReportButton complaintId={complaintId} className="btn btn-primary" />}
         </div>
       </div>
