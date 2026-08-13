@@ -182,24 +182,43 @@ ssh-keygen -t ed25519 -f ~/.ssh/janmitra_deploy_key -N "" -C "github-actions-dep
 Don't reuse your personal SSH key here — a dedicated key means you can revoke deploy access
 later (by removing it from the VM's `authorized_keys`) without touching your own login.
 
-**b) Add the public half to the VM.** SSH into the VM (Console's SSH button) and run:
+**b) Create a dedicated `deploybot` account on the VM — do NOT put the key on your own account.**
+
+This is important enough to explain up front rather than after something breaks: **your own
+account (the one matching your Google login) will not work reliably for this, even if you set it
+up correctly.** Google Cloud VMs run a background service that periodically resets your personal
+account's SSH access, tied to your browser login sessions — so a key added to your own account
+gets silently wiped out at unpredictable times, hours after it looked like it worked. This isn't a
+mistake you can avoid by being more careful; it's how GCP manages personal accounts, and it will
+happen no matter how correctly the key is added. See "Understanding the `deploybot` account" below
+for the full story if you hit this.
+
+The fix is a separate account that Google's account-recycling never touches, because it isn't tied
+to any Google login. SSH into the VM (Console's SSH button) as yourself and run:
 
 ```bash
-echo "<paste the contents of ~/.ssh/janmitra_deploy_key.pub here>" >> ~/.ssh/authorized_keys
+sudo useradd -m -s /bin/bash deploybot
+sudo usermod -aG docker deploybot
+sudo mkdir -p /home/deploybot/.ssh
+echo "<paste the contents of ~/.ssh/janmitra_deploy_key.pub here>" | sudo tee /home/deploybot/.ssh/authorized_keys
+sudo chown -R deploybot:deploybot /home/deploybot/.ssh
+sudo chmod 700 /home/deploybot/.ssh
+sudo chmod 600 /home/deploybot/.ssh/authorized_keys
 ```
 
-**c) Make sure the VM has a real, up-to-date clone with secrets configured.** If you cloned the
-repo earlier (before this work was pushed to `main`), re-clone it — the old clone predates all of
-this and won't have the current Dockerfiles/compose file:
+**c) Give `deploybot` its own clone of the repo, with secrets configured:**
 
 ```bash
-cd ~
-rm -rf janmitra-ai   # only if you have an old/stale clone from before -- skip if this is your first clone
-git clone https://github.com/<your-username>/janmitra-ai.git
-cd janmitra-ai
-cp .env.example .env
-nano .env   # fill in SARVAM_API_KEY, and set JWT_SECRET_KEY to a fixed value: openssl rand -hex 32
+sudo -u deploybot git clone https://github.com/<your-username>/janmitra-ai.git /home/deploybot/janmitra-ai
+sudo -u deploybot cp /home/deploybot/janmitra-ai/.env.example /home/deploybot/janmitra-ai/.env
+sudo -u deploybot nano /home/deploybot/janmitra-ai/.env
+# fill in SARVAM_API_KEY, and set JWT_SECRET_KEY to a fixed value: openssl rand -hex 32
 ```
+
+(If you already have a working `.env` filled in under your own account's clone, it's simpler to
+copy that instead of retyping everything: `sudo cp /home/<you>/janmitra-ai/.env
+/home/deploybot/janmitra-ai/.env && sudo chown deploybot:deploybot
+/home/deploybot/janmitra-ai/.env`.)
 
 **d) Get the VM's external IP** — either from the Console (Compute Engine → VM instances →
 External IP column), or by running this on the VM:
@@ -214,12 +233,18 @@ it installed and authenticated:
 
 ```bash
 gh secret set SSH_HOST --body "<the VM's external IP from step d>"
-gh secret set SSH_USER --body "<your VM username -- the part before @ in your SSH prompt, e.g. gpkp182093>"
+gh secret set SSH_USER --body "deploybot"
 gh secret set SSH_PRIVATE_KEY < ~/.ssh/janmitra_deploy_key
-gh secret set SSH_DEPLOY_PATH --body "/home/<your VM username>/janmitra-ai"
+gh secret set SSH_DEPLOY_PATH --body "/home/deploybot/janmitra-ai"
 ```
 
-`SSH_PORT` is optional — the workflow defaults to `22` if you don't set it.
+`SSH_PORT` is optional — the workflow defaults to `22` if you don't set it. **On Windows/Git
+Bash specifically**: prefer piping the value in (like `SSH_PRIVATE_KEY` above) over
+`--body "value"` for every secret if you can — `--body` with a quoted string has been observed to
+silently add a stray character to the stored value on this platform, which shows up later as a
+confusing "file not found" failure even though the value looks correct everywhere you check it.
+If you must use `--body`, verify by re-setting via `printf '%s' "value" | gh secret set NAME` if
+anything downstream fails mysteriously.
 
 **f) Verify it actually works.** The easiest way: make any small commit to `main` (even just this
 doc) and push — that re-triggers CI, and once CI passes, CD fires automatically. Watch it with:
@@ -229,15 +254,130 @@ gh run list --workflow=cd.yml --limit 1
 gh run watch   # follow the most recent run live
 ```
 
-If the SSH step fails, double check: the public key is really in the VM's `~/.ssh/authorized_keys`
-(one line, no extra whitespace), `SSH_DEPLOY_PATH` matches exactly where you cloned the repo, and
-`SSH_USER` matches your actual VM login username (not your Google account email).
+If the SSH step fails, see the troubleshooting checklist in "Understanding the `deploybot`
+account" below rather than guessing — this setup has already hit (and recovered from) several
+distinct failure modes that look similar on the surface but have different fixes.
 
 ### 6. Domain/HTTPS (optional)
 
-Identical to Oracle's step 5 in `docs/DEPLOYMENT.md` — set `SITE_ADDRESS=your-domain.com` in the
-VM's `.env` once a domain points at its IP, then `docker compose -f docker-compose.prod.yml up -d`
-to pick up the change. Caddy handles the Let's Encrypt certificate automatically from there.
+If you own a real domain: identical to Oracle's step 5 in `docs/DEPLOYMENT.md` — set
+`SITE_ADDRESS=your-domain.com` in the VM's `.env` once the domain points at its IP, then
+`docker compose -f docker-compose.prod.yml up -d` to pick up the change. Caddy handles the Let's
+Encrypt certificate automatically from there.
+
+**If you don't own a domain yet**: [DuckDNS](https://www.duckdns.org) gives a free subdomain
+(e.g. `your-name.duckdns.org`) that works exactly the same way for this purpose — Caddy doesn't
+care that it's a subdomain of duckdns.org rather than a domain you own outright, Let's Encrypt
+issues certificates for it identically.
+
+1. Sign in at duckdns.org (Google/GitHub/etc., no separate account).
+2. Type a subdomain name, click **Add domain**.
+3. Enter the VM's external IP next to it, click **update**.
+4. Test `http://your-name.duckdns.org` loads the app before proceeding.
+5. Point Caddy at it:
+   ```bash
+   sudo -u deploybot bash -c 'cd /home/deploybot/janmitra-ai && echo "SITE_ADDRESS=your-name.duckdns.org" >> .env && docker compose -f docker-compose.prod.yml up -d'
+   ```
+6. Wait ~10-30s, then `https://your-name.duckdns.org` should load with a valid certificate.
+
+One thing to remember: DuckDNS doesn't track the VM's IP automatically — if the VM's external IP
+ever changes (e.g. after a machine-type resize, which gives it a new ephemeral IP), go back to the
+DuckDNS page and update the IP there too, or the domain will silently point at the old address.
+
+## Understanding the `deploybot` account
+
+This section exists so nobody — human or AI assistant — has to rediscover the reasoning below
+from scratch. It took a genuinely long troubleshooting session to work out; reading this first
+should make it a five-minute setup instead.
+
+### What it is, in one sentence
+
+A Linux user account on the VM, created solely so GitHub Actions has something stable to log into
+— deliberately *not* your own account, and not tied to any Google login.
+
+### Why it exists — the actual failure this avoids
+
+The natural first instinct is to let the automated deploy log in as *you* (your own VM account,
+matching your Google identity). That does not work reliably, and the failure mode is specifically
+deceptive: it looks like it's working, right up until it silently doesn't.
+
+Here's the mechanism, confirmed directly from the VM's own logs
+(`sudo journalctl -u google-guest-agent`):
+
+- Every time you open a Console browser SSH session, Google pushes a **temporary**, short-lived
+  key into your account (visible in `~/.ssh/authorized_keys` as `# Added by Google` entries with
+  an `expireOn` timestamp roughly an hour out).
+- When *all* of an account's keys expire — including, apparently, alongside any permanent key you
+  manually added to sit next to them — Google's guest agent **deletes the entire Linux user
+  account**: `Removing user <you>`, `user <you> removed ... from group google-sudoers`. Not just
+  the expired keys — the account itself, home directory access included.
+- The account only gets recreated the next time *you personally* open a new browser SSH session —
+  nothing recreates it automatically on a schedule. In one observed case here, the account sat
+  deleted for over 5 hours with zero activity until a new session was opened.
+
+So: a key placed on your own account works for a while, then fails, then might start working again
+if you happen to open a session around when GitHub's automation runs, then fails again. Extremely
+hard to debug from the failure alone, because the same setup "worked" minutes earlier.
+
+`deploybot` sidesteps this completely: it was created with a plain `useradd`, not through any
+Google-metadata-driven flow, so the guest agent has no reason to ever touch it. Its key is
+permanent from Google's point of view because Google doesn't manage it at all.
+
+### The account, concretely
+
+- Created with: `sudo useradd -m -s /bin/bash deploybot` (see step 5b above for the full sequence).
+- In the `docker` group, so it can run `docker compose` without needing root for every command.
+- Owns its own clone of the repo at `/home/deploybot/janmitra-ai`, with its own `.env`.
+- Its home directory is locked to `700` (only `deploybot` can enter it) — this is normal Linux
+  account isolation, not something specific to this setup.
+
+### Running commands as `deploybot` yourself
+
+Because of that `700` permission, your own account can't `cd` into `/home/deploybot/...` directly
+— `sudo -u deploybot <command>` is how you act as it:
+
+```bash
+# One-off command:
+sudo -u deploybot docker ps
+
+# Multiple commands (needs bash -c so cd/&&/env changes apply together):
+sudo -u deploybot bash -c 'cd /home/deploybot/janmitra-ai && git log --oneline -3'
+
+# Full interactive shell as deploybot, if you want to poke around:
+sudo -u deploybot -i
+```
+
+### Troubleshooting checklist, if the CD deploy step ever fails again
+
+Check in this order — each of these was an actual distinct failure hit while building this setup,
+not a hypothetical:
+
+1. **`ssh: unable to authenticate, attempted methods [none publickey]`** — the key isn't where
+   the server expects it. Confirm directly: `sudo -u deploybot cat /home/deploybot/.ssh/authorized_keys`
+   should show your deploy key's public half, one line, no extra whitespace. If it's missing
+   entirely and you *did* add it, you likely added it to the wrong account (see above) or with a
+   malformed metadata entry (a Console-added key needs a `username:` prefix if entered via VM/
+   project metadata rather than directly into `authorized_keys` — but for `deploybot` specifically,
+   you should be writing directly into its `authorized_keys` file, not using GCP metadata at all,
+   which avoids this class of problem entirely).
+2. **`cd: <path>: No such file or directory`** (secret shows masked as `***` in logs) — usually
+   means `SSH_DEPLOY_PATH` doesn't match where the repo actually is, but if you've verified the
+   path is correct by testing it directly (see below), suspect the secret's stored *value* instead
+   — re-set it via `printf '%s' "/home/deploybot/janmitra-ai" | gh secret set SSH_DEPLOY_PATH`
+   rather than `--body`, which has caused this exact symptom on Windows/Git Bash.
+3. **Test the SSH connection directly, bypassing GitHub Actions entirely**, to isolate whether the
+   problem is the VM side or the GitHub Actions side — from a machine with the private key file
+   and network access to the VM:
+   ```bash
+   ssh -i ~/.ssh/janmitra_deploy_key deploybot@<VM_IP> "cd /home/deploybot/janmitra-ai && pwd && docker ps"
+   ```
+   If this works but the GitHub Actions run still fails the same way, the problem is specifically
+   in what GitHub Actions is sending (stale/malformed secret) — re-set the relevant secret and
+   trigger a **genuinely new** workflow run (`gh run rerun <ci-run-id>` on the CI run, which
+   cascades to a fresh CD run) rather than repeatedly re-running the same old CD run, which has
+   been observed to behave inconsistently with just-updated secrets.
+4. **Transient GitHub-side failures** (e.g. `curl: (56) Connection died` downloading the
+   ssh-action's own binary) are unrelated to anything in this project — just re-run.
 
 ## Before the credit runs out (~1 November 2026) — only matters if you picked Option B
 
