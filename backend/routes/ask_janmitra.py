@@ -71,6 +71,7 @@ def ask_janmitra_with_image(
     longitude: float | None = Form(None),
     location_text: str | None = Form(None),
     conversation_history: str = Form("[]"),
+    was_voice_input: bool = Form(False),
     image: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -96,6 +97,7 @@ def ask_janmitra_with_image(
             location_text=location_text,
             conversation_history=history,
             image=image,
+            was_voice_input=was_voice_input,
         )
     except HTTPException:
         raise

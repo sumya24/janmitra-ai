@@ -34,6 +34,21 @@ class QuestionIntent(str, Enum):
     TYPE_A_COMPLAINT = "TYPE_A_COMPLAINT"
     TYPE_B_SERVICE_INFO = "TYPE_B_SERVICE_INFO"
     TYPE_C_STATUS = "TYPE_C_STATUS"
+    # "What services do you provide?" / "What can you help with?" -- a real, answerable question
+    # about JanMitra's own scope, not a complaint or a RAG-answerable civic-service question. Kept
+    # distinct from TYPE_A's "no signal either way" fallback (see classify()'s docstring) so it
+    # gets its own accurate, static answer instead of being asked "what issue would you like to
+    # report?" as if it were an unspecified complaint.
+    CAPABILITIES = "CAPABILITIES"
+    # Genuinely no signal matched anything (not a complaint verb, not a named service category,
+    # not a service-info phrase, not a status/tracking phrase, not a known-unsupported service,
+    # not a capabilities question) -- e.g. "What is my name?" or unrelated small talk. Previously
+    # silently fell through to TYPE_A_COMPLAINT/service_category=None, which asked "what issue
+    # would you like to report?" as if the question had been about filing a complaint -- a real,
+    # user-reported bug (every off-topic question got that same complaint-shaped clarification,
+    # regardless of what was actually asked). UNCLEAR gets its own honest "I didn't understand
+    # that" response instead (see nodes.py's unclear_flow_node).
+    UNCLEAR = "UNCLEAR"
 
 
 @dataclass
@@ -115,6 +130,24 @@ _SERVICE_INFO_KEYWORDS: dict[str, list[str]] = {
     "or": ["ନୂଆ ପାଣି ସଂଯୋଗ", "ନୂଆ ସଂଯୋଗ", "ଆବେଦନ"],
 }
 
+# --- CAPABILITIES: "what can this app do?" -- a real, in-domain, answerable question about
+# JanMitra's own scope. Deliberately specific multi-word phrases, not bare "help" or "services"
+# (which appear in genuine complaint/service-info sentences too, e.g. "please help fix this
+# pothole" or "water services in my area are cut off") -- see _any_match's substring matching,
+# which would otherwise false-positive on those. ---
+_CAPABILITIES_KEYWORDS: dict[str, list[str]] = {
+    "en": ["what services", "which services", "what can you do", "what can you help",
+           "what do you do", "what all can you", "list of services", "services do you provide",
+           "services do you offer", "services you provide", "services you offer",
+           "what is janmitra", "what is this app", "how can you help", "what kind of help",
+           "what type of complaints", "what type of issues", "what can i report",
+           "what can i complain about"],
+    "hi": ["आप क्या कर सकते हैं", "कौन सी सेवाएं", "कौनसी सेवाएं", "जनमित्र क्या है"],
+    "mr": ["तुम्ही काय करू शकता", "कोणत्या सेवा", "जनमित्र म्हणजे काय"],
+    "or": ["ଆପଣ କଣ କରିପାରିବେ", "କେଉଁ ସେବା", "ଜନମିତ୍ର କଣ"],
+}
+
+
 # --- TYPE_A: complaint/issue -- "something is wrong" phrasing ---
 _COMPLAINT_VERB_KEYWORDS: dict[str, list[str]] = {
     "en": ["not working", "broken", "not collected", "problem", "issue", "report", "complain",
@@ -127,23 +160,50 @@ _COMPLAINT_VERB_KEYWORDS: dict[str, list[str]] = {
 # --- Service category detection (own keyword sets, deliberately NOT reusing
 # frontend-react/src/lib/serviceCategories.tsx's looser list -- that list includes bare
 # "electric" under STREETLIGHTS, which would make "new ELECTRICITY connection" misclassify as a
-# streetlight question. Precision matters more here than in a client-side UI hint.) ---
+# streetlight question. Precision matters more here than in a client-side UI hint.)
+#
+# Oblique-case stems: both Hindi and Marathi are (partly, for Hindi; fully, for Marathi) fusional
+# -- a masculine noun ending in -आ changes shape under a case suffix (की/में/पर/ने/...) instead of
+# staying fixed while a separate postposition word attaches, e.g. Marathi पाणी -> पाण्याची, Hindi
+# गड्ढा -> गड्ढे की. A citizen saying "गड्ढ्याची तक्रार" ("a complaint about the pothole") is at
+# least as natural as, if not more natural than, a bare-nominative sentence -- so a keyword list
+# with only the nominative form silently misses it, returning service_category=None and asking
+# the citizen to pick a category from a list that already includes the one they named. First
+# caught for पाणी/पाण्या (see git history), then confirmed as the same systemic gap across every
+# other masculine -आ noun in this list by direct classify() probing with natural oblique-case
+# sentences -- each "X, X-oblique" pair below is a real, measured fix, not a guess:
+# कचरा/कचऱ्या (mr), कचरा/कचरे + कूड़ा/कूड़े (hi), रस्ता/रस्त्या + खड्डा/खड्ड्या (mr),
+# गड्ढा/गड्ढे (hi), दिवा/दिव्या (mr), नाला/नाले (hi). Feminine/consonant-ending nouns (सड़क, बत्ती,
+# वीज, ...) and loanword phrases (स्ट्रीट लाइट) don't inflect this way and needed no change --
+# confirmed by the same probing, not assumed. Odia not audited the same way (no verified oblique
+# forms in hand) -- flagged, not guessed.
 _CATEGORY_KEYWORDS: dict[ServiceCategory, dict[str, list[str]]] = {
     ServiceCategory.WASTE_SANITATION: {
         "en": ["garbage", "waste", "trash", "sanitation", "dump", "litter", "rubbish"],
-        "hi": ["कचरा", "कूड़ा"], "mr": ["कचरा"], "or": ["ଆବର୍ଜନା"],
+        "hi": ["कचरा", "कचरे", "कूड़ा", "कूड़े"], "mr": ["कचरा", "कचऱ्या"], "or": ["ଆବର୍ଜନା"],
     },
     ServiceCategory.WATER_DRAINAGE: {
         "en": ["water", "drain", "drainage", "sewage", "sewer", "pipeline", "pipe connection", "flood"],
-        "hi": ["पानी", "नाला", "पाइप"], "mr": ["पाणी"], "or": ["ପାଣି"],
+        "hi": ["पानी", "नाला", "नाले", "पाइप"], "mr": ["पाणी", "पाण्या"], "or": ["ପାଣି"],
     },
     ServiceCategory.ROADS_POTHOLES: {
         "en": ["road", "pothole", "footpath", "pavement", "civil work"],
-        "hi": ["सड़क", "गड्ढा"], "mr": ["रस्ता", "खड्डा"], "or": ["ରାସ୍ତା"],
+        # mr "रस्त्याच" (genitive-only, e.g. रस्त्याची/रस्त्याचा/रस्त्याचे -- "of/about the road"),
+        # deliberately narrower than the bare oblique stem "रस्त्या" used for the other nouns in
+        # this file: रस्ता's locative form "रस्त्यावर"/"रस्त्यावरचा" ("on the road") is an
+        # extremely common way to LOCATE a completely different complaint (a streetlight or a
+        # pothole ON the road, garbage ON the road), not a complaint about the road itself. A bare
+        # "रस्त्या" match caught during this fix's own regression check: "रस्त्यावरचा दिवा बंद
+        # आहे" ("the streetlight on the road is off") flipped from the correct STREETLIGHTS to
+        # ROADS_POTHOLES, because ROADS_POTHOLES is checked first in _CATEGORY_KEYWORDS's
+        # iteration order and "रस्त्या" is a substring of "रस्त्यावरचा" too. The genitive-only
+        # substring still catches the real gap ("रस्त्याची तक्रार") without swallowing every
+        # other complaint that merely happens to be located on a road.
+        "hi": ["सड़क", "गड्ढा", "गड्ढे"], "mr": ["रस्ता", "रस्त्याच", "खड्डा", "खड्ड्या"], "or": ["ରାସ୍ତା"],
     },
     ServiceCategory.STREETLIGHTS: {
         "en": ["streetlight", "street light", "street lamp", "lamp post"],
-        "hi": ["स्ट्रीट लाइट", "बत्ती"], "mr": ["स्ट्रीट लाइट", "दिवा"], "or": ["ଆଲୋକ"],
+        "hi": ["स्ट्रीट लाइट", "बत्ती"], "mr": ["स्ट्रीट लाइट", "दिवा", "दिव्या"], "or": ["ଆଲୋକ"],
     },
 }
 
@@ -210,9 +270,11 @@ def _any_match(text: str, keyword_lists: dict[str, list[str]]) -> list[str]:
 
 
 def classify(question: str) -> ClassificationResult:
-    """Classifies one question. Never raises -- an unrecognized question falls through to
-    TYPE_A_COMPLAINT with service_category=None (the safest default: routes to RAG, which will
-    then correctly report "insufficient knowledge" rather than guessing, per rag_retriever.py)."""
+    """Classifies one question. Never raises. A complaint-verb match or a named service category
+    means TYPE_A_COMPLAINT (possibly still missing a category/location, which the caller asks
+    for). Failing that, a real "what can you do" question is CAPABILITIES; anything else that
+    matched nothing at all is UNCLEAR -- never silently defaulted to TYPE_A_COMPLAINT (see
+    QuestionIntent.UNCLEAR's own docstring for the bug this replaced)."""
     text = question.strip()
     requests_new_connection = bool(_any_match(text, _NEW_CONNECTION_TOPIC_KEYWORDS))
 
@@ -270,13 +332,34 @@ def classify(question: str) -> ClassificationResult:
             requests_new_connection=requests_new_connection,
         )
 
-    # Default: TYPE_A. Covers explicit complaint-verb matches AND the "no signal either way"
-    # fallback -- the safest default, since RAG will honestly report insufficient knowledge
-    # rather than fabricate an answer either way (see rag_retriever.py).
+    # TYPE_A: an explicit complaint-verb match, or a named civic category -- real signal that
+    # this is (or is about) a civic complaint, even if the category/location still needs
+    # clarifying. Checked before CAPABILITIES/UNCLEAR below so an actual complaint always wins.
+    if complaint_matches or category:
+        return ClassificationResult(
+            intent=QuestionIntent.TYPE_A_COMPLAINT,
+            service_category=category,
+            out_of_scope_service=None,
+            matched_keywords=complaint_matches + category_matches,
+            requests_new_connection=requests_new_connection,
+        )
+
+    capabilities_matches = _any_match(text, _CAPABILITIES_KEYWORDS)
+    if capabilities_matches:
+        return ClassificationResult(
+            intent=QuestionIntent.CAPABILITIES,
+            service_category=None,
+            out_of_scope_service=None,
+            matched_keywords=capabilities_matches,
+            requests_new_connection=requests_new_connection,
+        )
+
+    # Genuinely zero signal -- see QuestionIntent.UNCLEAR's own docstring for why this is no
+    # longer silently treated as an unspecified complaint.
     return ClassificationResult(
-        intent=QuestionIntent.TYPE_A_COMPLAINT,
-        service_category=category,
+        intent=QuestionIntent.UNCLEAR,
+        service_category=None,
         out_of_scope_service=None,
-        matched_keywords=complaint_matches + category_matches,
+        matched_keywords=[],
         requests_new_connection=requests_new_connection,
     )
