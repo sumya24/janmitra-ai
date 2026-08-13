@@ -385,6 +385,21 @@ def test_unknown_city_reports_no_data_not_fabricated(client, monkeypatch, make_c
     assert body["sources"] == []
 
 
+def test_falls_back_to_citizens_home_ward_when_no_other_location_signal(client, monkeypatch, make_citizen):
+    """A citizen whose question names no place, shares no GPS, and has no prior conversation
+    history must still get a real answer scoped to their own registered ward -- not an
+    unnecessary 'no information for this area' -- since their account already carries a location
+    (see nodes.py's _resolve_location, last fallback step)."""
+    _install_real_service(monkeypatch)
+    token, _ = make_citizen(phone="9100000020", ward="Ward 5 — Sector 71, Mohali")
+    resp = _ask(client, token, "Who do I contact about street lights?")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["location"]["city"] == "Sahibzada Ajit Singh Nagar (Mohali)"
+    assert body["location"]["source"] == "citizen_home_ward"
+    assert body["insufficient_knowledge"] is False
+
+
 def test_low_relevance_results_are_rejected_tfidf(monkeypatch):
     """Unit-level test of the relevance threshold on the LEGACY TF-IDF path: a nonsense query
     with no real keyword overlap with any chunk must not return low-quality matches just to have
