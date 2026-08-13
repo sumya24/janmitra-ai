@@ -92,6 +92,59 @@ def test_run_graph_starts_and_ends_one_root_span_per_request(monkeypatch):
     assert "total_ms" in end_kwargs["outputs"]
 
 
+@pytest.mark.parametrize(
+    "state_overrides,expected_input_mode,expected_has_image,expected_vision_used,expected_tts_used",
+    [
+        ({}, "TEXT", False, False, False),
+        ({"input_mode": "STT"}, "STT", False, False, False),
+        ({"input_mode": "IMAGE", "has_image": True, "vision_used": True}, "IMAGE", True, True, False),
+        ({"input_mode": "IMAGE_STT", "has_image": True, "vision_used": True}, "IMAGE_STT", True, True, False),
+        ({"input_mode": "VOICE_ASSISTANT", "tts_used": True}, "VOICE_ASSISTANT", False, False, True),
+        (
+            {"input_mode": "IMAGE_VOICE_ASSISTANT", "has_image": True, "vision_used": True, "tts_used": True},
+            "IMAGE_VOICE_ASSISTANT", True, True, True,
+        ),
+    ],
+)
+def test_root_span_metadata_reflects_input_mode_and_vision_tts_flags(
+    monkeypatch, state_overrides, expected_input_mode, expected_has_image, expected_vision_used, expected_tts_used
+):
+    """The multimodal/voice upgrade's LangSmith metadata (input_mode/has_image/vision_used/
+    tts_used) must reflect exactly what ask_janmitra_service.py put into the initial GraphState --
+    covers every combination the six real entry-point call sites can produce (see that module's
+    ask()/ask_with_image()/ask_voice())."""
+    start_calls = []
+    monkeypatch.setattr(graph_module.tracing, "start_root_run", lambda name, **kw: start_calls.append((name, kw)) or "FAKE_ROOT")
+    monkeypatch.setattr(graph_module.tracing, "end_run", lambda run, **kw: None)
+
+    compiled = build_graph()
+    # Deliberately an out-of-scope phrase (matches this file's other direct run_graph() tests,
+    # e.g. test_run_graph_starts_and_ends_one_root_span_per_request) -- routes to
+    # out_of_scope_flow, never complaint_flow, so it doesn't need a real DB/complaint_agent
+    # behind _minimal_deps()'s Mock()s. The metadata under test comes entirely from
+    # `state_overrides`, not from what this message itself means.
+    initial_state = {
+        "user_message": "I need a new electricity connection",
+        "original_language": "en",
+        "input_type": "text",
+        "conversation_history": [],
+        **state_overrides,
+    }
+    run_graph(compiled, _minimal_deps(), _minimal_ctx(), initial_state)
+
+    assert len(start_calls) == 1
+    _, kwargs = start_calls[0]
+    metadata = kwargs["metadata"]
+    assert metadata["input_mode"] == expected_input_mode
+    assert metadata["has_image"] is expected_has_image
+    assert metadata["vision_used"] is expected_vision_used
+    assert metadata["tts_used"] is expected_tts_used
+    # Never the raw caption/description or any audio, no matter which mode -- see
+    # docs/ask_janmitra_langsmith_observability.md §7.
+    assert "image_description" not in metadata
+    assert "audio_base64" not in metadata
+
+
 def test_run_graph_passes_trace_root_to_nodes_via_config(monkeypatch):
     """The root span object returned by start_root_run must reach node functions through
     config["configurable"]["trace_root"] -- this is how rag_flow_node/complaint_flow_node create
@@ -116,6 +169,41 @@ def test_run_graph_passes_trace_root_to_nodes_via_config(monkeypatch):
     run_graph(compiled, _minimal_deps(), _minimal_ctx(), initial_state)
 
     assert seen_roots == [sentinel_root]
+
+
+def test_was_voice_input_reaches_the_graph_as_stt_input_mode_end_to_end(client, monkeypatch, make_citizen):
+    """Full HTTP -> ask_janmitra_service.ask() -> run_graph() path: AskJanMitraRequest.
+    was_voice_input=True (set when Mic 1 produced the question text) must reach the root span's
+    metadata as input_mode="STT", not the default "TEXT" -- proves the service layer's mapping,
+    not just the graph's own metadata-population logic (already covered directly above)."""
+    start_calls = []
+    monkeypatch.setattr(graph_module.tracing, "start_root_run", lambda name, **kw: start_calls.append((name, kw)) or "FAKE_ROOT")
+    monkeypatch.setattr(graph_module.tracing, "end_run", lambda run, **kw: None)
+
+    _install_real_service(monkeypatch)
+    token, _ = make_citizen(phone="9100000099")
+
+    response = _ask(client, token, "Who do I contact about street lights in Mohali?", was_voice_input=True)
+
+    assert response.status_code == 200, response.text
+    assert len(start_calls) == 1
+    assert start_calls[0][1]["metadata"]["input_mode"] == "STT"
+
+
+def test_was_voice_input_defaults_false_for_older_clients(client, monkeypatch, make_citizen):
+    """A client that doesn't send `was_voice_input` at all (the field's default) must behave
+    exactly as before this field existed -- input_mode stays "TEXT"."""
+    start_calls = []
+    monkeypatch.setattr(graph_module.tracing, "start_root_run", lambda name, **kw: start_calls.append((name, kw)) or "FAKE_ROOT")
+    monkeypatch.setattr(graph_module.tracing, "end_run", lambda run, **kw: None)
+
+    _install_real_service(monkeypatch)
+    token, _ = make_citizen(phone="9100000098")
+
+    response = _ask(client, token, "Who do I contact about street lights in Mohali?")
+
+    assert response.status_code == 200, response.text
+    assert start_calls[0][1]["metadata"]["input_mode"] == "TEXT"
 
 
 # --- 5: error tracing ---

@@ -21,6 +21,7 @@ from pathlib import Path
 from unittest.mock import Mock
 
 import backend.routes.ask_janmitra as ask_janmitra_module
+import backend.services.observability.tracing as tracing_module
 from backend.config import settings
 from backend.models import Complaint, ComplaintEvidence
 from backend.services.ask_janmitra_service import AskJanMitraService
@@ -279,3 +280,117 @@ def test_image_endpoint_accepts_png(client, monkeypatch, make_citizen):
     )
 
     assert response.status_code == 200, response.text
+
+
+# ---------------------------------------------------------------------------
+# Phase 7 (combined-flow spec, item 7.6): additional required combined cases
+# ---------------------------------------------------------------------------
+
+
+def test_image_plus_voice_to_text_is_a_real_request_not_a_crash(client, monkeypatch, make_citizen):
+    """"Voice-to-text + image" (Mic 1 fills the text box, citizen edits/sends, with a photo
+    attached) is not a distinct backend flow -- Mic 1's transcript arrives as plain `question`
+    text exactly like typing does. This test's only job is proving the `was_voice_input` flag
+    (set when Mic 1 produced the text) is accepted and doesn't change the real answer -- the
+    LangSmith input_mode="IMAGE_STT" mapping itself is covered directly in
+    test_ask_janmitra_tracing.py."""
+    _install_real_service(monkeypatch)
+    token, _ = make_citizen(phone="9000000212")
+
+    response = _ask_image(
+        client, token, "Who do I contact about street lights in Mohali?", was_voice_input="true"
+    )
+
+    assert response.status_code == 200, response.text
+    assert _FAKE_CAPTION in response.json()["answer"]
+
+
+def test_image_plus_ambiguous_location_request_asks_for_the_city_not_a_guess(client, monkeypatch, make_citizen):
+    """Image + a complaint-shaped question whose location is genuinely ambiguous (a state that
+    matches more than one known city) must still ask which city -- exactly like the text-only
+    path already does (test_ask_janmitra.py::test_ambiguous_state_only_location_asks_for_city) --
+    never guess a city just because an image is also attached."""
+    _install_real_service(monkeypatch)
+    token, _ = make_citizen(phone="9000000213")
+
+    response = _ask_image(client, token, "Street light problem in Punjab.")
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["follow_up_required"] is True
+    assert set(body["follow_up_options"]) == {"Patiala", "Sahibzada Ajit Singh Nagar (Mohali)"}
+    # No complaint was filed yet (still clarifying) -- so no evidence row either.
+    assert body["complaint_id"] is None
+
+
+# ---------------------------------------------------------------------------
+# Phase 9 (LangSmith §9.1): vision_processing is a real child span of the SAME
+# trace as the graph's own spans, not a separate/missing one.
+# ---------------------------------------------------------------------------
+
+
+def test_image_request_creates_a_vision_processing_child_span_of_the_same_root_run(client, monkeypatch, make_citizen):
+    start_root_calls = []
+    start_child_calls = []
+    monkeypatch.setattr(
+        tracing_module, "start_root_run",
+        lambda name, **kw: start_root_calls.append((name, kw)) or "FAKE_ROOT",
+    )
+    monkeypatch.setattr(
+        tracing_module, "start_child_run",
+        lambda parent, name, run_type="chain", **kw: start_child_calls.append((parent, name, kw)) or name,
+    )
+    monkeypatch.setattr(tracing_module, "end_run", lambda run, **kw: None)
+
+    _install_real_service(monkeypatch)
+    token, _ = make_citizen(phone="9000000215")
+
+    response = _ask_image(client, token, "Who do I contact about street lights in Mohali?")
+
+    assert response.status_code == 200, response.text
+    assert len(start_root_calls) == 1
+    assert start_root_calls[0][1]["metadata"]["input_mode"] == "IMAGE"
+
+    vision_calls = [c for c in start_child_calls if c[1] == "vision_processing"]
+    assert len(vision_calls) == 1
+    parent, _name, kwargs = vision_calls[0]
+    assert parent == "FAKE_ROOT"  # the exact object start_root_run returned -- same trace
+    assert kwargs["inputs"] == {"has_image": True}
+
+
+# ---------------------------------------------------------------------------
+# Real-world gap found via manual testing: an image + text that lands on the
+# category/location clarification (not the image_no_text one) must still
+# acknowledge the image -- the caption was already computed, it must not be
+# silently dropped just because clarification happened for a different reason.
+# ---------------------------------------------------------------------------
+
+
+def test_image_plus_ambiguous_text_still_mentions_the_image_in_a_category_clarification(client, monkeypatch, make_citizen):
+    """A photo that isn't clearly a civic issue (e.g. an unrelated screenshot), combined with a
+    vaguely-phrased question that the classifier reads as complaint-shaped, correctly can't
+    determine a service category -- but the citizen must still see that their photo was actually
+    looked at, not just a generic "what issue?" as if no image existed."""
+    _install_real_service(monkeypatch, caption="A screenshot of a cloud billing account page.")
+    token, _ = make_citizen(phone="9000000216")
+
+    response = _ask_image(client, token, "tell me about the provided image what this kind of ?")
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["follow_up_required"] is True
+    assert "A screenshot of a cloud billing account page." in body["answer"]
+    assert "What issue would you like to report?" in body["answer"]
+
+
+def test_image_plus_ambiguous_text_mentions_the_image_in_a_location_clarification(client, monkeypatch, make_citizen):
+    """Same gap, the other common clarification reason (category resolved, location missing)."""
+    _install_real_service(monkeypatch, caption="A screenshot of a cloud billing account page.")
+    token, _ = make_citizen(phone="9000000217")
+
+    response = _ask_image(client, token, "Street light not working, tell me about the image too.")
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["follow_up_required"] is True
+    assert "A screenshot of a cloud billing account page." in body["answer"]
