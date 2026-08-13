@@ -247,9 +247,20 @@ def intent_node(state: GraphState, config: RunnableConfig) -> dict[str, Any]:
 
 def _resolve_location(state: GraphState, config: RunnableConfig) -> LocationResolution:
     """Same priority order as the pre-graph `AskJanMitraService._resolve_location()` this
-    replaces: explicit `location_text` > location named in the message text > GPS > a location
-    mentioned in `conversation_history`. Reuses `LocationExtractor` exactly as before -- this
-    function only sequences the existing calls, it performs no resolution itself."""
+    replaces, plus one addition: explicit `location_text` > location named in the message text >
+    GPS > a location mentioned in `conversation_history` > the citizen's own registered ward.
+    Reuses `LocationExtractor` exactly as before -- this function only sequences the existing
+    calls, it performs no resolution itself.
+
+    The last step (citizen's own ward) is a deliberate final fallback, not a new resolution
+    method: a citizen's `ward` free text (set once at signup, see models.User.ward) almost always
+    contains their city name (e.g. "Ward 22 -- Kothrud, Pune"), so running it through the same
+    `resolve_from_text` used for message text/conversation history lets a logged-in citizen who
+    doesn't name a place get an answer scoped to where they actually live, instead of an
+    unnecessary "no information for this area" when every earlier signal was silent. Workers and
+    admins are unaffected in practice (their `ward` is an operational area string, not used here
+    any differently) -- this only changes behavior for QUESTION_RAG intents where nothing else
+    resolved a location."""
     deps = _deps(config)
     ctx = _ctx(config)
     extractor = deps.location_extractor
@@ -275,6 +286,12 @@ def _resolve_location(state: GraphState, config: RunnableConfig) -> LocationReso
         resolved = extractor.resolve_from_text(turn.get("content", ""))
         if resolved.city or resolved.state or resolved.is_ambiguous:
             resolved.source = "conversation_history"
+            return resolved
+
+    if ctx.user.ward:
+        resolved = extractor.resolve_from_text(ctx.user.ward)
+        if resolved.city or resolved.state or resolved.is_ambiguous:
+            resolved.source = "citizen_home_ward"
             return resolved
 
     return LocationResolution(source="none")

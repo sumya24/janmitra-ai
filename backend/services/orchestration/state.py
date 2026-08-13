@@ -68,7 +68,7 @@ class GraphState(TypedDict, total=False):
     # --- location (location_node) ---
     location_city: str | None
     location_state: str | None
-    location_source: str  # "text" | "gps" | "conversation_history" | "none"
+    location_source: str  # "text" | "gps" | "conversation_history" | "citizen_home_ward" | "none"
     location_is_ambiguous: bool
     location_ambiguous_candidates: list[str]
 
