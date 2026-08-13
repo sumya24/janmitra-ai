@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { LangCode } from "./i18n";
 
 /**
- * Browser-native speech-to-text for the Ask JanMitra chat, via the Web Speech API
+ * Browser-native speech-to-text for the Ask Sarthi chat, via the Web Speech API
  * (SpeechRecognition). This is deliberately NOT the Sarvam STT pipeline that
  * ReportIssue.tsx's voice recording uses (see useAudioRecorder.ts) -- that pipeline only exists
  * on the complaint-creation endpoint (POST /complaints accepts multipart `audio` segments,
@@ -65,7 +65,7 @@ export interface SpeechToTextState {
   transcript: string;
   /** An i18n KEY (e.g. "ask.voice.noSpeech"), not a literal message -- unlike
    * useAudioRecorder.ts's plain English error strings, this hook's caller is already inside
-   * the fully-localized Ask JanMitra UI, so the key is resolved via t(lang, error) at render
+   * the fully-localized Ask Sarthi UI, so the key is resolved via t(lang, error) at render
    * time instead of hardcoding English here. */
   error: string | null;
   start: () => void;

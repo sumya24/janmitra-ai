@@ -3,7 +3,7 @@ import { useUiLang } from "../lib/uiLang";
 import type { SourceRecord } from "../lib/ragTypes";
 
 /**
- * Renders one source backing an "Ask JanMitra" answer. Everything it shows comes from the
+ * Renders one source backing an "Ask Sarthi" answer. Everything it shows comes from the
  * `source` prop — this component never hard-codes a government source or URL itself, so it
  * stays correct the moment the real RAG backend starts returning `SourceRecord`s (see
  * lib/ragTypes.ts and data/rag_knowledge_base/schema/source_record.schema.json, which this

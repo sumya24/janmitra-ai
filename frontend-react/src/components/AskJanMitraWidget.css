@@ -1,4 +1,4 @@
-/* Floating entry point for Ask JanMitra -- see AskJanMitraWidget.tsx's docstring for why this
+/* Floating entry point for Ask Sarthi -- see AskJanMitraWidget.tsx's docstring for why this
    replaced the old nav tab. z-index sits below the toast layer (200, see global.css) so a
    "Complaint submitted" toast can still surface above an open panel. */
 

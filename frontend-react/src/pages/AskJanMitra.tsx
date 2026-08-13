@@ -40,7 +40,7 @@ interface ChatMessage {
 }
 
 /**
- * Ask JanMitra -- a continuous, ChatGPT-style conversation with JanMitra, not a single-question
+ * Ask Sarthi -- a continuous, ChatGPT-style conversation with Sarthi, not a single-question
  * form (see git history for the earlier form-shaped version deliberately replaced here). Same
  * real backend, same real Mic 1 (useSpeechToText.ts)/Mic 2 (VoiceAssistantOverlay.tsx)/image
  * attach (MultiPhotoUpload.tsx)/mascot (Mascot.tsx) as before -- this file only changes how the

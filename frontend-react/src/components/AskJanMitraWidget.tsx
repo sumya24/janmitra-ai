@@ -6,7 +6,7 @@ import { AskJanMitraContent } from "../pages/AskJanMitra";
 import Mascot from "./Mascot";
 import "./AskJanMitraWidget.css";
 
-/** Floating entry point for Ask JanMitra -- replaces the old nav tab with the common
+/** Floating entry point for Ask Sarthi -- replaces the old nav tab with the common
  * floating-chat-widget pattern: a round button in the corner that periodically shows
  * a small greeting bubble, and opens a slide-out panel instead of navigating away. The panel
  * renders the exact same `AskJanMitraContent` the standalone /citizen/ask page uses, so both

@@ -10,7 +10,7 @@ import NavDrawer from "./NavDrawer";
 import AskJanMitraWidget from "./AskJanMitraWidget";
 import "./TopBar.css";
 
-// "JanMitra AI" is the product name, kept as-is in every language per the brand guide —
+// "JanSarthi AI" is the product name, kept as-is in every language per the brand guide —
 // only the subtitle and role label translate.
 const ROLE_KEY: Record<string, string> = { citizen: "role.citizen", worker: "role.worker", admin: "role.admin" };
 
@@ -37,9 +37,9 @@ export default function TopBar() {
               notifications/profile/settings/logout -- those stay right here in the header. */}
           <NavDrawer />
           <div className="brand">
-            <img src="/brand/logo-mark.png" alt="JanMitra AI" className="brand-mark" />
+            <img src="/brand/logo-mark.png" alt="JanSarthi AI" className="brand-mark" />
             <div>
-              <div className="brand-word display">JanMitra AI</div>
+              <div className="brand-word display">JanSarthi AI</div>
               <div className="brand-tag">{t(lang, "topbar.subtitle")}</div>
             </div>
           </div>

@@ -1,6 +1,6 @@
-# JanMitra AI — React Frontend
+# JanSarthi AI — React Frontend
 
-The React/TypeScript rebuild of JanMitra AI's frontend, replacing the Streamlit
+The React/TypeScript rebuild of JanSarthi AI's frontend, replacing the Streamlit
 apps in `../frontend/`. Built on the design explored in the earlier UI mockup,
 now wired to the real, authenticated backend.
 

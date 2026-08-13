@@ -24,14 +24,14 @@
   background-size: 22px 22px; opacity: 0.5; pointer-events: none;
 }
 /* Centered rather than left-aligned or paired with separate text beside it -- a duplicate
-   "JanMitra AI" label next to the image (which already has the wordmark baked in) read as
+   "JanSarthi AI" label next to the image (which already has the wordmark baked in) read as
    redundant. The image alone, centered in the panel's width, is the cleaner result. */
 .auth-panel-brand { display: flex; justify-content: center; position: relative; margin-bottom: 4px; }
 /* No plate/card behind the image at all -- a rectangle here, translucent or not, tight or not,
    is still exactly the "visible box behind the logo on a dark background" the brand direction
    ruled out. A soft glow via drop-shadow instead, which follows the image's own alpha channel
    (the circular mark + the letterforms), not a bounding rectangle. Colored blue->green, the
-   same "AI glow" pairing already used on Ask JanMitra's answer card and the landing hero's
+   same "AI glow" pairing already used on Ask Sarthi's answer card and the landing hero's
    illustration halo, rather than a plain white spotlight -- ties this page into that same
    visual language instead of it being a one-off, and reads as ambient light rather than a
    flashlight aimed at the logo. The innermost layer stays close to white specifically because
