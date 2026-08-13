@@ -109,7 +109,7 @@
     "official_url_available": false,
     "official_pdf_available": false,
     "question_type": "RAG",
-    "notes": "Confirmed by direct inspection of all 14 VERIFIED and all 112 SYNTHETIC records' service_name/sub_service/problem_type fields: every single one of the 126 records is a complaint/fault/repair-type service. Zero are new-connection, new-installation, or new-application service requests. This is a structural characteristic of the current data set, not a bug -- it matches the original Phase 1 scoping decision, but is worth calling out explicitly since the user-facing app is named 'JanMitra' (broad civic assistant), not just a complaint tracker."
+    "notes": "Confirmed by direct inspection of all 14 VERIFIED and all 112 SYNTHETIC records' service_name/sub_service/problem_type fields: every single one of the 126 records is a complaint/fault/repair-type service. Zero are new-connection, new-installation, or new-application service requests. This is a structural characteristic of the current data set, not a bug -- it matches the original Phase 1 scoping decision, but is worth calling out explicitly since the user-facing app is named 'JanSarthi' (broad civic assistant), not just a complaint tracker."
   },
 
   {
