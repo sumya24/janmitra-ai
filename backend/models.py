@@ -1,4 +1,4 @@
-"""ORM models for the JanMitra AI database."""
+"""ORM models for the JanSarthi AI database."""
 
 from datetime import datetime, timezone
 
@@ -463,7 +463,7 @@ class Locality(Base):
 
 
 class AiRequestLog(Base):
-    """One row per Ask JanMitra request -- the local, always-available data source for the Admin
+    """One row per Ask Sarthi request -- the local, always-available data source for the Admin
     "AI Monitoring" dashboard (see routes/admin.py's /admin/ai-monitoring endpoints and
     backend/repositories/ai_request_log_repository.py).
 
@@ -538,7 +538,7 @@ class AiAlertState(Base):
 
 
 class User(Base):
-    """A JanMitra AI account: a citizen, a worker, or a super admin.
+    """A JanSarthi AI account: a citizen, a worker, or a super admin.
 
     Citizens self-register (see routes/auth.py). Workers are only ever created by
     a super admin (see routes/admin.py) — there is deliberately no way for anyone

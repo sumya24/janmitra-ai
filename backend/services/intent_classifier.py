@@ -1,4 +1,4 @@
-"""Classifies an Ask JanMitra question into TYPE_A (complaint), TYPE_B (service info), or
+"""Classifies an Ask Sarthi question into TYPE_A (complaint), TYPE_B (service info), or
 TYPE_C (personal complaint status/tracking) — and, for TYPE_A/TYPE_B, which civic ServiceCategory
 it's about, if any.
 
@@ -35,7 +35,7 @@ class QuestionIntent(str, Enum):
     TYPE_B_SERVICE_INFO = "TYPE_B_SERVICE_INFO"
     TYPE_C_STATUS = "TYPE_C_STATUS"
     # "What services do you provide?" / "What can you help with?" -- a real, answerable question
-    # about JanMitra's own scope, not a complaint or a RAG-answerable civic-service question. Kept
+    # about Sarthi's own scope, not a complaint or a RAG-answerable civic-service question. Kept
     # distinct from TYPE_A's "no signal either way" fallback (see classify()'s docstring) so it
     # gets its own accurate, static answer instead of being asked "what issue would you like to
     # report?" as if it were an unspecified complaint.
@@ -131,7 +131,7 @@ _SERVICE_INFO_KEYWORDS: dict[str, list[str]] = {
 }
 
 # --- CAPABILITIES: "what can this app do?" -- a real, in-domain, answerable question about
-# JanMitra's own scope. Deliberately specific multi-word phrases, not bare "help" or "services"
+# Sarthi's own scope. Deliberately specific multi-word phrases, not bare "help" or "services"
 # (which appear in genuine complaint/service-info sentences too, e.g. "please help fix this
 # pothole" or "water services in my area are cut off") -- see _any_match's substring matching,
 # which would otherwise false-positive on those. ---
@@ -139,7 +139,7 @@ _CAPABILITIES_KEYWORDS: dict[str, list[str]] = {
     "en": ["what services", "which services", "what can you do", "what can you help",
            "what do you do", "what all can you", "list of services", "services do you provide",
            "services do you offer", "services you provide", "services you offer",
-           "what is janmitra", "what is this app", "how can you help", "what kind of help",
+           "what is janmitra", "what is jansarthi", "what is sarthi", "what is this app", "how can you help", "what kind of help",
            "what type of complaints", "what type of issues", "what can i report",
            "what can i complain about"],
     "hi": ["आप क्या कर सकते हैं", "कौन सी सेवाएं", "कौनसी सेवाएं", "जनमित्र क्या है"],

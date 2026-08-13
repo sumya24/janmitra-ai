@@ -28,7 +28,7 @@ from backend.services.assignment_service import assign_next_worker
 from backend.services.complaint_agent import ComplaintAgent
 from backend.services.complaint_translation_cache import get_display_text_and_summary
 # Relocated to backend/services/evidence_service.py (pure move, no behavior change) so the Ask
-# JanMitra image-to-complaint flow (orchestration/nodes.py) can reuse this exact validate/write/
+# Sarthi image-to-complaint flow (orchestration/nodes.py) can reuse this exact validate/write/
 # DB-row logic without a service module importing a route module. Aliased back to their original
 # names here so every call site in this file is unchanged.
 from backend.services.evidence_service import (
@@ -974,7 +974,7 @@ def download_report(
         logger.exception("Report PDF generation failed for complaint %s", complaint_id)
         raise HTTPException(status_code=500, detail="Could not generate the report. Please try again.")
 
-    filename = f"JanMitra_Complaint_{data.display_id}_Report.pdf"
+    filename = f"JanSarthi_Complaint_{data.display_id}_Report.pdf"
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",

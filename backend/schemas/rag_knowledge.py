@@ -59,7 +59,7 @@ class ServiceCategory(str, Enum):
 # The fixed, exact string every SYNTHETIC record's source_organization must use — one constant,
 # not re-typed at every call site, so it can never accidentally drift into something that reads
 # as a real department name.
-SYNTHETIC_SOURCE_ORGANIZATION = "JanMitra AI — synthetic representative record (not sourced from an official document)"
+SYNTHETIC_SOURCE_ORGANIZATION = "JanSarthi AI — synthetic representative record (not sourced from an official document)"
 
 
 class SourceRecord(BaseModel):

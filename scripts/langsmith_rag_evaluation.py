@@ -1,4 +1,4 @@
-"""LangSmith Dataset + Experiment for the Ask JanMitra RAG pipeline.
+"""LangSmith Dataset + Experiment for the Ask Sarthi RAG pipeline.
 
 Complements scripts/evaluate_rag_retrieval.py (which compares the OLD/NEW retrieval engines and
 writes a local markdown report) rather than replacing it: this script uploads the SAME labeled
@@ -105,7 +105,7 @@ def _ensure_dataset(client: Client, cases: list[dict]) -> str:
         dataset = client.create_dataset(
             DATASET_NAME,
             description=(
-                "Ask JanMitra RAG pipeline eval cases -- mirrors "
+                "Ask Sarthi RAG pipeline eval cases -- mirrors "
                 "data/rag_knowledge_base/test_questions/retrieval_evaluation_dataset.json. "
                 "See scripts/langsmith_rag_evaluation.py."
             ),

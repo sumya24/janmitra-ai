@@ -1,1 +1,1 @@
-"""Observability layer for the Ask JanMitra LangGraph pipeline -- see tracing.py."""
+"""Observability layer for the Ask Sarthi LangGraph pipeline -- see tracing.py."""

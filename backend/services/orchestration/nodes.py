@@ -1,4 +1,4 @@
-"""LangGraph node functions for the Ask JanMitra orchestrator.
+"""LangGraph node functions for the Ask Sarthi orchestrator.
 
 Every node is a thin adapter: it reads what it needs from `GraphState`/the injected deps and
 calls into an EXISTING service (`classify()`, `LocationExtractor`, `LocationResolver`,
@@ -9,7 +9,7 @@ before this phase. See `graph.py`'s module docstring for the full node/edge list
 
 **Deliberate behavior change, confirmed with the user before implementing (see git history /
 session transcript)**: previously, a TYPE_A_COMPLAINT-classified question ("Street light not
-working near me") was answered by RAG, the same as a TYPE_B question -- Ask JanMitra could not
+working near me") was answered by RAG, the same as a TYPE_B question -- Ask Sarthi could not
 yet act on a complaint-shaped message, only describe relevant civic-service information about it.
 This phase closes that gap: TYPE_A_COMPLAINT now routes to `complaint_flow_node`, which files a
 real complaint via the existing `ComplaintAgent`/`assign_next_worker` services and returns a
@@ -136,7 +136,7 @@ def _localize(text: str, state: GraphState, config: RunnableConfig) -> str:
     try:
         return deps.translation_service.to_language(text, language)
     except AIServiceError as exc:
-        logger.warning("Ask JanMitra: localizing response text to %s failed, keeping English: %s", language, exc)
+        logger.warning("Ask Sarthi: localizing response text to %s failed, keeping English: %s", language, exc)
         return text
 
 
@@ -322,7 +322,7 @@ def out_of_scope_flow_node(state: GraphState, config: RunnableConfig) -> dict[st
         state.get("out_of_scope_service") or "", (state.get("out_of_scope_service") or "").lower()
     )
     text = (
-        f"I don't currently have reliable information for {topic} in JanMitra. "
+        f"I don't currently have reliable information for {topic} in JanSarthi. "
         f"This may be available in a future update."
     )
     return {
@@ -335,8 +335,8 @@ def out_of_scope_flow_node(state: GraphState, config: RunnableConfig) -> dict[st
 
 # ------------------------------------------------------------------
 # capabilities flow -- "what can you do?" is a real, in-domain, fully-answerable question about
-# JanMitra's own scope (see QuestionIntent.CAPABILITIES's docstring). A static, accurate answer,
-# not a RAG lookup -- what JanMitra supports is a fixed fact about this deployment, not something
+# Sarthi's own scope (see QuestionIntent.CAPABILITIES's docstring). A static, accurate answer,
+# not a RAG lookup -- what Sarthi supports is a fixed fact about this deployment, not something
 # to search a knowledge base for.
 # ------------------------------------------------------------------
 
@@ -691,7 +691,7 @@ def complaint_flow_node(state: GraphState, config: RunnableConfig) -> dict[str, 
             photo_path=ctx.image_saved.filename if ctx.image_saved else None,
         )
     except (ValueError, AIServiceError) as exc:
-        logger.warning("Ask JanMitra complaint_flow: complaint creation failed: %s", exc)
+        logger.warning("Ask Sarthi complaint_flow: complaint creation failed: %s", exc)
         tracing.end_run(creation_span, error=str(exc))
         text = "I couldn't file that complaint right now. Please try again, or use the complaint form directly."
         return {
@@ -753,7 +753,7 @@ def complaint_flow_node(state: GraphState, config: RunnableConfig) -> dict[str, 
         # Best-effort, exactly like routes/complaints.py's own equivalent try/except -- a
         # location-resolution failure must never fail complaint creation, which has already
         # succeeded and committed above.
-        logger.exception("Ask JanMitra complaint_flow: ward resolution failed for complaint %s; continuing unassigned by ward.", complaint.id)
+        logger.exception("Ask Sarthi complaint_flow: ward resolution failed for complaint %s; continuing unassigned by ward.", complaint.id)
 
     assign_next_worker(ctx.db, complaint)
     ctx.db.refresh(complaint)

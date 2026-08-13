@@ -21,7 +21,7 @@ class Settings:
     SARVAM_API_KEY: str = os.getenv("SARVAM_API_KEY", "")
     SARVAM_BASE_URL: str = os.getenv("SARVAM_BASE_URL", "https://api.sarvam.ai")
 
-    # Ask JanMitra voice assistant TTS (see backend/services/sarvam_client.py's
+    # Ask Sarthi voice assistant TTS (see backend/services/sarvam_client.py's
     # synthesize_speech()) -- one fixed default voice/model for v1, not user-configurable (a
     # cosmetic product decision, not an architectural one -- see the implementation plan).
     TTS_SPEAKER: str = os.getenv("TTS_SPEAKER", "anushka")
@@ -81,7 +81,7 @@ class Settings:
     # docs/ask_janmitra_rag_architecture.md.
     EMBEDDING_MODEL_NAME: str = os.getenv("EMBEDDING_MODEL_NAME", "intfloat/multilingual-e5-small")
 
-    # Ask JanMitra image understanding (see backend/services/vision_service.py). A small local
+    # Ask Sarthi image understanding (see backend/services/vision_service.py). A small local
     # vision-language model, not a hosted vendor -- Sarvam has no vision capability, and the user
     # chose to avoid adding a new AI vendor/API key for this feature.
     VISION_MODEL_NAME: str = os.getenv("VISION_MODEL_NAME", "vikhyatk/moondream2")
@@ -143,7 +143,7 @@ class Settings:
     LANGSMITH_TRACING: bool = os.getenv("LANGSMITH_TRACING", "false").strip().lower() == "true"
     LANGSMITH_API_KEY: str = os.getenv("LANGSMITH_API_KEY", "")
     LANGSMITH_ENDPOINT: str = os.getenv("LANGSMITH_ENDPOINT", "https://api.smith.langchain.com")
-    LANGSMITH_PROJECT: str = os.getenv("LANGSMITH_PROJECT", "janmitra-ai")
+    LANGSMITH_PROJECT: str = os.getenv("LANGSMITH_PROJECT", "jansarthi-ai")
     # Optional deep-link template for the Admin dashboard's "View Trace" button, with a
     # "{trace_id}" placeholder, e.g.
     # "https://smith.langchain.com/o/<your-org-id>/projects/p/<project>/r/{trace_id}" -- copy the
@@ -151,10 +151,10 @@ class Settings:
     # still stored and shown but without a clickable link (deliberately not auto-resolved via the
     # LangSmith API -- that would be a network call on the admin dashboard's read path).
     LANGSMITH_TRACE_URL_TEMPLATE: str = os.getenv("LANGSMITH_TRACE_URL_TEMPLATE", "")
-    # LangSmith Annotation Queue every "insufficient_knowledge"/out-of-scope Ask JanMitra trace is
+    # LangSmith Annotation Queue every "insufficient_knowledge"/out-of-scope Ask Sarthi trace is
     # routed into for human review (see tracing.py's enqueue_for_review()) -- a knowledge-base-gap
     # backlog, not a moderation queue. Created automatically on first use if it doesn't exist yet.
-    LANGSMITH_REVIEW_QUEUE_NAME: str = os.getenv("LANGSMITH_REVIEW_QUEUE_NAME", "janmitra-ai-knowledge-gaps")
+    LANGSMITH_REVIEW_QUEUE_NAME: str = os.getenv("LANGSMITH_REVIEW_QUEUE_NAME", "jansarthi-ai-knowledge-gaps")
 
     # Supported languages: short code -> (display name, Sarvam BCP-47 code)
     SUPPORTED_LANGUAGES: dict[str, dict[str, str]] = {

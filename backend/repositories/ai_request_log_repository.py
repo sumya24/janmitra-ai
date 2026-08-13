@@ -4,7 +4,7 @@ routes/admin.py's /admin/ai-monitoring endpoints and models.py's `AiRequestLog` 
 Mirrors complaint_repository.py's plain-function style. `record_ai_request()` is called from
 `AskJanMitraService.ask()` (see that module) on both the success and error paths of every
 request -- it is deliberately best-effort: a logging failure here must never break (or mask the
-success/failure of) the Ask JanMitra response that has already been produced by the time this is
+success/failure of) the Ask Sarthi response that has already been produced by the time this is
 called, so every exception is caught and logged, never re-raised.
 """
 
@@ -45,7 +45,7 @@ def record_ai_request(
     error_type: str | None,
     latency_ms: float,
 ) -> None:
-    """Persist one Ask JanMitra request's outcome. Best-effort -- see this module's docstring."""
+    """Persist one Ask Sarthi request's outcome. Best-effort -- see this module's docstring."""
     try:
         db.add(
             AiRequestLog(
@@ -132,7 +132,7 @@ def check_and_fire_alerts(db: Session) -> list[str]:
 
     Called from `AskJanMitraService.ask()` right after `record_ai_request()`, on both the
     success and failure path. Best-effort like that function -- an alerting bug must never break
-    the Ask JanMitra response that already completed by the time this runs.
+    the Ask Sarthi response that already completed by the time this runs.
 
     Returns the list of alert types that actually fired this call (usually empty) -- mainly for
     tests; callers don't need to do anything with it.
@@ -147,13 +147,13 @@ def check_and_fire_alerts(db: Session) -> list[str]:
         failed = sum(1 for r in recent if not r.success)
         error_rate = failed / len(recent)
         if error_rate >= _ERROR_RATE_ALERT_THRESHOLD:
-            message = f"Error rate over the last {len(recent)} Ask JanMitra requests is {error_rate:.0%}."
+            message = f"Error rate over the last {len(recent)} Ask Sarthi requests is {error_rate:.0%}."
             if _try_fire(db, "HIGH_ERROR_RATE", message):
                 fired.append("HIGH_ERROR_RATE")
 
         avg_latency_ms = sum(r.latency_ms for r in recent) / len(recent)
         if avg_latency_ms >= _LATENCY_ALERT_THRESHOLD_MS:
-            message = f"Average latency over the last {len(recent)} Ask JanMitra requests is {avg_latency_ms / 1000:.1f}s."
+            message = f"Average latency over the last {len(recent)} Ask Sarthi requests is {avg_latency_ms / 1000:.1f}s."
             if _try_fire(db, "HIGH_LATENCY", message):
                 fired.append("HIGH_LATENCY")
 

@@ -346,7 +346,7 @@ def assign_complaint(
 
 
 # ------------------------------------------------------------------
-# AI Monitoring -- application-level observability for the Ask JanMitra LangGraph pipeline (see
+# AI Monitoring -- application-level observability for the Ask Sarthi LangGraph pipeline (see
 # backend/services/observability/tracing.py and docs/ask_janmitra_langsmith_observability.md).
 #
 # Deliberately NOT a LangSmith dashboard reimplementation: these two endpoints read only
@@ -398,7 +398,7 @@ def ai_monitoring_summary(
     db: Session = Depends(get_db),
     admin: User = Depends(require_role("admin")),
 ) -> AiMonitoringSummary:
-    """Aggregate Ask JanMitra request counts/rates for the Admin dashboard's AI Monitoring tiles."""
+    """Aggregate Ask Sarthi request counts/rates for the Admin dashboard's AI Monitoring tiles."""
     return AiMonitoringSummary(**ai_request_log_repository.get_ai_monitoring_summary(db))
 
 
@@ -408,7 +408,7 @@ def ai_monitoring_requests(
     db: Session = Depends(get_db),
     admin: User = Depends(require_role("admin")),
 ) -> list[AiRequestLogEntry]:
-    """Most recent Ask JanMitra requests, each with a "View Trace" link where configured."""
+    """Most recent Ask Sarthi requests, each with a "View Trace" link where configured."""
     rows = ai_request_log_repository.get_recent_ai_requests(db, limit=min(max(limit, 1), 200))
     return [
         AiRequestLogEntry(

@@ -516,7 +516,7 @@ def test_report_download_returns_a_pdf(client, make_worker, db_session):
     download = client.get(f"/complaints/{complaint_id}/report/download", headers={"Authorization": f"Bearer {token}"})
     assert download.status_code == 200
     assert download.headers["content-type"] == "application/pdf"
-    assert f"JanMitra_Complaint_JM-{complaint_id:05d}_Report.pdf" in download.headers["content-disposition"]
+    assert f"JanSarthi_Complaint_JM-{complaint_id:05d}_Report.pdf" in download.headers["content-disposition"]
     assert download.content[:4] == b"%PDF"
 
 

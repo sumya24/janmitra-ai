@@ -130,5 +130,5 @@ class ComplaintAgent:
         """Transcribe each audio chunk in order and join the results into one transcript --
         see backend/services/stt_service.py's `transcribe_chunks()` for the full behavior
         (retry-once-then-gap-marker chunk stitching), unchanged, just relocated so Ask
-        JanMitra's voice-assistant flow can reuse it too."""
+        Sarthi's voice-assistant flow can reuse it too."""
         return transcribe_chunks(self._sarvam, audio_chunks, bcp47_language)

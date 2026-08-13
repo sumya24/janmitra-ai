@@ -16,7 +16,7 @@ from backend.config import settings  # noqa: E402
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
 
-st.set_page_config(page_title="JanMitra AI - Worker", page_icon="🧹")
+st.set_page_config(page_title="JanSarthi AI - Worker", page_icon="🧹")
 st.title("🧹 Worker Dashboard")
 st.caption(f"Logged in as {settings.HARDCODED_WORKER_ID}")
 

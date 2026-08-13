@@ -1,4 +1,4 @@
-"""Builds and runs the Ask JanMitra LangGraph orchestrator.
+"""Builds and runs the Ask Sarthi LangGraph orchestrator.
 
 ```
 START
