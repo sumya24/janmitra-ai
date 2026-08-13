@@ -48,6 +48,7 @@ def main() -> None:
             r = requests.post(f"{BASE}/auth/signup", json={
                 "full_name": f"Resident {i}-{j} of {ward.split(chr(8212))[-1].strip()}",
                 "phone": citizen_phone, "password": "citizenpass123", "preferred_language": lang,
+                "ward": ward,
             })
             r.raise_for_status()
             citizen_token = r.json()["access_token"]
@@ -68,16 +69,32 @@ def main() -> None:
             })
 
         # Mark the first complaint in this ward (from batch 1) resolved, via the worker account,
-        # so the queue shows a realistic open/resolved mix rather than everything open.
+        # so the queue shows a realistic open/resolved mix rather than everything open. The
+        # complaint-resolution workflow now requires going through accept -> start -> resolve
+        # (see backend/routes/complaints.py) rather than a single status PATCH, which this script
+        # predates.
         r = requests.post(f"{BASE}/auth/login", json={"phone": area["worker_phone"], "password": area["worker_password"]})
         worker_token = r.json()["access_token"]
-        r = requests.patch(
-            f"{BASE}/complaints/{area['complaint_id']}",
-            headers={"Authorization": f"Bearer {worker_token}"},
-            json={"status": "resolved"},
+        headers = {"Authorization": f"Bearer {worker_token}"}
+        complaint_id = area["complaint_id"]
+
+        r = requests.post(f"{BASE}/complaints/{complaint_id}/accept", headers=headers)
+        r.raise_for_status()
+
+        r = requests.post(
+            f"{BASE}/complaints/{complaint_id}/start",
+            headers=headers,
+            data={"assessment": "Assessed the issue on site; proceeding with resolution."},
         )
         r.raise_for_status()
-        print(f"  marked complaint #{area['complaint_id']} resolved")
+
+        r = requests.post(
+            f"{BASE}/complaints/{complaint_id}/resolve",
+            headers=headers,
+            data={"completion_status": "Issue resolved and verified on site."},
+        )
+        r.raise_for_status()
+        print(f"  marked complaint #{complaint_id} resolved")
 
     with open("scripts/multi_ward_seed_batch2_output.json", "w", encoding="utf-8") as f:
         json.dump(all_citizens, f, ensure_ascii=False, indent=2)
