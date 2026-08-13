@@ -6,22 +6,21 @@
   position: fixed; right: 24px; bottom: 24px; z-index: 96;
   display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
 }
+.ask-widget-anchor-hidden { display: none; }
 
+/* No circular colored backdrop -- the full, uncropped character IS the button now, rather than
+   being clipped inside a small round badge. Its own idle animation (Mascot.tsx's .mascot-idle
+   breathe) is the only motion here; a soft neutral drop-shadow (not the old colored ring pulse,
+   which existed to sell the circle as "alive" and no longer makes sense without one) keeps it
+   readable against any page background. */
 .ask-widget-fab {
-  width: 58px; height: 58px; border-radius: 50%; border: none; cursor: pointer;
-  background: linear-gradient(135deg, var(--ai-from), var(--ai-to)); color: #fff;
+  border: none; background: transparent; padding: 0; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: var(--shadow-lg);
-  animation: ask-fab-breathe 3.2s ease-in-out infinite;
+  filter: drop-shadow(0 6px 14px rgba(15, 23, 42, 0.22));
   transition: transform var(--dur-fast) var(--ease-out);
 }
-.ask-widget-fab:hover { transform: scale(1.06); }
-.ask-widget-fab:active { transform: scale(0.97); }
-@keyframes ask-fab-breathe {
-  0%, 100% { box-shadow: var(--shadow-lg), 0 0 0 0 color-mix(in srgb, var(--ai-to) 40%, transparent); }
-  50% { box-shadow: var(--shadow-lg), 0 0 0 10px color-mix(in srgb, var(--ai-to) 0%, transparent); }
-}
-@media (prefers-reduced-motion: reduce) { .ask-widget-fab { animation: none; } }
+.ask-widget-fab:hover { transform: scale(1.05); }
+.ask-widget-fab:active { transform: scale(0.96); }
 
 /* The greeting bubble -- the "hi, ask me anything" cue. Positioned above the button with a
    small tail pointing down at it, like a real speech bubble. */
@@ -67,12 +66,46 @@
   .ask-widget-panel { width: 100vw; }
 }
 
-/* Mascot (src/components/Mascot.tsx) -- the only place its supporting CSS lives, since this
-   file is its sole Phase-1 consumer (the FAB icon, the greeting bubble, and AskJanMitraContent's
-   loading/empty/success moments). Now a real cropped-and-background-removed photo of the
-   character the user supplied, not a hand-drawn SVG -- so the animations below work with a
-   raster <img>, not currentColor/SVG children like the first pass had. */
+/* Mascot (src/components/Mascot.tsx) -- the only place its supporting CSS lives, since every
+   consumer (the FAB icon, the greeting bubble, AskJanMitraContent's loading/empty/success
+   moments, and VoiceAssistantOverlay's "Mic 2" panel) imports this file already. A real
+   cropped-and-background-removed photo of the character the user supplied, not a hand-drawn SVG
+   -- so every animation below is transform/filter on a raster <img>, GPU-friendly, never
+   distorting the character to fake movement it can't actually do (no fake lip-sync, no
+   stretching). Each state's animation is either a continuous loop (idle/thinking/listening/
+   speaking -- while that state persists) or a one-shot (greeting/success -- plays once, then the
+   state itself moves on), matching how long each real condition actually lasts. */
 .mascot { flex-shrink: 0; }
+
+/* Idle: the default, most-seen state -- deliberately the subtlest animation of the set (small
+   values, slow 4.5s period) so it reads as "calmly present," not restless, and never competes
+   with whatever the citizen is actually looking at. */
+.mascot-idle { animation: mascot-idle-breathe 4.5s ease-in-out infinite; }
+@keyframes mascot-idle-breathe {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-2px) scale(1.012); }
+}
+
+/* Greeting: a short, one-shot welcoming wobble (reads as a wave, given the pose's own raised
+   hand) -- NOT infinite, so it plays once per appearance and settles, per the brief's explicit
+   "do not continuously repeat the greeting animation." */
+.mascot-greeting { animation: mascot-greeting-wave 0.7s var(--ease-out); }
+@keyframes mascot-greeting-wave {
+  0% { transform: rotate(0deg) translateY(0); }
+  25% { transform: rotate(-4deg) translateY(-2px); }
+  55% { transform: rotate(3deg) translateY(-3px); }
+  80% { transform: rotate(-1.5deg) translateY(-1px); }
+  100% { transform: rotate(0deg) translateY(0); }
+}
+
+/* Thinking: a slow pondering sway -- the pose itself already shows a hand-on-chin gesture and
+   thought-dots, so the animation only needs to add a small continuous tilt, not invent a new
+   gesture on top of it. */
+.mascot-thinking { animation: mascot-thinking-sway 2.2s ease-in-out infinite; }
+@keyframes mascot-thinking-sway {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  50% { transform: rotate(-3deg) translateY(-1px); }
+}
 
 /* Listening: a soft pulsing glow that follows the character's own silhouette (drop-shadow
    respects the PNG's alpha channel, unlike a box-shadow ring which would draw a generic
@@ -87,6 +120,18 @@
   50% { filter: drop-shadow(0 0 10px color-mix(in srgb, var(--ai-to) 65%, transparent)); }
 }
 
+/* Speaking: reuses the greeting pose's image (see Mascot.tsx's IMAGE_FOR_STATE) but its own
+   animation -- a continuous scale+glow pulse, faster than idle's breathe (0.9s vs 4.5s) so it
+   visibly reads as "actively talking" rather than "calmly present." Only ever applied while
+   `state === "speaking"`, which VoiceAssistantOverlay.tsx only ever sets while the real
+   HTMLAudioElement is genuinely firing `playing` (removed again on pause/ended/error) -- never a
+   fixed-duration timer, so it always matches however long the real TTS audio actually runs. */
+.mascot-speaking { animation: mascot-speaking-pulse 0.9s ease-in-out infinite; }
+@keyframes mascot-speaking-pulse {
+  0%, 100% { transform: scale(1) translateY(0); filter: drop-shadow(0 0 0 color-mix(in srgb, var(--ai-to) 0%, transparent)); }
+  50% { transform: scale(1.035) translateY(-1px); filter: drop-shadow(0 0 10px color-mix(in srgb, var(--ai-to) 55%, transparent)); }
+}
+
 /* Success: a brief settle-in pop when the pose swaps to the thumbs-up/checkmark image. */
 .mascot-success { animation: mascot-success-pop 0.4s var(--ease-out); }
 @keyframes mascot-success-pop {
@@ -96,5 +141,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mascot-listening, .mascot-success { animation: none; }
+  .mascot-idle, .mascot-greeting, .mascot-thinking, .mascot-listening, .mascot-speaking, .mascot-success {
+    animation: none;
+  }
 }

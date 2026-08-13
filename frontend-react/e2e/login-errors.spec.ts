@@ -9,6 +9,15 @@ test("login with wrong password shows an error and does not navigate away", asyn
   await page.getByLabel("Full name").fill("Test User");
   await page.getByLabel("Phone number").fill(phone);
   await page.getByLabel("Password").fill("correct-password");
+  // Mandatory ward field -- see e2e/ask-janmitra.spec.ts's signUpAndReachCitizenHome for why
+  // this waits for the async GET /complaints/wards fetch (Signup.tsx) to settle first.
+  await page.waitForTimeout(600);
+  const wardField = page.getByLabel("Area / ward");
+  if ((await wardField.evaluate((el) => el.tagName)) === "SELECT") {
+    await wardField.selectOption({ index: 1 });
+  } else {
+    await wardField.fill("Test Ward");
+  }
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/citizen$/);
 

@@ -76,6 +76,14 @@ def test_route_after_intent_else_goes_to_location():
     assert _route_after_intent(state) == "location_resolution"
 
 
+def test_route_after_intent_capabilities():
+    assert _route_after_intent({"intent": QuestionIntent.CAPABILITIES.value, "out_of_scope_service": None}) == "capabilities_flow"
+
+
+def test_route_after_intent_unclear():
+    assert _route_after_intent({"intent": QuestionIntent.UNCLEAR.value, "out_of_scope_service": None}) == "unclear_flow"
+
+
 def test_route_after_location_type_a_always_goes_to_complaint_flow():
     """Even with no location resolved yet -- complaint_flow decides for itself whether it still
     needs category/location (see nodes.py's complaint_flow_node)."""
@@ -115,7 +123,8 @@ def test_graph_compiles_with_expected_nodes():
     expected = {
         "__start__", "input_processing", "language_detection", "intent_classification",
         "location_resolution", "complaint_flow", "rag_flow", "status_flow",
-        "clarification_flow", "out_of_scope_flow", "response_generation", "__end__",
+        "clarification_flow", "out_of_scope_flow", "capabilities_flow", "unclear_flow",
+        "response_generation", "__end__",
     }
     assert nodes == expected
 
