@@ -10,6 +10,7 @@ before it's ever translated, fixes it at the source regardless of which language
 
 import logging
 
+import httpx
 from sarvamai import SarvamAI
 
 from backend.config import get_prompt, settings
@@ -24,7 +25,17 @@ class NormalizationService:
         """Initialize the underlying SarvamAI client, if an API key is configured."""
         self._client: SarvamAI | None = None
         if settings.LLM_API_KEY:
-            self._client = SarvamAI(api_subscription_key=settings.LLM_API_KEY)
+            # Chat-completion call against the same reasoning model as summary_service.py/
+            # answer_generation_service.py (LLM_MODEL) -- see config.py's SARVAM_CONNECT_TIMEOUT_
+            # SECONDS docstring for why this needs the generous reasoning read-timeout, not the
+            # short one sarvam_client.py's fast STT/translation/TTS calls use.
+            timeout = httpx.Timeout(
+                connect=settings.SARVAM_CONNECT_TIMEOUT_SECONDS,
+                read=settings.SARVAM_REASONING_READ_TIMEOUT_SECONDS,
+                write=settings.SARVAM_REASONING_READ_TIMEOUT_SECONDS,
+                pool=settings.SARVAM_REASONING_READ_TIMEOUT_SECONDS,
+            )
+            self._client = SarvamAI(api_subscription_key=settings.LLM_API_KEY, timeout=timeout)
         else:
             logger.warning("LLM_API_KEY is not set; text normalization will be skipped.")
 
