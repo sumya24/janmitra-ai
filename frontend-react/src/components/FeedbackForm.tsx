@@ -75,12 +75,28 @@ export default function FeedbackForm({
           </button>
         ))}
       </div>
+      {/* This textarea was never wrapped in the shared .field class the rest of the app's inputs
+          use (Signup, the worker modals, etc.), so it had none of that rule's styling at all --
+          just the browser's bare default UA appearance: near-zero padding (placeholder text
+          reads as vertically centered only because there's so little room in it, not because
+          anything is actually centering it) and a practically invisible 1px default border,
+          worse still in dark mode where it doesn't pick up this app's dark surface/border colors
+          at all. Styled explicitly to match: top-aligned text via real padding, and --ink-3 for
+          the border rather than the shared field style's --line -- --line is already documented
+          elsewhere in this codebase (see .btn-ghost) as reading fine in dark mode but nearly
+          invisible against the light-mode paper background, exactly the "too faint" complaint
+          here; --ink-3 is that same fix already established for borders that need real visibility
+          in light mode without going as heavy as --ink itself. */}
       <textarea
         rows={2}
         value={comment}
         onChange={(e) => setComment(e.target.value)}
         placeholder={t(lang, "citizen.feedbackCommentPlaceholder")}
-        style={{ marginBottom: 8 }}
+        style={{
+          display: "block", width: "100%", boxSizing: "border-box", marginBottom: 8,
+          padding: "10px 12px", fontSize: 14, fontFamily: "inherit", lineHeight: 1.4,
+          border: "1px solid var(--ink-3)", borderRadius: 8, background: "var(--paper)", color: "var(--ink)",
+        }}
       />
       <button type="button" className="btn btn-primary btn-sm" onClick={submit} disabled={submitting || rating < 1}>
         {submitting ? t(lang, "citizen.feedbackSubmitting") : t(lang, "citizen.feedbackSubmit")}
