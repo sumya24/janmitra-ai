@@ -96,6 +96,7 @@ export default function FeedbackForm({
           display: "block", width: "100%", boxSizing: "border-box", marginBottom: 8,
           padding: "10px 12px", fontSize: 14, fontFamily: "inherit", lineHeight: 1.4,
           border: "1px solid var(--ink-3)", borderRadius: 8, background: "var(--paper)", color: "var(--ink)",
+          verticalAlign: "top",
         }}
       />
       <button type="button" className="btn btn-primary btn-sm" onClick={submit} disabled={submitting || rating < 1}>
