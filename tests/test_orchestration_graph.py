@@ -209,7 +209,7 @@ def test_category_recovery_returns_none_when_history_has_no_category():
 # --- error handling: a node exception must not silently produce a fabricated answer ---
 
 
-def test_complaint_agent_failure_returns_honest_error_not_a_fake_complaint_id(client, monkeypatch, make_citizen):
+def test_complaint_agent_failure_returns_honest_error_not_a_fake_complaint_id(client, monkeypatch, make_citizen, make_worker):
     fake_answers = Mock()
     fake_answers.generate = lambda q, chunks, lang: ("x", False)
 
@@ -220,6 +220,7 @@ def test_complaint_agent_failure_returns_honest_error_not_a_fake_complaint_id(cl
     service = _real_ask_janmitra_service(complaint_agent=_RaisingComplaintAgent())
     monkeypatch.setattr(ask_janmitra_module, "_service", service)
 
+    make_worker(phone="9100099031", ward="Mohali")
     token, _ = make_citizen(phone="9100000031")
     resp = _ask(client, token, "Street light not working in Mohali.", location_text="Mohali")
     assert resp.status_code == 200  # handled gracefully, not a 500

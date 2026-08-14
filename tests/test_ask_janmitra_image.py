@@ -157,11 +157,12 @@ def test_image_without_text_still_asks_clarification_when_captioning_fails(clien
     assert body["routed_to"] == "NONE_CLARIFICATION_NEEDED"
 
 
-def test_image_plus_complaint_creates_real_photo_path_and_evidence_row(client, monkeypatch, make_citizen, db_session):
+def test_image_plus_complaint_creates_real_photo_path_and_evidence_row(client, monkeypatch, make_citizen, db_session, make_worker):
     """Phase 4: filing a complaint with an attached image must reuse the EXISTING ComplaintEvidence
     system exactly -- a real Complaint.photo_path AND a real ComplaintEvidence row (stage
     CITIZEN_COMPLAINT), not a second image-storage system."""
     _install_real_service(monkeypatch)
+    make_worker(phone="9000099111", ward="Mohali")
     token, _ = make_citizen(phone="9000000111")
 
     response = _ask_image(client, token, "Street light near my home is not working.", location_text="Mohali")

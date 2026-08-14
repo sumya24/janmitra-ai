@@ -1,5 +1,5 @@
 """Tests for backend/services/sarvam_client.py's synthesize_speech() -- the new text-to-speech
-method backing Ask JanMitra's voice assistant. Mocks the underlying SarvamAI SDK client, same
+method backing Ask Sarthi's voice assistant. Mocks the underlying SarvamAI SDK client, same
 convention as ComplaintAgent's tests mocking SarvamClient itself -- never a real network call.
 """
 

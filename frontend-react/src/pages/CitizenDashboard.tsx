@@ -5,6 +5,7 @@ import ComplaintTracker from "../components/ComplaintTracker";
 import StatusBadge from "../components/StatusBadge";
 import ComplaintUpdatesTimeline from "../components/ComplaintUpdatesTimeline";
 import ReportModal from "../components/ReportModal";
+import SummaryModal from "../components/SummaryModal";
 import DownloadReportButton from "../components/DownloadReportButton";
 import FeedbackForm from "../components/FeedbackForm";
 import { useAuth } from "../lib/auth";
@@ -48,6 +49,7 @@ export default function CitizenDashboard() {
   const [updatesLoadingId, setUpdatesLoadingId] = useState<number | null>(null);
   const [updatesError, setUpdatesError] = useState<Record<number, string>>({});
   const [reportModalId, setReportModalId] = useState<number | null>(null);
+  const [summaryComplaint, setSummaryComplaint] = useState<Complaint | null>(null);
 
   async function toggleUpdates(id: number) {
     if (expandedId === id) {
@@ -214,6 +216,9 @@ export default function CitizenDashboard() {
 
               {c.status === "resolved" && (
                 <div style={{ marginTop: 10, display: "flex", gap: 6 }}>
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => setSummaryComplaint(c)}>
+                    {t(lang, "worker.viewSummary")}
+                  </button>
                   <button type="button" className="btn btn-ghost btn-sm" onClick={() => setReportModalId(c.id)}>
                     {t(lang, "worker.viewReport")}
                   </button>
@@ -236,6 +241,13 @@ export default function CitizenDashboard() {
         </div>
       </div>
       {reportModalId !== null && <ReportModal complaintId={reportModalId} onClose={() => setReportModalId(null)} />}
+      {summaryComplaint && (
+        <SummaryModal
+          complaint={summaryComplaint}
+          statusLabel={t(lang, STATUS_LABEL_KEY[summaryComplaint.status])}
+          onClose={() => setSummaryComplaint(null)}
+        />
+      )}
     </div>
   );
 }

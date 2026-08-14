@@ -39,7 +39,7 @@ from backend.services.complaint_agent import ComplaintAgent
 from backend.services.evidence_service import SavedFile
 from backend.services.intent_classifier import QuestionIntent, classify
 from backend.services.location_extractor import LocationExtractor, LocationResolution
-from backend.services.location_resolver import LocationResolver
+from backend.services.location_resolver import LocationResolver, ResolvedLocation
 from backend.services.observability import tracing
 from backend.services.orchestration.state import GraphState
 from backend.services.rag_retriever import RagRetriever
@@ -665,7 +665,74 @@ def complaint_flow_node(state: GraphState, config: RunnableConfig) -> dict[str, 
             "route": "clarification",
         }
 
-    if state.get("location_city") is None and state.get("location_state") is None:
+    # `location_city`/`location_state` only ever come from the RAG knowledge base's narrow 30-city
+    # gazetteer (see location_extractor.py) -- unrelated to whether a complaint can actually be
+    # ASSIGNED, which depends entirely on `assignment_service.py`'s exact-string match between
+    # `complaint.ward` and a real worker's `User.ward` (or a shared `ward_id`, though none of the
+    # currently-seeded workers have that backfilled -- see find_worker_ward_text's own docstring).
+    # A city the RAG knowledge base has documents for (e.g. Mohali) is not necessarily a city this
+    # app has any WORKER for at all -- two separate, unrelated datasets. Two earlier versions of
+    # this fix got this wrong in two different ways, both caught live before shipping: (1) accepting
+    # ANY citizen-typed text as the ward regardless of whether it matched anything real -- created
+    # complaints that could never be assigned; (2) treating a RAG gazetteer match alone as "good
+    # enough to proceed" -- let a complaint through for a city (Mohali) with a real name but zero
+    # seeded workers, which then sat unassigned exactly like (1) did.
+    #
+    # Correct fix: only proceed when a REAL, CURRENTLY-STAFFED ward can be found for this
+    # complaint -- via `ctx.location_text` matching a worker's ward (exact text, or the city named
+    # in a worker's own "Ward N -- Locality, City" ward), the SAME message text (a city mentioned
+    # inline, e.g. "...in Pune."), or GPS (unchanged, unrelated to this gap). If none of those
+    # hold, this is honest instead of silently broken: says plainly that this area isn't covered
+    # yet, and does NOT create an unassignable complaint or repeat the same question forever.
+    worker_ward_text = deps.location_resolver.find_worker_ward_text(ctx.db, ctx.location_text or "")
+    if worker_ward_text is None:
+        worker_ward_text = deps.location_resolver.find_worker_ward_text(ctx.db, text)
+    gps_resolved: ResolvedLocation | None = None
+    if worker_ward_text is None and ctx.latitude is not None and ctx.longitude is not None:
+        # Same mistake this fix already closed once for the RAG gazetteer -- almost repeated here
+        # for GPS: raw coordinate PRESENCE isn't resolution SUCCESS (a real geocoder call can fail
+        # or return nothing usable; test_gps_failure_does_not_break_ask_janmitra exists specifically
+        # to catch a caller that assumes otherwise). Resolve for real and try to match a worker
+        # from whatever city name comes back, exactly like the text-based path above.
+        gps_resolved = deps.location_resolver.resolve_coordinates(ctx.latitude, ctx.longitude)
+        if gps_resolved.city_name:
+            worker_ward_text = deps.location_resolver.find_worker_ward_text(ctx.db, gps_resolved.city_name)
+    # `resolved_ward` (the structured `wards`-table row, only ever used further below for its
+    # richer state/district/.../locality ID chain) is a BONUS when `worker_ward_text` happens to
+    # also be in the "Ward N -- Locality, City" format `resolve_ward_by_text` understands -- NOT a
+    # requirement. A real worker match (e.g. a worker registered with a plain `ward="Mohali"`,
+    # exactly what this project's own test fixtures use) is already sufficient evidence a real,
+    # assignable place was found; requiring `resolved_ward` too rejected that exact case, a real
+    # regression caught by this fix's own test run before shipping.
+    resolved_ward = None
+    if worker_ward_text is not None:
+        resolved_ward = deps.location_resolver.resolve_ward_by_text(ctx.db, worker_ward_text)
+    has_real_location = worker_ward_text is not None
+    if not has_real_location:
+        # A place was already established from ANY source -- explicit `ctx.location_text`, the
+        # RAG gazetteer's own city/state match on this or an earlier turn (`location_city`/
+        # `location_state`, set upstream by location_node), or a city mentioned earlier in
+        # `conversation_history` -- just not one with a real worker. All of these are equally
+        # legitimate "the citizen already told us where" signals; gating this on `ctx.location_text`
+        # alone (an earlier version of this fix) missed the conversation-history case, a real
+        # regression caught by this fix's own test run: a citizen who said "I'm in Mohali." last
+        # turn and "Street light not working." this turn got asked for location AGAIN, even though
+        # the location was already known -- just not assignable.
+        known_place = ctx.location_text or state.get("location_city") or state.get("location_state")
+        if known_place:
+            # An honest, terminal answer, not the same clarification question again (see this
+            # fix's own docstring for why looping was the wrong fallback too).
+            honest_text = (
+                "I'm sorry, Sarthi doesn't currently have workers set up to handle complaints in "
+                f"\"{known_place.strip()}\". Please try a nearby city, or contact your local "
+                "municipal office directly."
+            )
+            return {
+                "response_text": _localize(honest_text, state, config),
+                "routed_to": "NONE_OUT_OF_SCOPE",
+                "insufficient_knowledge": True,
+                "sources": [],
+            }
         return {
             "needs_clarification": True,
             "clarification_reason": "location",
@@ -722,33 +789,26 @@ def complaint_flow_node(state: GraphState, config: RunnableConfig) -> dict[str, 
     # Resolve ward-level location for assignment -- deliberately the app's OWN LocationResolver
     # (state/district/ULB/WARD hierarchy, what assignment_service.py actually keys on), not the
     # RAG gazetteer's city/state (that's only ever used for RAG's metadata filtering, a separate,
-    # coarser-grained concern -- see location_extractor.py's module docstring). Same calls
-    # routes/complaints.py already makes; nothing new invented here.
+    # coarser-grained concern -- see location_extractor.py's module docstring). Reuses
+    # `worker_ward_text`/`resolved_ward`/`gps_resolved` from the gate above -- by the time
+    # execution reaches here the gate has already required `worker_ward_text is not None` (or
+    # returned early), so it's always set; no need to re-query or branch on GPS separately here.
     #
-    # `complaint.ward` (plain free text) is set directly from the citizen's own explicit location
-    # text FIRST, exactly like routes/complaints.py's `ward` form field -- this is what
-    # assign_next_worker's fallback path matches on (`User.ward == complaint.ward`, see
-    # assignment_service.py's module docstring on the two ward-matching paths). Structured
-    # resolution (`resolve_ward_by_text`, which only understands this app's own "Ward N —
-    # Locality, City" convention) is attempted ADDITIONALLY, as a richer, more precise match when
-    # the text happens to be in that exact format -- it augments, never replaces, the plain-text
-    # ward already set.
+    # `complaint.ward` is set to the real WORKER's own exact ward string (`worker_ward_text`),
+    # never a `wards` table row's bare `.name` -- see find_worker_ward_text's docstring for the
+    # real bug this closes (a resolved Ward's bare "Ward 22" never exact-matches a worker
+    # registered as "Ward 22 — Kothrud, Pune", so the complaint silently never got assigned even
+    # though structured resolution had technically "succeeded").
     try:
-        resolved_ward = None
-        if ctx.location_text:
-            resolved_ward = deps.location_resolver.resolve_ward_by_text(ctx.db, ctx.location_text)
-
-        if resolved_ward is not None:
-            chain = deps.location_resolver.location_chain_for_ward(ctx.db, resolved_ward)
-            complaint_repository.save_complaint_location(ctx.db, complaint, ward=resolved_ward.name, location_chain=chain)
-        elif ctx.location_text:
-            complaint_repository.save_complaint_location(ctx.db, complaint, ward=ctx.location_text.strip())
-        elif ctx.latitude is not None and ctx.longitude is not None:
-            resolved = deps.location_resolver.resolve_coordinates(ctx.latitude, ctx.longitude)
-            ids = deps.location_resolver.normalize_location(ctx.db, resolved)
-            complaint_repository.save_complaint_location(
-                ctx.db, complaint, location_chain=ids, formatted_address=resolved.formatted_address
-            )
+        chain = (
+            deps.location_resolver.location_chain_for_ward(ctx.db, resolved_ward)
+            if resolved_ward is not None
+            else None
+        )
+        complaint_repository.save_complaint_location(
+            ctx.db, complaint, ward=worker_ward_text, location_chain=chain,
+            formatted_address=gps_resolved.formatted_address if gps_resolved else None,
+        )
     except Exception:
         # Best-effort, exactly like routes/complaints.py's own equivalent try/except -- a
         # location-resolution failure must never fail complaint creation, which has already

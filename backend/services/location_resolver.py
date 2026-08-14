@@ -31,7 +31,7 @@ from datetime import datetime, timezone
 import requests
 from sqlalchemy.orm import Session
 
-from backend.models import ULB, District, Locality, State, Ward, Zone
+from backend.models import ULB, District, Locality, State, User, Ward, Zone
 
 logger = logging.getLogger(__name__)
 
@@ -129,6 +129,44 @@ class LocationResolver:
             haystacks = [ulb.name.lower() if ulb else "", district.name.lower() if district else ""]
             if any(city_hint in haystack for haystack in haystacks):
                 return ward
+        return None
+
+    def find_worker_ward_text(self, db: Session, hint: str) -> str | None:
+        """Finds a real, currently-registered worker's exact `ward` string that best matches
+        `hint` -- either an exact (case-insensitive) match, or `hint` naming the same city a
+        worker's ward is in (parsed via this app's own "Ward N -- Locality, City" convention,
+        same as `resolve_ward_by_text` above).
+
+        Deliberately returns the WORKER's own `ward` string verbatim, not a `wards` table row's
+        `name` column -- that column is bare ("Ward 22", no locality/city suffix; see the wards
+        table's actual seeded data), which can never exact-match a worker's full free-text `ward`
+        ("Ward 22 -- Kothrud, Pune") again. `assignment_service.py`'s `_candidates()` matches
+        workers by EXACT TEXT (`User.ward == complaint.ward`) whenever `ward_id` isn't set on both
+        sides -- true for every currently-seeded worker (none have `ward_id` backfilled yet, see
+        scripts/seed_multi_ward_data.py) -- so whatever this method returns is guaranteed to
+        exact-match a real worker by construction, closing a real bug: `resolve_ward_by_text`
+        succeeding and the caller saving its bare `Ward.name` as `complaint.ward` LOOKED like a
+        correct structured resolution but silently produced an unassignable complaint anyway
+        (caught live: a complaint with `ward="Ward 22"` against a real worker registered as
+        `ward="Ward 22 — Kothrud, Pune"` never matched, sat "pending" forever).
+
+        Never guesses beyond substring city-name matching; returns None if nothing lines up (an
+        honest "not currently served" is correct there, not a fabricated match).
+        """
+        needle = hint.strip().lower()
+        if not needle:
+            return None
+        workers = db.query(User).filter(User.role == "worker", User.ward.isnot(None)).all()
+        for worker in workers:
+            if worker.ward.strip().lower() == needle:
+                return worker.ward
+        for worker in workers:
+            match = _WARD_TEXT_PATTERN.match(worker.ward)
+            if not match or "," not in match.group(2):
+                continue
+            city = match.group(2).rsplit(",", 1)[-1].strip().lower()
+            if city and city in needle:
+                return worker.ward
         return None
 
     def location_chain_for_ward(self, db: Session, ward: Ward) -> dict[str, int | None]:

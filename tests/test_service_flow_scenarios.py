@@ -23,8 +23,9 @@ def test_scenario_1_water_connection_documents_goes_to_rag_flow(client, monkeypa
 
 
 # 2. "Streetlight near my home is broken." -> Complaint flow
-def test_scenario_2_streetlight_broken_goes_to_complaint_flow(client, monkeypatch, db_session, make_citizen):
+def test_scenario_2_streetlight_broken_goes_to_complaint_flow(client, monkeypatch, db_session, make_citizen, make_worker):
     _install_real_service(monkeypatch)
+    make_worker(phone="9100099041", ward="Mohali")
     token, _ = make_citizen(phone="9100000041")
     resp = _ask(client, token, "Streetlight near my home is broken.", location_text="Mohali")
     assert resp.status_code == 200
