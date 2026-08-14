@@ -154,5 +154,31 @@
     "retrieved_at": "2026-08-14T05:17:45.050384+00:00",
     "geographic_scope": "CITY",
     "notes": "12-page Citizens Charter PDF, downloaded and provided directly by the user (WebFetch was unavailable this pass). Full text read directly. Dated May 2024 -- the most recently updated source in this research pass. Rich SLA table (1-7 days across 14 service types: no water supply, leakage, sewerage chokage/overflow, billing, dial-a-tanker, etc.), 25 O&M Divisions with named officers/phone numbers by ward (Annexures 2/3). Confirms HMWSSB is a statutory board separate from GHMC, handling water supply/sewerage while GHMC handles waste/roads/streetlights/storm drainage. Used for 1 KnowledgeRecord -- see knowledge_records/verified/telangana/hyderabad.json."
+  },
+  {
+    "source_id": "WB_KMC_SWM_SERVICES_PAGE",
+    "source_title": "Solid Waste Management Services",
+    "source_organization": "Kolkata Municipal Corporation (KMC)",
+    "source_url": "https://www.kmcgov.in/KMCPortal/jsp/Solid_Waste_Services.html",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-14T08:21:24.774821+00:00",
+    "geographic_scope": "CITY",
+    "notes": "HTML page text pasted directly by the user (WebFetch was unavailable this pass; the user copied the page's rendered text rather than a downloaded PDF). Content is a reform-achievements report (collection tonnage, door-to-door coverage %, disposal-site area, infrastructure counts), appears to date from ~2009-2010 based on internal references ('2005-09' comparison period, a remediation project 'expected to start from April 2010') -- treated as historical/dated data, not necessarily current. No complaint procedure, SLA, or contact number for SWM specifically is stated on this page. Used for 1 KnowledgeRecord -- see knowledge_records/verified/west_bengal/kolkata.json."
+  },
+  {
+    "source_id": "WB_KMC_STREETLIGHT_FAQ_PAGE",
+    "source_title": "Department of Lighting — FAQ & Zone Contacts",
+    "source_organization": "Kolkata Municipal Corporation (KMC)",
+    "source_url": "https://www.kmcgov.in/KMCPortal/jsp/KMCStreetLight.jsp",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-14T08:21:24.774821+00:00",
+    "geographic_scope": "CITY",
+    "notes": "HTML page text pasted directly by the user (WebFetch was unavailable this pass). Full FAQ + 6-zone ward/contact table read directly. Concrete citizen-facing content: Control Room numbers, zonal Executive Engineer (Lighting) contacts mapped to specific boroughs/wards, and guidance on what to report (non-glowing/daytime-lit lights, missing lights, damaged poles/wiring, equipment pilferage). No numeric SLA stated. Used for 1 KnowledgeRecord -- see knowledge_records/verified/west_bengal/kolkata.json."
   }
 ]

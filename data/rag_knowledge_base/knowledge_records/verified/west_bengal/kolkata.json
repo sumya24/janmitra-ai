@@ -57,5 +57,109 @@
     "last_updated": null,
     "retrieved_at": "2026-08-14T03:44:31.810186+00:00",
     "created_at": "2026-08-14T03:45:08.701552+00:00"
+  },
+  {
+    "record_id": "WB_KMC_SOLID_WASTE_MANAGEMENT",
+    "service_id": "WB_KMC_SOLID_WASTE_MANAGEMENT",
+    "service_name": "Solid Waste Management — Collection, Transport & Disposal",
+    "sub_service": "Door-to-door waste collection, open-vat conversion, landfill/disposal operations",
+    "problem_type": "Uncollected garbage, open-vat/dumping-ground issues",
+    "service_category": "WASTE_SANITATION",
+    "state": "West Bengal",
+    "district": "Kolkata",
+    "city": "Kolkata",
+    "municipality": "Kolkata Municipal Corporation (KMC)",
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "CITY",
+    "department": "Solid Waste Management Department, KMC",
+    "authority": "Solid Waste Management Department, KMC",
+    "description": "KMC is responsible for collection, transportation, disposal, and treatment of waste generated in the city, stated on this page as averaging 4,000 MT/day. The page is presented as a reform achievements report and appears to date from around 2009-2010 (its own tables compare 2004-05 against '2005-09' and describe a remediation project 'expected to start from April 2010') -- the specific figures below should be treated as historical/dated, not necessarily current: waste collected grew from ~2,999.5 MT/day (2004-05) to ~3,932 MT/day (2005-09 period); open-vats converted to direct loading grew from 46 to 60; door-to-door household coverage grew from 50%% to 65%%; disposal-site area grew from 21.47 to 35.5 hectares. A KMC compost plant operates at Dhapa, converting waste to fertilizer; a slaughterhouse-waste Effluent Treatment Plant (100 KLD) and a bio-composting plant were also built at Dhapa.",
+    "procedure": "PROCEDURE NOT FOUND — this page describes department achievements/statistics, not a citizen complaint-lodging procedure for uncollected waste.",
+    "required_information": [],
+    "required_documents": [],
+    "sla": "SLA NOT FOUND — this page is a reform-achievements report (collection tonnage, coverage %, infrastructure counts) and does not state a complaint-to-resolution SLA.",
+    "expected_response_time": null,
+    "expected_resolution_time": null,
+    "complaint_channel": [],
+    "contact_information": "CONTACT INFORMATION NOT FOUND — no SWM-specific complaint number or office is published on this page.",
+    "escalation_procedure": "ESCALATION INFORMATION NOT FOUND",
+    "escalation_authority": null,
+    "faq": [],
+    "citizen_guidance": "This KMC page documents solid-waste infrastructure and reform achievements (collection tonnage, door-to-door coverage, disposal-site capacity) rather than a citizen complaint process -- it does not itself state how to report uncollected garbage or what response time to expect.",
+    "source_id": "WB_KMC_SWM_SERVICES_PAGE",
+    "source_title": "Solid Waste Management Services",
+    "source_organization": "Kolkata Municipal Corporation (KMC)",
+    "source_url": "https://www.kmcgov.in/KMCPortal/jsp/Solid_Waste_Services.html",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-14T08:20:56.590520+00:00",
+    "created_at": "2026-08-14T08:20:56.590520+00:00"
+  },
+  {
+    "record_id": "WB_KMC_STREETLIGHT_REPAIR",
+    "service_id": "WB_KMC_STREETLIGHT_REPAIR",
+    "service_name": "Streetlight Repair & Reporting",
+    "sub_service": "Non-glowing/daytime-lit streetlights, damaged poles/wiring, missing streetlights, equipment pilferage",
+    "problem_type": "Streetlight not working, streetlight on during the day, damaged pole/loose wiring (electrocution risk), no streetlight in area, suspected pilferage of lighting equipment",
+    "service_category": "STREETLIGHTS",
+    "state": "West Bengal",
+    "district": "Kolkata",
+    "city": "Kolkata",
+    "municipality": "Kolkata Municipal Corporation (KMC)",
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "CITY",
+    "department": "Department of Lighting, KMC",
+    "authority": "Executive Engineer (Lighting) for the ward's zone (6 zones, each covering a named group of wards)",
+    "description": "KMC's Department of Lighting handles installation and maintenance of streetlights, park/garden lighting, crematorium electrics, and institutional lighting (schools, ward offices). Its FAQ page gives concrete reporting channels: a citywide Control Room, plus 6 zonal Executive Engineer (Lighting) offices, each responsible for a specific set of boroughs/wards -- e.g. Zone 1 (Boroughs 1-3, wards 1-20 & 29-35) at 79 Bidhan Sarani, Kolkata-700006; Zone 6 (Borough 16, wards 123-126 & 142-144) at 4 Diamond Park, Joka, Kolkata-700104. Citizens are explicitly encouraged to report non-glowing/daytime-lit lights, missing streetlights, damaged poles or loose wiring (electrocution risk), and suspected pilferage of lighting equipment -- with an assurance that a pilferage reporter's identity is kept confidential.",
+    "procedure": "Contact the citywide Control Room, or the Executive Engineer (Lighting) for the zone covering the citizen's ward (see the 6-zone contact table on this page).",
+    "required_information": [
+      "Ward number (to identify the correct zonal Executive Engineer (Lighting))"
+    ],
+    "required_documents": [],
+    "sla": "SLA NOT FOUND — the FAQ page names who to contact for each type of streetlight issue but does not state a numeric response/resolution-time commitment.",
+    "expected_response_time": null,
+    "expected_resolution_time": null,
+    "complaint_channel": [
+      "Control Room: (033) 2286 1212 / (033) 2286 1313 / (033) 2286 1414",
+      "Zonal Executive Engineer (Lighting) — 6 zones, contact by ward (see description)"
+    ],
+    "contact_information": "Control Room: (033) 2286 1212, (033) 2286 1313, (033) 2286 1414. Zone 1 (wards 1-20, 29-35): Executive Engineer (Lighting), 79 Bidhan Sarani, Kolkata-700006. Zone 2 (wards 21-28, 36-55, 60-62): 15N Neli Sengupta Sarani, Kolkata-700087. Zone 3 (wards 56-59, 63-80, 82-88, 90): 3rd Floor, 28 A.K.N Sen Road, e-Governance Building, Kolkata-700042. Zone 4 (wards 81, 89, 91-114): Santoshpur Municipal Market (1st Floor), Kolkata-700075. Zone 5 (wards 115-122, 127-141): Parnashreepally Government Quarter Block 14, Kolkata-700060. Zone 6 (wards 123-126, 142-144): 4 Diamond Park, Joka, Kolkata-700104.",
+    "escalation_procedure": "ESCALATION INFORMATION NOT FOUND — the page names the responsible zonal Executive Engineer (Lighting) as the point of contact but does not state a further escalation authority or timeline.",
+    "escalation_authority": null,
+    "faq": [
+      {
+        "question": "Who do I contact if streetlights in my area are lit in the day or not lit at night?",
+        "answer": "Contact the Executive Engineer (Lighting) for your zone (see the ward-to-zone contact table), or the citywide Control Room at (033) 2286 1212 / 1313 / 1414."
+      },
+      {
+        "question": "My area has no streetlights at all — who do I contact?",
+        "answer": "The same zonal Executive Engineer (Lighting) responsible for your ward."
+      },
+      {
+        "question": "What if I notice someone stealing lighting equipment?",
+        "answer": "Report it to the concerned zonal Executive Engineer (Lighting) — your identity is kept confidential."
+      },
+      {
+        "question": "A streetlight pole is damaged with loose/exposed wiring — what do I do?",
+        "answer": "Contact the Lighting Department immediately via the zonal Executive Engineer (Lighting) or the Control Room."
+      }
+    ],
+    "citizen_guidance": "Find your ward's zone from the 6-zone table and contact that zone's Executive Engineer (Lighting), or call the Control Room at (033) 2286 1212 / 1313 / 1414 for any streetlight issue -- not working, on during the day, missing, damaged/loose wiring, or suspected equipment theft.",
+    "source_id": "WB_KMC_STREETLIGHT_FAQ_PAGE",
+    "source_title": "Department of Lighting — FAQ & Zone Contacts",
+    "source_organization": "Kolkata Municipal Corporation (KMC)",
+    "source_url": "https://www.kmcgov.in/KMCPortal/jsp/KMCStreetLight.jsp",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-14T08:20:56.590520+00:00",
+    "created_at": "2026-08-14T08:20:56.590520+00:00"
   }
 ]

@@ -55,11 +55,11 @@ The following URLs were found via **WebSearch only** — this environment's WebF
 
 | URL | Source title | Authority | Format | Quality | Cities | Services |
 |---|---|---|---|---|---|---|
-| https://ahmedabadcity.gov.in/portal/jsp/Static_pages/pi_ccharter.jsp | Citizen Charter :: Ahmedabad Municipal Corporation | Ahmedabad Municipal Corporation (AMC) | HTML | A | Ahmedabad | All services (Citizen Charter) |
+| https://ahmedabadcity.gov.in/portal/jsp/Static_pages/pi_ccharter.jsp | Citizen Charter :: Ahmedabad Municipal Corporation | Ahmedabad Municipal Corporation (AMC) | HTML | A | Ahmedabad | All services (Citizen Charter) | **[CHECKED — 404, page no longer exists. Not usable, not re-tried.]** |
 | https://ahmedabadcity.gov.in/StaticPage/solid_waste_mgmt | Solid Waste Management — AMC | AMC | HTML | A | Ahmedabad | Waste & Sanitation |
 | https://ahmedabadcity.gov.in/Images/_SWM%20Dept_SWM%20BREIF%20NOTE%20IN%20ENGLISH.pdf | SWM Dept — Brief Note (PDF) | AMC | PDF | A | Ahmedabad | Waste & Sanitation | **[PROMOTED TO VERIFIED — see knowledge_records/verified/, sources/inventory.json]**
 | https://amccrs.apphost.in/AMCPortal | AMCCRS — Comprehensive Complaint Redressal System | AMC | Web app | B | Ahmedabad | All services (complaint portal) |
-| https://www.suratmunicipal.gov.in/Downloads/CitizenCharter | Citizen Charter | Surat Municipal Corporation (SMC) | HTML | A | Surat | All services (Citizen Charter) |
+| https://www.suratmunicipal.gov.in/Downloads/CitizenCharter | Citizen Charter | Surat Municipal Corporation (SMC) | HTML | A | Surat | All services (Citizen Charter) | **[CHECKED — page loads, but it's a generic index linking to dept-specific charters (Watch & Ward, Fire, Town Planning, Shops & Establishments, Law, etc.) with NO SWM/Water/Roads/Streetlight-specific PDF among them. Not usable as-is. The actual targets for our 4 categories are the separate department pages already listed above (rows 63-67: solidwastemanagementhome, drainageintroduction, DrainageHowDoI, hydraulichome, StreetLightsHome) — try those instead.]** |
 | https://www.suratmunicipal.gov.in/departments/solidwastemanagementhome | Solid Waste Management Home | SMC | HTML | A | Surat | Waste & Sanitation |
 | https://www.suratmunicipal.gov.in/departments/drainageintroduction | Drainage — Introduction | SMC | HTML | A | Surat | Water & Drainage |
 | https://www.suratmunicipal.gov.in/Departments/DrainageHowDoI | Drainage — How Do I Get a Connection? | SMC | HTML | A | Surat | Water & Drainage |
@@ -237,7 +237,7 @@ The following URLs were found via **WebSearch only** — this environment's WebF
 | https://www.kmcgov.in/KMCPortal/jsp/ComplaintProcedure.jsp | Complaint Procedure — Official Website of KMC | Kolkata Municipal Corporation | HTML | B | Kolkata | All services (complaint procedure) |
 | https://www.kmcgov.in/KMCPortal/ComplaintFormAction.do | KMC Common Complaint e-Form | Kolkata Municipal Corporation | Web form | B | Kolkata | All services (complaint form) |
 | https://www.kmcgov.in/KMCPortal/jsp/CitizenCharter.jsp | Citizen Charter — Official Website of KMC | Kolkata Municipal Corporation | HTML | B | Kolkata | All services (citizen charter) |
-| https://www.kmcgov.in/KMCPortal/jsp/Solid_Waste_Services.html | Solid Waste Management Services | Kolkata Municipal Corporation | HTML | A | Kolkata | Waste & Sanitation |
+| https://www.kmcgov.in/KMCPortal/jsp/Solid_Waste_Services.html | Solid Waste Management Services | Kolkata Municipal Corporation | HTML | A | Kolkata | Waste & Sanitation | **[PROMOTED TO VERIFIED — see knowledge_records/verified/, sources/inventory.json]**
 | https://www.kmcgov.in/KMCPortal/jsp/SolidWasteFAQs.jsp | Solid Waste FAQs | Kolkata Municipal Corporation | HTML | A | Kolkata | Waste & Sanitation |
 | https://www.kmcgov.in/KMCPortal/jsp/Water_Supply.html | Water Supply Department page | Kolkata Municipal Corporation | HTML | A | Kolkata | Water & Drainage (water supply) |
 | https://www.kmcgov.in/KMCPortal/downloads/citizens_charter_water_supply.pdf | Citizens' Charter — Water Supply Department | Kolkata Municipal Corporation | PDF | A | Kolkata | Water & Drainage (water supply — citizen charter) | **[PROMOTED TO VERIFIED — see knowledge_records/verified/, sources/inventory.json]**
@@ -245,10 +245,10 @@ The following URLs were found via **WebSearch only** — this environment's WebF
 | https://www.kmcgov.in/KMCPortal/jsp/WaterConnection.jsp | How to get Water Connection in Your New House? | Kolkata Municipal Corporation | HTML | B | Kolkata | Water & Drainage (new connection) |
 | https://www.kmcgov.in/KMCPortal/jsp/SewerageAndDrainageServices.jsp | Sewerage and Drainage Services | Kolkata Municipal Corporation | HTML | A | Kolkata | Water & Drainage (sewerage/drainage) |
 | https://www.kmcgov.in/KMCPortal/jsp/Manholes.jsp | Manholes — report to Control Room/Borough Office | Kolkata Municipal Corporation | HTML | A | Kolkata | Water & Drainage (manholes) |
-| https://www.kmcgov.in/KMCPortal/jsp/Roads.jsp | Roads Dept. — Official Website of KMC | Kolkata Municipal Corporation | HTML | A | Kolkata | Roads & Potholes |
+| https://www.kmcgov.in/KMCPortal/jsp/Roads.jsp | Roads Dept. — Official Website of KMC | Kolkata Municipal Corporation | HTML | A | Kolkata | Roads & Potholes | **[CHECKED — page loads, but content is only a table of completed civil-works project statistics (km resurfaced, cost, by year) with no complaint procedure, SLA, or contact info for a citizen reporting a pothole. Not usable as a KnowledgeRecord; downgraded to reference-only.]** |
 | https://www.kmcgov.in/KMCPortal/jsp/RoadsContact.jsp | Roads Dept. Contact | Kolkata Municipal Corporation | HTML | A | Kolkata | Roads & Potholes (contact) |
 | https://www.kmcgov.in/KMCPortal/jsp/KMCRoadDevelopmentDetails.jsp | List of KMC Road Development Scheme | Kolkata Municipal Corporation | HTML | B | Kolkata | Roads & Potholes (development scheme) |
-| https://www.kmcgov.in/KMCPortal/jsp/KMCStreetLight.jsp | Street Lighting — Official Website of KMC | Kolkata Municipal Corporation | HTML | A | Kolkata | Streetlights |
+| https://www.kmcgov.in/KMCPortal/jsp/KMCStreetLight.jsp | Street Lighting — Official Website of KMC | Kolkata Municipal Corporation | HTML | A | Kolkata | Streetlights | **[PROMOTED TO VERIFIED — see knowledge_records/verified/, sources/inventory.json]**
 | https://www.kmcgov.in/KMCPortal/jsp/Lighting.html | Lighting Services | Kolkata Municipal Corporation | HTML | A | Kolkata | Streetlights |
 | https://www.myhmc.in/contacts/ | Contacts — Howrah Municipal Corporation | Howrah Municipal Corporation (HMC) | HTML | B | Howrah | All services |
 | https://www.myhmc.in/grs/ | HMC-GRS — Complaint Submission | Howrah Municipal Corporation | Web form | B | Howrah | All services (complaint submission) |
