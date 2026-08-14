@@ -315,7 +315,7 @@ export default function AdminDashboard() {
             ) : filteredComplaints.length === 0 ? (
               <p style={{ color: "var(--ink-2)" }}>{t(lang, "admin.noComplaintsFiltered")}</p>
             ) : (
-              <div className="surface-card" style={{ overflowX: "auto", marginBottom: 34 }}>
+              <div className="surface-card table-scroll" style={{ overflowX: "auto", marginBottom: 34 }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 760 }}>
                   <thead>
                     <tr>

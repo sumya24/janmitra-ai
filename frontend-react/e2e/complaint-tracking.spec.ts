@@ -196,7 +196,10 @@ test("full complaint lifecycle: reject reassigns to the next worker, accept unlo
   await expect(page.getByRole("button", { name: "View Report" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Download Report" })).toBeVisible();
 
-  await page.getByRole("button", { name: "5" }).click();
+  // role: "radio" -- the 5 star-rating controls are a "pick exactly one of five" group, which is
+  // what they're now semantically marked up as (role="radiogroup"/"radio", see
+  // FeedbackForm.tsx and useModalA11y.ts's sibling accessibility pass) instead of plain buttons.
+  await page.getByRole("radio", { name: "5" }).click();
   await page.getByPlaceholder("Optional comment").fill("Fixed fast, thank you!");
   await page.getByRole("button", { name: "Submit feedback" }).click();
   // "Thanks for your feedback!" now renders twice at once: the toast (exact) and the on-page
