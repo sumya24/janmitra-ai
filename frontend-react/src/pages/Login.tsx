@@ -62,13 +62,36 @@ export default function Login() {
           <form onSubmit={handleSubmit} noValidate>
             <div className={`field ${fieldErrors.phone ? "has-error" : ""}`}>
               <label htmlFor="login-phone">{t(lang, "auth.field.phone")}</label>
-              <input id="login-phone" type="tel" placeholder="98xxxxxxxx" value={phone} onChange={(e) => setPhone(e.target.value)} />
-              {fieldErrors.phone && <div className="field-error">{t(lang, "common.fieldRequired")}</div>}
+              <input
+                id="login-phone"
+                type="tel"
+                placeholder="98xxxxxxxx"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                aria-invalid={fieldErrors.phone || undefined}
+                aria-describedby={fieldErrors.phone ? "login-phone-error" : undefined}
+              />
+              {fieldErrors.phone && (
+                <div className="field-error" id="login-phone-error">
+                  {t(lang, "common.fieldRequired")}
+                </div>
+              )}
             </div>
             <div className={`field ${fieldErrors.password ? "has-error" : ""}`}>
               <label htmlFor="login-password">{t(lang, "auth.field.password")}</label>
-              <input id="login-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-              {fieldErrors.password && <div className="field-error">{t(lang, "common.fieldRequired")}</div>}
+              <input
+                id="login-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                aria-invalid={fieldErrors.password || undefined}
+                aria-describedby={fieldErrors.password ? "login-password-error" : undefined}
+              />
+              {fieldErrors.password && (
+                <div className="field-error" id="login-password-error">
+                  {t(lang, "common.fieldRequired")}
+                </div>
+              )}
             </div>
             <button type="submit" className="btn btn-primary full" disabled={submitting}>
               {submitting ? "…" : t(lang, "auth.login.button")}

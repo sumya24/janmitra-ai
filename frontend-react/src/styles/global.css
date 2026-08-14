@@ -238,6 +238,19 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
   overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
 }
 
+/* Skip-to-content link (TopBar.tsx) -- same "hidden until focused" technique as .sr-only, but
+   this one needs to become visible on focus (a keyboard user needs to see it to know it's
+   there), so it can't just reuse .sr-only itself. Sits above everything (including the topbar
+   at its own z-index) since it must be reachable by the very first Tab press on any
+   authenticated page. */
+.skip-link {
+  position: fixed; top: -100px; left: 12px; z-index: 300;
+  background: var(--accent); color: var(--accent-ink); font-weight: 700; font-size: 13px;
+  padding: 10px 16px; border-radius: 8px; box-shadow: var(--shadow-lg); text-decoration: none;
+  transition: top var(--dur-fast) var(--ease-out);
+}
+.skip-link:focus { top: 12px; }
+
 /* Headings use the same Inter family as body text (no decorative display face, per brand
    direction) at a heavier weight -- hierarchy comes from size/weight/spacing, not a second
    typeface. */

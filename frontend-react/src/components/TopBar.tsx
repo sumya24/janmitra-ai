@@ -29,6 +29,14 @@ export default function TopBar() {
 
   return (
     <>
+      {/* Visually hidden until keyboard-focused (see .skip-link in global.css) -- lets a
+          keyboard user jump straight past the header/nav-drawer-toggle/notification bell/theme
+          toggle/settings button to the page's own content, instead of tabbing through all of
+          them on every single page. #main-content is set on every Citizen/Worker/Admin page's
+          outer .page/.page-admin wrapper. */}
+      <a href="#main-content" className="skip-link">
+        {t(lang, "topbar.skipToContent")}
+      </a>
       <div className="topbar">
         <div className="topbar-left">
           {/* The one page/tab navigation drawer, role-filtered -- see NavDrawer.tsx. Renders a
