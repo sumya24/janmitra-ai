@@ -253,7 +253,7 @@ retrieved_at: 2026-08-09 (via WebSearch only)
 verification_status: NOT INDEPENDENTLY FETCHED — confirm before production use
 source_quality: B
 geographic_scope: city
-notes: **Important jurisdiction-split finding**: for Bengaluru, water supply and sewerage is handled by BWSSB, a separate state statutory board — NOT by BBMP (the municipal corporation that handles waste/roads/streetlights). Any JanMitra routing logic for Bengaluru water complaints must point to BWSSB channels, not BBMP's Sahaaya/Fix My Street system. The 3-level escalation structure is more explicit than anything found for BBMP's own (non-water) categories in this pass.
+notes: **Important jurisdiction-split finding**: for Bengaluru, water supply and sewerage is handled by BWSSB, a separate state statutory board — NOT by BBMP (the municipal corporation that handles waste/roads/streetlights). Any JanSarthi routing logic for Bengaluru water complaints must point to BWSSB channels, not BBMP's Sahaaya/Fix My Street system. The 3-level escalation structure is more explicit than anything found for BBMP's own (non-water) categories in this pass.
 ```
 
 ### Record: Karnataka-Bengaluru-Streetlight
@@ -581,7 +581,7 @@ notes: Structured/SQL-suitable data source, useful for analytics rather than cit
   about LED luminosity surfaced, not a citizen procedure).
 - **Jurisdiction-split finding (important):** Bengaluru's water supply and
   sewerage is run by BWSSB, a separate state statutory board — **not**
-  BBMP. This must be reflected in any future JanMitra routing logic for
+  BBMP. This must be reflected in any future JanSarthi routing logic for
   Bengaluru water/drainage complaints; BBMP's Sahaaya/Fix My Street
   channels are not the right destination for those.
 - **Third-city choice:** Mangaluru was used (per the assignment's

@@ -207,7 +207,7 @@ retrieved_at: 2026-08-09 (via WebSearch only)
 verification_status: NOT INDEPENDENTLY FETCHED — confirm before production use
 source_quality: B
 geographic_scope: city
-notes: **Important jurisdiction-split finding**: for Chennai, water supply and sewerage is run by CMWSSB, a separate state statutory board — **not** GCC. Any JanMitra routing logic for Chennai water/drainage complaints must point to CMWSSB channels (14420 / 1916 / cmwssb.tn.gov.in), not GCC's Namma Chennai/PGR system. CMWSSB's own Citizen's Charter (in force since 1998, per a government order) is a strong candidate for a future quality-A record once its content can be directly fetched and read — this pass only confirmed the charter's existence and 1998 origin, not its specific SLA text, so it is kept at B rather than A here.
+notes: **Important jurisdiction-split finding**: for Chennai, water supply and sewerage is run by CMWSSB, a separate state statutory board — **not** GCC. Any JanSarthi routing logic for Chennai water/drainage complaints must point to CMWSSB channels (14420 / 1916 / cmwssb.tn.gov.in), not GCC's Namma Chennai/PGR system. CMWSSB's own Citizen's Charter (in force since 1998, per a government order) is a strong candidate for a future quality-A record once its content can be directly fetched and read — this pass only confirmed the charter's existence and 1998 origin, not its specific SLA text, so it is kept at B rather than A here.
 ```
 
 ### Record: TamilNadu-Chennai-AllServices-GCCandStateEscalation

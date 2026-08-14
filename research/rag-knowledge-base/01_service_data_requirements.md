@@ -126,6 +126,6 @@ Per `00_README.md`'s per-record template:
 
 ## Data NOT collected under this research
 
-Per `00_README.md` rule 6: no citizen/worker/complaint IDs, no JanMitra
+Per `00_README.md` rule 6: no citizen/worker/complaint IDs, no JanSarthi
 internal workflow data, no private citizen information. This research is
 strictly public, official, government-published information.

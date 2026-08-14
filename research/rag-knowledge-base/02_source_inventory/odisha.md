@@ -205,7 +205,7 @@ retrieved_at: 2026-08-09 (via WebSearch only)
 verification_status: NOT INDEPENDENTLY FETCHED — confirm before production use
 source_quality: B
 geographic_scope: city
-notes: **Important jurisdiction-split finding**: Bhubaneswar's piped water supply is predominantly run by the state PHED (Public Health Engineering Organization), not BMC — matching the pattern found for Bengaluru/BWSSB (Karnataka) and Chennai/CMWSSB (Tamil Nadu). Any JanMitra routing logic for Bhubaneswar water complaints should point to PHED channels rather than BMC's general grievance line, though BMC's own citizenservices.bhubaneswar.me portal also lists water as a grievance category — the exact division of labor between the two channels (state PHED infrastructure vs. BMC-forwarded citizen complaints) was not fully resolved in this pass and needs direct-fetch follow-up. Drainage/sewerage specifically (as opposed to water supply) was not clearly attributed to either PHED or BMC in the search results found — flag as a further open question.
+notes: **Important jurisdiction-split finding**: Bhubaneswar's piped water supply is predominantly run by the state PHED (Public Health Engineering Organization), not BMC — matching the pattern found for Bengaluru/BWSSB (Karnataka) and Chennai/CMWSSB (Tamil Nadu). Any JanSarthi routing logic for Bhubaneswar water complaints should point to PHED channels rather than BMC's general grievance line, though BMC's own citizenservices.bhubaneswar.me portal also lists water as a grievance category — the exact division of labor between the two channels (state PHED infrastructure vs. BMC-forwarded citizen complaints) was not fully resolved in this pass and needs direct-fetch follow-up. Drainage/sewerage specifically (as opposed to water supply) was not clearly attributed to either PHED or BMC in the search results found — flag as a further open question.
 ```
 
 ### Record: Odisha-Bhubaneswar-AllServices-UnifiedHelpline
@@ -256,7 +256,7 @@ retrieved_at: 2026-08-09 (via WebSearch only)
 verification_status: NOT INDEPENDENTLY FETCHED — confirm before production use
 source_quality: B
 geographic_scope: city
-notes: The 4-agency unification (BMC + BSCL + BDA + CRUT under one helpline) is a distinctive structural feature not seen in the other 2 states researched — worth capturing in any future JanMitra Odisha-specific routing design, since it means a single Bhubaneswar helpline number may route to a Smart City company or transit authority rather than the municipal corporation for some categories. The 2006 Citizen Charter reference (13,473/14,779 disposed) is old and should be treated as historical context only, not current performance — flagged per the OUTDATED sentinel guidance if ever cited as a live statistic.
+notes: The 4-agency unification (BMC + BSCL + BDA + CRUT under one helpline) is a distinctive structural feature not seen in the other 2 states researched — worth capturing in any future JanSarthi Odisha-specific routing design, since it means a single Bhubaneswar helpline number may route to a Smart City company or transit authority rather than the municipal corporation for some categories. The 2006 Citizen Charter reference (13,473/14,779 disposed) is old and should be treated as historical context only, not current performance — flagged per the OUTDATED sentinel guidance if ever cited as a live statistic.
 ```
 
 ### Record: Odisha-HUD-CitizenCharterDraft

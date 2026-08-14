@@ -1,8 +1,8 @@
-# JanMitra AI — RAG Knowledge Base: Data Foundation
+# JanSarthi AI — RAG Knowledge Base: Data Foundation
 
 This folder is **research and data collection only** — it is preparation
 for a future RAG (retrieval-augmented generation) knowledge base that
-will eventually let JanMitra AI ground complaint handling in real,
+will eventually let JanSarthi AI ground complaint handling in real,
 official government information (which department handles what, SLAs,
 escalation paths, official contact channels) instead of just translating
 and summarizing complaints as the app does today.
@@ -68,9 +68,9 @@ Primary RAG content should preferably come from A and B sources.
 
 ### 6. What must NOT go into this knowledge base
 Citizen IDs, worker IDs, complaint IDs, mock worker data, live complaint
-status, assignment info, internal JanMitra workflow data, or any private
+status, assignment info, internal JanSarthi workflow data, or any private
 citizen information. This is a *government-facts* knowledge base, not a
-copy of JanMitra's own transactional data — that stays in the app's own
+copy of JanSarthi's own transactional data — that stays in the app's own
 database (`backend/models.py`).
 
 ## The 4 civic service categories in scope
