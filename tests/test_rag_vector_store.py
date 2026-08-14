@@ -92,19 +92,17 @@ def test_embedding_batch_matches_individual_embeddings():
 def test_chroma_collection_opens_and_reports_expected_size():
     store = _real_store()
     assert store.is_loaded
-    # 731, not the earlier 692 -- a large push (round 5) targeted the 10 cities that previously
-    # had ONLY synthetic placeholders and had never been researched at all. 13 new VERIFIED
-    # records survived across 8 of those 10 cities (Gaya, New Delhi/NDMC -- a genuinely distinct
-    # authority from Delhi/MCD, Faridabad, Mysuru, Thiruvananthapuram, Nagpur, Chennai, Warangal),
-    # each with a real, directly-fetched primary source (official ULB websites, RTS Act pages, SLA
-    # timelines, complaint directories with named officers). 2 cities (Vijayawada, Jodhpur) came up
-    # empty after a genuine attempt each -- see data/rag_knowledge_base/sources/candidate_urls.md's
-    # "Round 5" section for the full research log, including why a real-but-pre-2014
-    # undivided-Andhra-Pradesh circular was deliberately NOT used for Vijayawada (would misrepresent
-    # its scope). Confirmed by actually running `scripts/build_rag_embeddings.py` against the real
-    # embedding model (intfloat/multilingual-e5-small) and reading the resulting ChromaDB collection
-    # size directly -- not counted by hand.
-    assert store.size == 731
+    # 740, not the earlier 731 -- the Priority-2 partial-coverage half of round 5 added 3 more
+    # VERIFIED records for Ahmedabad (Water/Drainage + Roads + Streetlights), found via AMC's own
+    # AMCCRS complaint portal (amccrs.com) -- a genuinely different domain from the TLS-blocked
+    # ahmedabadcity.gov.in confirmed exhausted in round 4, with a real 24x7 toll-free/SMS/email/
+    # WhatsApp channel confirmed via direct fetch. 5 other Priority-2 gaps (Patna, Gurugram,
+    # Bhopal, Lucknow, Howrah) were genuinely attempted and confirmed still open; see
+    # data/rag_knowledge_base/sources/candidate_urls.md's "Priority-2 partial-coverage sweep"
+    # section for the full log. Confirmed by actually running `scripts/build_rag_embeddings.py`
+    # against the real embedding model (intfloat/multilingual-e5-small) and reading the resulting
+    # ChromaDB collection size directly -- not counted by hand.
+    assert store.size == 740
 
 
 def test_chroma_persist_dir_is_configurable_not_hardcoded():

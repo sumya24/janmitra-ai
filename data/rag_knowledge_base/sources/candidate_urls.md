@@ -1,5 +1,29 @@
 # RAG Knowledge Base — Source Research Log
 
+## Round 5, continued: Priority-2 partial-coverage sweep (2026-08-14, same session)
+
+Follow-up pass at the 10 Priority-2 partial-coverage gaps flagged for this round. Time allowed a
+real attempt at 6 of the 10; the other 4 (Bengaluru, Bhopal/Indore, Varanasi) were not reached this
+pass. 1 city (Ahmedabad) produced 3 new records; the rest came up empty after a genuine attempt.
+
+| City / Gap | Result | Notes |
+|---|---|---|
+| **Ahmedabad, Gujarat (Water/Drainage + Roads/Streetlights)** | **PROMOTED TO VERIFIED (3 records)** | **[PROMOTED TO VERIFIED — see knowledge_records/verified/gujarat/ahmedabad.json (GJ_AMC_AMCCRS_WATER_DRAINAGE_CHANNEL, GJ_AMC_AMCCRS_ROADS_CHANNEL, GJ_AMC_AMCCRS_STREETLIGHT_CHANNEL), sources/inventory.json. AMC's own AMCCRS portal (amccrs.com) — a genuinely different domain from the TLS-blocked ahmedabadcity.gov.in confirmed exhausted in round 4 — gave real, specific complaint categories for all 3 gap categories, plus a real 24x7 toll-free (155303), SMS shortcode (56767), email, and WhatsApp channel, all confirmed via direct fetch of the AMCCRS homepage itself (not just a WebSearch summary). No numeric SLA published. Closes Ahmedabad's Water gap entirely and its Roads/Streetlights gap (previously only Surat had these).]** |
+| **Patna, Bihar (Water/Roads/Streetlights)** | **NO NEW RECORDS** | **[CHECKED — pmc.bihar.gov.in/drainage.aspx gives only the same general PMC office contact already recorded for Waste (0612-2223791), no drainage-specific content. Guessed URLs for a Water Board Details page and a Street Lights Installation page both returned empty content. The Citizen Charter landing page still does not link to an actual downloadable charter document. Patna's Water/Roads/Streetlights gaps remain open.]** |
+| **Gurugram, Haryana (Water/Roads/Streetlights)** | **NO NEW RECORDS** | **[CHECKED — mcg.gov.in/GriMaster.aspx returns only a page title, no body content (same JS-rendering issue confirmed for mcg.gov.in generally in an earlier round). wssbilling.mcg.gov.in (a subdomain found via search) fails DNS resolution entirely (ENOTFOUND). A real LED-streetlight toll-free number (18001803580) was found only via a WebSearch-surfaced tweet from MCG's own account — not independently confirmed via a direct fetch of an official page, so NOT promoted per the primary-source-only rule. Gurugram's gaps remain open.]** |
+| **Bengaluru, Karnataka (Roads/Streetlights)** | **NOT ATTEMPTED THIS PASS** | Per the round's own instructions, BBMP/GBA-domain retries were explicitly skipped (confirmed TLS-blocked across 2 prior rounds); no genuinely new non-karnataka.gov.in domain surfaced during this pass's other searches. Remains open. |
+| **Bhopal & Indore, Madhya Pradesh (Water/Roads/Streetlights)** | **CONFIRMED DEAD END (Bhopal)** | **[CHECKED — bhopalmunicipal.com (the alternate domain suggested for this round) returns HTTP 403 Forbidden on direct fetch. bmconline.gov.in remains confirmed-empty from round 4. A real general phone/email (+91-755-2701222, commoffice@bmconline.gov.in) surfaced only via WebSearch, never independently confirmed via a direct fetch of an official page, so NOT promoted. Indore was not re-attempted this pass (imcindore.mp.gov.in already confirmed empty twice). Both remain open.]** |
+| **Lucknow, Uttar Pradesh (Water/Roads/Streetlights)** | **NO NEW RECORDS** | **[CHECKED — the one specific PDF found via search (lmc.up.nic.in/ViewPDF.ashx?Id=506) was fetched and fully read via the Read-tool-on-saved-PDF workaround: it is a real LMC document, but a 2016 PPP tender notice for a housing scheme, completely unrelated to citizen complaint SLAs. It does confirm a real general LMC phone/fax (0522-2622440) and email (nnlko@up.nic.in), already redundant with what's likely available elsewhere. Lucknow's Water/Roads/Streetlights gaps remain open.]** |
+| **Varanasi, Uttar Pradesh (Roads/Streetlights)** | **NOT ATTEMPTED THIS PASS** | Not reached due to time; remains open. |
+| **Howrah, West Bengal (Waste/Water/Streetlights)** | **NO NEW RECORDS** | **[CHECKED — myhmc.in/grs/ (grievance system) and myhmc.in/departments-2/ both return HTTP 403 Forbidden on direct fetch (the domain appears to block automated/bot requests generally). A real toll-free number (1800 121 500 000) and support line (033-2638 3211) surfaced only via WebSearch, never independently confirmed via a direct fetch, so NOT promoted. Howrah's Waste/Water/Streetlights gaps remain open (only the state-wide WB PWD Roads record currently covers Howrah).]** |
+
+### Net result of the Priority-2 pass
+
+3 new VERIFIED records (Ahmedabad only). 5 of the remaining 9 gaps (Patna, Gurugram, Bhopal,
+Lucknow, Howrah) were genuinely attempted and confirmed still-open with specific reasons logged.
+4 (Delhi Streetlights, Bengaluru, Indore, Varanasi) were not reached this pass due to time —
+flagged as remaining work for a follow-up round.
+
 ## Round 5 (2026-08-14, session 5): first pass at Priority-1 zero-coverage cities
 
 Large push targeting the 10 cities that previously had ONLY synthetic placeholders (never

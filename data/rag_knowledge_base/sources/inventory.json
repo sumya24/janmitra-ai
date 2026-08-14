@@ -557,5 +557,18 @@
     "retrieved_at": "2026-08-14T15:16:44.121007Z",
     "geographic_scope": "CITY",
     "notes": "Warangal's first-ever real record (previously zero coverage). gwmc.gov.in was a real, quality-A lead flagged in the original research pass and now independently fetched -- real call center number and grievance portal confirmed, but both attempted pages (grievance_registration.aspx, ContactUs_New.aspx) lack department-specific contacts or numeric SLA."
+  },
+  {
+    "source_id": "GJ_AMC_AMCCRS_PORTAL",
+    "source_title": "AMCCRS -- Citizen Complaint Redressal & Service Tracking, Ahmedabad Municipal Corporation",
+    "source_organization": "Ahmedabad Municipal Corporation (AMC)",
+    "source_url": "http://www.amccrs.com",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-14T15:27:18.510785Z",
+    "geographic_scope": "CITY",
+    "notes": "Closes Ahmedabad's Water/Drainage and Roads/Streetlights category gaps (Water was previously fully open; Roads/Streetlights were previously covered only for Surat). amccrs.com is a genuinely different domain from the TLS-blocked ahmedabadcity.gov.in (confirmed exhausted in round 4) -- confirms the round-4 hypothesis that AMC's own primary domain is blocked but the city still publishes real content elsewhere. Toll-free 155303, SMS 56767, email, and WhatsApp all confirmed via direct fetch of the AMCCRS homepage; the complaint-category list confirmed via the ComplaintRegistration.aspx page. No numeric SLA found on either page."
   }
 ]
