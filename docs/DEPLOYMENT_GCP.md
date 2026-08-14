@@ -46,7 +46,7 @@ this is memory the app claims immediately on boot, not just under peak load:
 
 That's before the OS, Docker itself, and the Caddy container (which also has to fit on the same
 1GB VM) take their share. So on Option A, a swap file isn't a "nice to have" — without it, expect
-the backend to get OOM-killed at startup or on the first Ask JanMitra request. Swap doesn't add
+the backend to get OOM-killed at startup or on the first Ask Sarthi request. Swap doesn't add
 real memory either; it lets the OS spill overflow onto disk instead of crashing, which is roughly
 100-1000x slower than RAM — it turns "crashes" into "works, but noticeably slower," not into
 "works properly." Option B's 4GB avoids all of this outright.
@@ -135,7 +135,7 @@ docker compose version   # confirm the Compose plugin is present
 ```
 
 **Option A only** — also add swap, or the backend will very likely get OOM-killed on startup or
-on the first Ask JanMitra request (1GB isn't enough on its own for torch + sentence-transformers
+on the first Ask Sarthi request (1GB isn't enough on its own for torch + sentence-transformers
 + ChromaDB together):
 
 ```bash

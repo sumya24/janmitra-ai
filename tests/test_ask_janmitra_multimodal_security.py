@@ -1,4 +1,4 @@
-"""Security/authorization regression for the multimodal Ask JanMitra endpoints (Phase 8).
+"""Security/authorization regression for the multimodal Ask Sarthi endpoints (Phase 8).
 
 Verifies the new `/ask-janmitra/image` and `/ask-janmitra/voice` endpoints do not introduce any
 new authorization bypass relative to the existing, already-tested `/ask-janmitra` (text) endpoint

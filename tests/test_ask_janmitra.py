@@ -1,4 +1,4 @@
-"""Tests for the Ask JanMitra RAG retrieval endpoint and its underlying services.
+"""Tests for the Ask Sarthi RAG retrieval endpoint and its underlying services.
 
 Uses the REAL, checked-in ChromaDB collection (data/rag_knowledge_base/chroma, built by
 scripts/build_rag_embeddings.py from the real 131-record knowledge base via
@@ -529,7 +529,7 @@ def test_status_bypasses_rag_explicitly(client, monkeypatch, db_session, make_ci
 
 def test_type_a_without_location_does_not_create_a_complaint_yet(client, monkeypatch, db_session, make_citizen):
     """Renamed/rewritten from the pre-orchestration `test_complaint_creation_intent_is_not_this_
-    endpoint`, which asserted Ask JanMitra never creates complaints -- that guarantee was
+    endpoint`, which asserted Ask Sarthi never creates complaints -- that guarantee was
     deliberately changed this phase (see module docstring). What's still true, and still worth a
     regression test: a complaint is created ONLY once enough information (category + location)
     is actually available -- an incomplete complaint-shaped message must never create a

@@ -377,6 +377,6 @@ def test_voice_plus_image_request_creates_all_three_child_spans_in_order(client,
 
     assert response.status_code == 200, response.text
     # STT before vision before TTS -- matches docs/ask_janmitra_langsmith_observability.md §9.1's
-    # "Ask JanMitra Voice -> STT -> Vision -> LangGraph -> ... -> TTS" diagram.
+    # "Ask Sarthi Voice -> STT -> Vision -> LangGraph -> ... -> TTS" diagram.
     assert start_child_calls.index("speech_to_text") < start_child_calls.index("vision_processing")
     assert start_child_calls.index("vision_processing") < start_child_calls.index("text_to_speech")
