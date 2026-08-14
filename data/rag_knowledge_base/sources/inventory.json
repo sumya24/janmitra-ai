@@ -180,5 +180,44 @@
     "retrieved_at": "2026-08-14T08:21:24.774821+00:00",
     "geographic_scope": "CITY",
     "notes": "HTML page text pasted directly by the user (WebFetch was unavailable this pass). Full FAQ + 6-zone ward/contact table read directly. Concrete citizen-facing content: Control Room numbers, zonal Executive Engineer (Lighting) contacts mapped to specific boroughs/wards, and guidance on what to report (non-glowing/daytime-lit lights, missing lights, damaged poles/wiring, equipment pilferage). No numeric SLA stated. Used for 1 KnowledgeRecord -- see knowledge_records/verified/west_bengal/kolkata.json."
+  },
+  {
+    "source_id": "AP_GVMC_GRIEVANCES_PAGE",
+    "source_title": "Grievances — Modes of Registering Grievances by the Citizens",
+    "source_organization": "Greater Visakhapatnam Municipal Corporation (GVMC)",
+    "source_url": "https://www.gvmc.gov.in/static_content/Grievances.jsp",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-14T09:59:45.454607+00:00",
+    "geographic_scope": "CITY",
+    "notes": "HTML page text pasted directly by the user (WebFetch was unavailable this pass). Real, detailed IVRS/PGRS/online/app grievance-channel content -- toll-free 1800-4250-0009 (6 AM-8 PM), weekly Monday PGRS walk-in, complaint-number SMS confirmation flow. The mechanism is genuinely generic across service types (one call centre routes to 'the concerned official' internally), so it was used to build 4 near-identical category-specific KnowledgeRecords (WASTE_SANITATION, WATER_DRAINAGE, ROADS_POTHOLES, STREETLIGHTS) rather than one -- this reflects how the real channel works, not an invented split. No numeric SLA stated. Used for 4 KnowledgeRecords -- see knowledge_records/verified/andhra_pradesh/visakhapatnam.json."
+  },
+  {
+    "source_id": "GJ_SMC_SWM_HOME_PAGE",
+    "source_title": "Solid Waste Management — SWM Home",
+    "source_organization": "Surat Municipal Corporation (SMC)",
+    "source_url": "https://www.suratmunicipal.gov.in/departments/solidwastemanagementhome",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": "2019-10-08",
+    "retrieved_at": "2026-08-14T09:59:45.454607+00:00",
+    "geographic_scope": "CITY",
+    "notes": "HTML page text pasted directly by the user (WebFetch was unavailable this pass). Lists department objectives and a genuinely useful live public tool: Door-to-Door Vehicle Tracking at swm.suratmunicipal.org (login public/public). No SWM-specific complaint number, procedure, or SLA is stated on this page -- only the site-wide general complaint form is referenced. Used for 1 KnowledgeRecord -- see knowledge_records/verified/gujarat/surat.json."
+  },
+  {
+    "source_id": "GJ_SMC_STREETLIGHT_HOME_PAGE",
+    "source_title": "Street Light — Streetlight Home",
+    "source_organization": "Surat Municipal Corporation (SMC)",
+    "source_url": "https://www.suratmunicipal.gov.in/Departments/StreetLightsHome",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": "2022-07-21",
+    "retrieved_at": "2026-08-14T09:59:45.454607+00:00",
+    "geographic_scope": "CITY",
+    "notes": "HTML page text pasted directly by the user (WebFetch was unavailable this pass). Describes department structure (8 zone offices + HQ) and functions, and links to a dedicated 'Non-working Streetlights' sub-page that was NOT itself fetched in this pass and likely holds the actual reporting procedure -- logged as a good next candidate. No complaint number, procedure, or SLA is stated on this specific page. Used for 1 KnowledgeRecord -- see knowledge_records/verified/gujarat/surat.json."
   }
 ]

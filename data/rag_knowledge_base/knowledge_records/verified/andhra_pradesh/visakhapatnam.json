@@ -1,0 +1,238 @@
+[
+  {
+    "record_id": "AP_GVMC_GRIEVANCE_WASTE_SANITATION",
+    "service_id": "AP_GVMC_GRIEVANCE_WASTE_SANITATION",
+    "service_name": "Civic Grievance Redressal (Waste & Sanitation)",
+    "sub_service": "General civic complaint intake via IVRS/PGRS/online/app",
+    "problem_type": "Uncollected garbage, sanitation/cleanliness complaint",
+    "service_category": "WASTE_SANITATION",
+    "state": "Andhra Pradesh",
+    "district": null,
+    "city": "Visakhapatnam",
+    "municipality": "Greater Visakhapatnam Municipal Corporation (GVMC)",
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "CITY",
+    "department": "GVMC Call Centre / Public Grievance Redressal",
+    "authority": "Concerned official notified per complaint (department not identified from the citizen-facing channel itself)",
+    "description": "Greater Visakhapatnam Municipal Corporation (GVMC) runs one unified grievance mechanism across all civic complaint types, with four channels: (1) a toll-free IVRS call centre, 1800-4250-0009, staffed 6:00 AM-8:00 PM -- dialling 1 records a complaint (name, address, phone) after the beep, issues a complaint number, SMS-notifies the concerned official with full details, SMS-confirms the complaint number to the citizen, and SMS-confirms again once the complaint is marked redressed; (2) PGRS (Public Grievance Redressal System), an in-person walk-in session every Monday 11:00 AM-1:00 PM at GVMC's premises; (3) an Online Grievance Redressal System (web); (4) the Smart Vizag mobile app. The same IVRS number also handles related requests when dialling 2 (water tanker request -- transferred to a call-centre operator who logs details, generates a code, and informs the filling station) and 3/4 (tax and general prerequisite information, e.g. for a new water connection, title transfer, birth/death certificate).",
+    "procedure": "Call the toll-free IVRS number 1800-4250-0009 (6:00 AM-8:00 PM) and press 1 to record a complaint (name, address, phone number) after the beep -- a complaint number is issued and confirmed by SMS, with an SMS notification also sent to the responsible official. Alternatively, attend the weekly in-person PGRS session (every Monday, 11:00 AM-1:00 PM, at GVMC's premises), use the Online Grievance Redressal System, or the Smart Vizag mobile app.",
+    "required_information": [
+      "Name",
+      "Address",
+      "Telephone number"
+    ],
+    "required_documents": [],
+    "sla": "SLA NOT FOUND — the page describes the complaint-lodging and confirmation workflow (SMS at each step) in detail but does not state a numeric response/resolution-time commitment.",
+    "expected_response_time": null,
+    "expected_resolution_time": null,
+    "complaint_channel": [
+      "Toll-free IVRS: 1800-4250-0009 (6:00 AM-8:00 PM daily) — press 1 for complaints",
+      "PGRS (Public Grievance Redressal System) — in-person, every Monday 11:00 AM-1:00 PM at GVMC premises",
+      "Online Grievance Redressal System (GVMC website)",
+      "Smart Vizag mobile app"
+    ],
+    "contact_information": "Toll-free IVRS: 1800-4250-0009 (6:00 AM-8:00 PM daily)",
+    "escalation_procedure": "ESCALATION INFORMATION NOT FOUND — the page describes the intake/confirmation workflow but does not name a further escalation authority beyond 'the concerned official'.",
+    "escalation_authority": null,
+    "faq": [
+      {
+        "question": "How do I lodge a civic complaint with GVMC?",
+        "answer": "Call the toll-free IVRS number 1800-4250-0009 (6 AM-8 PM) and press 1, or use the PGRS walk-in session (Mondays 11 AM-1 PM at GVMC premises), the Online Grievance Redressal System, or the Smart Vizag app."
+      },
+      {
+        "question": "Will I get a reference number for my complaint?",
+        "answer": "Yes — after recording your complaint via IVRS, a complaint number is generated and sent to you by SMS, and again once the complaint is marked redressed."
+      }
+    ],
+    "citizen_guidance": "For any civic complaint in Visakhapatnam, call the toll-free IVRS number 1800-4250-0009 (6 AM-8 PM) and press 1 — you'll get an SMS with a complaint number, and another SMS once it's resolved. In-person, online, and app channels are also available.",
+    "source_id": "AP_GVMC_GRIEVANCES_PAGE",
+    "source_title": "Grievances — Modes of Registering Grievances by the Citizens",
+    "source_organization": "Greater Visakhapatnam Municipal Corporation (GVMC)",
+    "source_url": "https://www.gvmc.gov.in/static_content/Grievances.jsp",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-14T09:59:18.952651+00:00",
+    "created_at": "2026-08-14T09:59:18.952651+00:00"
+  },
+  {
+    "record_id": "AP_GVMC_GRIEVANCE_WATER_DRAINAGE",
+    "service_id": "AP_GVMC_GRIEVANCE_WATER_DRAINAGE",
+    "service_name": "Civic Grievance Redressal (Water & Drainage) + Water Tanker Requests",
+    "sub_service": "General civic complaint intake via IVRS/PGRS/online/app; dedicated water-tanker request line",
+    "problem_type": "Water supply/drainage complaint, need for a water tanker",
+    "service_category": "WATER_DRAINAGE",
+    "state": "Andhra Pradesh",
+    "district": null,
+    "city": "Visakhapatnam",
+    "municipality": "Greater Visakhapatnam Municipal Corporation (GVMC)",
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "CITY",
+    "department": "GVMC Call Centre / Public Grievance Redressal",
+    "authority": "Concerned official notified per complaint (department not identified from the citizen-facing channel itself)",
+    "description": "Greater Visakhapatnam Municipal Corporation (GVMC) runs one unified grievance mechanism across all civic complaint types, with four channels: (1) a toll-free IVRS call centre, 1800-4250-0009, staffed 6:00 AM-8:00 PM -- dialling 1 records a complaint (name, address, phone) after the beep, issues a complaint number, SMS-notifies the concerned official with full details, SMS-confirms the complaint number to the citizen, and SMS-confirms again once the complaint is marked redressed; (2) PGRS (Public Grievance Redressal System), an in-person walk-in session every Monday 11:00 AM-1:00 PM at GVMC's premises; (3) an Online Grievance Redressal System (web); (4) the Smart Vizag mobile app. The same IVRS number also handles related requests when dialling 2 (water tanker request -- transferred to a call-centre operator who logs details, generates a code, and informs the filling station) and 3/4 (tax and general prerequisite information, e.g. for a new water connection, title transfer, birth/death certificate).",
+    "procedure": "Call the toll-free IVRS number 1800-4250-0009 (6:00 AM-8:00 PM) and press 1 to record a complaint (name, address, phone number) after the beep -- a complaint number is issued and confirmed by SMS, with an SMS notification also sent to the responsible official. Alternatively, attend the weekly in-person PGRS session (every Monday, 11:00 AM-1:00 PM, at GVMC's premises), use the Online Grievance Redressal System, or the Smart Vizag mobile app. For a water tanker specifically, dialling 2 on the same IVRS number transfers the call to an operator who logs the request, generates a code, and informs the filling station directly.",
+    "required_information": [
+      "Name",
+      "Address",
+      "Telephone number"
+    ],
+    "required_documents": [],
+    "sla": "SLA NOT FOUND — the page describes the complaint-lodging and confirmation workflow (SMS at each step) in detail but does not state a numeric response/resolution-time commitment.",
+    "expected_response_time": null,
+    "expected_resolution_time": null,
+    "complaint_channel": [
+      "Toll-free IVRS: 1800-4250-0009 (6:00 AM-8:00 PM daily) — press 1 for complaints",
+      "PGRS (Public Grievance Redressal System) — in-person, every Monday 11:00 AM-1:00 PM at GVMC premises",
+      "Online Grievance Redressal System (GVMC website)",
+      "Smart Vizag mobile app"
+    ],
+    "contact_information": "Toll-free IVRS: 1800-4250-0009 (6:00 AM-8:00 PM daily)",
+    "escalation_procedure": "ESCALATION INFORMATION NOT FOUND — the page describes the intake/confirmation workflow but does not name a further escalation authority beyond 'the concerned official'.",
+    "escalation_authority": null,
+    "faq": [
+      {
+        "question": "How do I lodge a civic complaint with GVMC?",
+        "answer": "Call the toll-free IVRS number 1800-4250-0009 (6 AM-8 PM) and press 1, or use the PGRS walk-in session (Mondays 11 AM-1 PM at GVMC premises), the Online Grievance Redressal System, or the Smart Vizag app."
+      },
+      {
+        "question": "Will I get a reference number for my complaint?",
+        "answer": "Yes — after recording your complaint via IVRS, a complaint number is generated and sent to you by SMS, and again once the complaint is marked redressed."
+      }
+    ],
+    "citizen_guidance": "For any civic complaint in Visakhapatnam, call the toll-free IVRS number 1800-4250-0009 (6 AM-8 PM) and press 1 — you'll get an SMS with a complaint number, and another SMS once it's resolved. In-person, online, and app channels are also available.",
+    "source_id": "AP_GVMC_GRIEVANCES_PAGE",
+    "source_title": "Grievances — Modes of Registering Grievances by the Citizens",
+    "source_organization": "Greater Visakhapatnam Municipal Corporation (GVMC)",
+    "source_url": "https://www.gvmc.gov.in/static_content/Grievances.jsp",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-14T09:59:18.952651+00:00",
+    "created_at": "2026-08-14T09:59:18.952651+00:00"
+  },
+  {
+    "record_id": "AP_GVMC_GRIEVANCE_ROADS_POTHOLES",
+    "service_id": "AP_GVMC_GRIEVANCE_ROADS_POTHOLES",
+    "service_name": "Civic Grievance Redressal (Roads & Potholes)",
+    "sub_service": "General civic complaint intake via IVRS/PGRS/online/app",
+    "problem_type": "Pothole, damaged road complaint",
+    "service_category": "ROADS_POTHOLES",
+    "state": "Andhra Pradesh",
+    "district": null,
+    "city": "Visakhapatnam",
+    "municipality": "Greater Visakhapatnam Municipal Corporation (GVMC)",
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "CITY",
+    "department": "GVMC Call Centre / Public Grievance Redressal",
+    "authority": "Concerned official notified per complaint (department not identified from the citizen-facing channel itself)",
+    "description": "Greater Visakhapatnam Municipal Corporation (GVMC) runs one unified grievance mechanism across all civic complaint types, with four channels: (1) a toll-free IVRS call centre, 1800-4250-0009, staffed 6:00 AM-8:00 PM -- dialling 1 records a complaint (name, address, phone) after the beep, issues a complaint number, SMS-notifies the concerned official with full details, SMS-confirms the complaint number to the citizen, and SMS-confirms again once the complaint is marked redressed; (2) PGRS (Public Grievance Redressal System), an in-person walk-in session every Monday 11:00 AM-1:00 PM at GVMC's premises; (3) an Online Grievance Redressal System (web); (4) the Smart Vizag mobile app. The same IVRS number also handles related requests when dialling 2 (water tanker request -- transferred to a call-centre operator who logs details, generates a code, and informs the filling station) and 3/4 (tax and general prerequisite information, e.g. for a new water connection, title transfer, birth/death certificate).",
+    "procedure": "Call the toll-free IVRS number 1800-4250-0009 (6:00 AM-8:00 PM) and press 1 to record a complaint (name, address, phone number) after the beep -- a complaint number is issued and confirmed by SMS, with an SMS notification also sent to the responsible official. Alternatively, attend the weekly in-person PGRS session (every Monday, 11:00 AM-1:00 PM, at GVMC's premises), use the Online Grievance Redressal System, or the Smart Vizag mobile app.",
+    "required_information": [
+      "Name",
+      "Address",
+      "Telephone number"
+    ],
+    "required_documents": [],
+    "sla": "SLA NOT FOUND — the page describes the complaint-lodging and confirmation workflow (SMS at each step) in detail but does not state a numeric response/resolution-time commitment.",
+    "expected_response_time": null,
+    "expected_resolution_time": null,
+    "complaint_channel": [
+      "Toll-free IVRS: 1800-4250-0009 (6:00 AM-8:00 PM daily) — press 1 for complaints",
+      "PGRS (Public Grievance Redressal System) — in-person, every Monday 11:00 AM-1:00 PM at GVMC premises",
+      "Online Grievance Redressal System (GVMC website)",
+      "Smart Vizag mobile app"
+    ],
+    "contact_information": "Toll-free IVRS: 1800-4250-0009 (6:00 AM-8:00 PM daily)",
+    "escalation_procedure": "ESCALATION INFORMATION NOT FOUND — the page describes the intake/confirmation workflow but does not name a further escalation authority beyond 'the concerned official'.",
+    "escalation_authority": null,
+    "faq": [
+      {
+        "question": "How do I lodge a civic complaint with GVMC?",
+        "answer": "Call the toll-free IVRS number 1800-4250-0009 (6 AM-8 PM) and press 1, or use the PGRS walk-in session (Mondays 11 AM-1 PM at GVMC premises), the Online Grievance Redressal System, or the Smart Vizag app."
+      },
+      {
+        "question": "Will I get a reference number for my complaint?",
+        "answer": "Yes — after recording your complaint via IVRS, a complaint number is generated and sent to you by SMS, and again once the complaint is marked redressed."
+      }
+    ],
+    "citizen_guidance": "For any civic complaint in Visakhapatnam, call the toll-free IVRS number 1800-4250-0009 (6 AM-8 PM) and press 1 — you'll get an SMS with a complaint number, and another SMS once it's resolved. In-person, online, and app channels are also available.",
+    "source_id": "AP_GVMC_GRIEVANCES_PAGE",
+    "source_title": "Grievances — Modes of Registering Grievances by the Citizens",
+    "source_organization": "Greater Visakhapatnam Municipal Corporation (GVMC)",
+    "source_url": "https://www.gvmc.gov.in/static_content/Grievances.jsp",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-14T09:59:18.952651+00:00",
+    "created_at": "2026-08-14T09:59:18.952651+00:00"
+  },
+  {
+    "record_id": "AP_GVMC_GRIEVANCE_STREETLIGHTS",
+    "service_id": "AP_GVMC_GRIEVANCE_STREETLIGHTS",
+    "service_name": "Civic Grievance Redressal (Streetlights)",
+    "sub_service": "General civic complaint intake via IVRS/PGRS/online/app",
+    "problem_type": "Streetlight not working, streetlight complaint",
+    "service_category": "STREETLIGHTS",
+    "state": "Andhra Pradesh",
+    "district": null,
+    "city": "Visakhapatnam",
+    "municipality": "Greater Visakhapatnam Municipal Corporation (GVMC)",
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "CITY",
+    "department": "GVMC Call Centre / Public Grievance Redressal",
+    "authority": "Concerned official notified per complaint (department not identified from the citizen-facing channel itself)",
+    "description": "Greater Visakhapatnam Municipal Corporation (GVMC) runs one unified grievance mechanism across all civic complaint types, with four channels: (1) a toll-free IVRS call centre, 1800-4250-0009, staffed 6:00 AM-8:00 PM -- dialling 1 records a complaint (name, address, phone) after the beep, issues a complaint number, SMS-notifies the concerned official with full details, SMS-confirms the complaint number to the citizen, and SMS-confirms again once the complaint is marked redressed; (2) PGRS (Public Grievance Redressal System), an in-person walk-in session every Monday 11:00 AM-1:00 PM at GVMC's premises; (3) an Online Grievance Redressal System (web); (4) the Smart Vizag mobile app. The same IVRS number also handles related requests when dialling 2 (water tanker request -- transferred to a call-centre operator who logs details, generates a code, and informs the filling station) and 3/4 (tax and general prerequisite information, e.g. for a new water connection, title transfer, birth/death certificate).",
+    "procedure": "Call the toll-free IVRS number 1800-4250-0009 (6:00 AM-8:00 PM) and press 1 to record a complaint (name, address, phone number) after the beep -- a complaint number is issued and confirmed by SMS, with an SMS notification also sent to the responsible official. Alternatively, attend the weekly in-person PGRS session (every Monday, 11:00 AM-1:00 PM, at GVMC's premises), use the Online Grievance Redressal System, or the Smart Vizag mobile app.",
+    "required_information": [
+      "Name",
+      "Address",
+      "Telephone number"
+    ],
+    "required_documents": [],
+    "sla": "SLA NOT FOUND — the page describes the complaint-lodging and confirmation workflow (SMS at each step) in detail but does not state a numeric response/resolution-time commitment.",
+    "expected_response_time": null,
+    "expected_resolution_time": null,
+    "complaint_channel": [
+      "Toll-free IVRS: 1800-4250-0009 (6:00 AM-8:00 PM daily) — press 1 for complaints",
+      "PGRS (Public Grievance Redressal System) — in-person, every Monday 11:00 AM-1:00 PM at GVMC premises",
+      "Online Grievance Redressal System (GVMC website)",
+      "Smart Vizag mobile app"
+    ],
+    "contact_information": "Toll-free IVRS: 1800-4250-0009 (6:00 AM-8:00 PM daily)",
+    "escalation_procedure": "ESCALATION INFORMATION NOT FOUND — the page describes the intake/confirmation workflow but does not name a further escalation authority beyond 'the concerned official'.",
+    "escalation_authority": null,
+    "faq": [
+      {
+        "question": "How do I lodge a civic complaint with GVMC?",
+        "answer": "Call the toll-free IVRS number 1800-4250-0009 (6 AM-8 PM) and press 1, or use the PGRS walk-in session (Mondays 11 AM-1 PM at GVMC premises), the Online Grievance Redressal System, or the Smart Vizag app."
+      },
+      {
+        "question": "Will I get a reference number for my complaint?",
+        "answer": "Yes — after recording your complaint via IVRS, a complaint number is generated and sent to you by SMS, and again once the complaint is marked redressed."
+      }
+    ],
+    "citizen_guidance": "For any civic complaint in Visakhapatnam, call the toll-free IVRS number 1800-4250-0009 (6 AM-8 PM) and press 1 — you'll get an SMS with a complaint number, and another SMS once it's resolved. In-person, online, and app channels are also available.",
+    "source_id": "AP_GVMC_GRIEVANCES_PAGE",
+    "source_title": "Grievances — Modes of Registering Grievances by the Citizens",
+    "source_organization": "Greater Visakhapatnam Municipal Corporation (GVMC)",
+    "source_url": "https://www.gvmc.gov.in/static_content/Grievances.jsp",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-14T09:59:18.952651+00:00",
+    "created_at": "2026-08-14T09:59:18.952651+00:00"
+  }
+]

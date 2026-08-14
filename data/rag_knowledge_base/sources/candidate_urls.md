@@ -39,7 +39,7 @@ The following URLs were found via **WebSearch only** — this environment's WebF
 
 | URL | Source title | Authority | Format | Quality | Cities | Services |
 |---|---|---|---|---|---|---|
-| https://www.gvmc.gov.in/static_content/Grievances.jsp | Modes Of Registering Grievances By The Citizens / IVRS | Greater Visakhapatnam Municipal Corporation (GVMC) | HTML | A | Visakhapatnam | All services (grievance mechanism) |
+| https://www.gvmc.gov.in/static_content/Grievances.jsp | Modes Of Registering Grievances By The Citizens / IVRS | Greater Visakhapatnam Municipal Corporation (GVMC) | HTML | A | Visakhapatnam | All services (grievance mechanism) | **[PROMOTED TO VERIFIED — see knowledge_records/verified/, sources/inventory.json]**
 | https://www.gvmc.gov.in/ | Smart Vizag (GVMC's citizen app) | GVMC | HTML | A | Visakhapatnam | All services (app channel) |
 | https://www.data.gov.in/catalog/solid-waste-management-visakhapatnam | Solid Waste Management : Visakhapatnam (dataset) | Ministry of Housing & Urban Affairs — Smart Cities Mission, via data.gov.in OGD | Dataset (catalog) | C | Visakhapatnam | Waste & Sanitation |
 | https://services.india.gov.in/service/detail/grievances-for-vijayawada-municipal-corporation-commissioner-andhra-pradesh | Grievances for Vijayawada Municipal Corporation Commissioner | services.india.gov.in (National Government Services Portal, Govt. of India) | HTML | B | Vijayawada | All services (grievance mechanism) |
@@ -60,11 +60,11 @@ The following URLs were found via **WebSearch only** — this environment's WebF
 | https://ahmedabadcity.gov.in/Images/_SWM%20Dept_SWM%20BREIF%20NOTE%20IN%20ENGLISH.pdf | SWM Dept — Brief Note (PDF) | AMC | PDF | A | Ahmedabad | Waste & Sanitation | **[PROMOTED TO VERIFIED — see knowledge_records/verified/, sources/inventory.json]**
 | https://amccrs.apphost.in/AMCPortal | AMCCRS — Comprehensive Complaint Redressal System | AMC | Web app | B | Ahmedabad | All services (complaint portal) |
 | https://www.suratmunicipal.gov.in/Downloads/CitizenCharter | Citizen Charter | Surat Municipal Corporation (SMC) | HTML | A | Surat | All services (Citizen Charter) | **[CHECKED — page loads, but it's a generic index linking to dept-specific charters (Watch & Ward, Fire, Town Planning, Shops & Establishments, Law, etc.) with NO SWM/Water/Roads/Streetlight-specific PDF among them. Not usable as-is. The actual targets for our 4 categories are the separate department pages already listed above (rows 63-67: solidwastemanagementhome, drainageintroduction, DrainageHowDoI, hydraulichome, StreetLightsHome) — try those instead.]** |
-| https://www.suratmunicipal.gov.in/departments/solidwastemanagementhome | Solid Waste Management Home | SMC | HTML | A | Surat | Waste & Sanitation |
+| https://www.suratmunicipal.gov.in/departments/solidwastemanagementhome | Solid Waste Management Home | SMC | HTML | A | Surat | Waste & Sanitation | **[PROMOTED TO VERIFIED — see knowledge_records/verified/, sources/inventory.json]**
 | https://www.suratmunicipal.gov.in/departments/drainageintroduction | Drainage — Introduction | SMC | HTML | A | Surat | Water & Drainage |
 | https://www.suratmunicipal.gov.in/Departments/DrainageHowDoI | Drainage — How Do I Get a Connection? | SMC | HTML | A | Surat | Water & Drainage |
 | https://www.suratmunicipal.gov.in/departments/hydraulichome | Water Supply (Hydraulic) — Home | SMC | HTML | A | Surat | Water & Drainage |
-| https://www.suratmunicipal.gov.in/Departments/StreetLightsHome | Streetlight — Home | SMC | HTML | A | Surat | Streetlights |
+| https://www.suratmunicipal.gov.in/Departments/StreetLightsHome | Streetlight — Home | SMC | HTML | A | Surat | Streetlights | **[PROMOTED TO VERIFIED — see knowledge_records/verified/, sources/inventory.json. Follow-up candidate surfaced by this page's own nav: https://www.suratmunicipal.gov.in/Departments/NonWorkingStreetlights (not yet fetched) likely has the actual complaint procedure.]**
 | https://www.data.gov.in/catalog/solid-waste-management-surat | Solid Waste Management : Surat (dataset) | Ministry of Housing & Urban Affairs — Smart Cities Mission, via data.gov.in OGD | Dataset (catalog) | C | Surat | Waste & Sanitation |
 | https://vmc.gov.in/PublicService.aspx | Public Service — VMC | Vadodara Municipal Corporation (VMC) | HTML | A | Vadodara | All services (public service portal) |
 | https://vmc.gov.in/Department_SWM_Approach.aspx | Department — Solid Waste Management Approach | VMC | HTML | A | Vadodara | Waste & Sanitation |
@@ -219,7 +219,7 @@ The following URLs were found via **WebSearch only** — this environment's WebF
 | https://nnvns.org.in/ | Home — Varanasi Nagar Nigam | Varanasi Nagar Nigam (NNVNS) | HTML | B | Varanasi | All services |
 | https://nnvns.org.in:449/nnvns/index.php?option=com_content&view=article&id=57&Itemid=396&lang=en | Departments — Varanasi Nagar Nigam | Varanasi Nagar Nigam (NNVNS) | HTML | B | Varanasi | All services (departments) |
 | http://www.jalkalvaranasi.org/pgr/comlaint1.php | Jalkal Varanasi Public Grievance and Redressal System (PGR) | Jal Kal Vibhag, Varanasi Nagar Nigam | Web app | B | Varanasi | Water & Drainage |
-| https://varanasi.nic.in/service/how-to-lodge-a-grievance/ | How to lodge a Grievance? | District Varanasi, Government of Uttar Pradesh | HTML | B | Varanasi | All services (grievance escalation) |
+| https://varanasi.nic.in/service/how-to-lodge-a-grievance/ | How to lodge a Grievance? | District Varanasi, Government of Uttar Pradesh | HTML | B | Varanasi | All services (grievance escalation) | **[CHECKED — 404, page no longer exists. Not usable, not re-tried. Uttar Pradesh remains 0 verified.]** |
 | https://nagarnigambareilly.com/citizen-charter.php | Citizen Charter — Nagar Nigam Bareilly | Bareilly Nagar Nigam | HTML | B | Bareilly | All services (citizen charter) |
 | https://nagarnigambareilly.com/addcomplaint.php | Grievances Redressal System — Nagar Nigam Bareilly | Bareilly Nagar Nigam | Web form | B | Bareilly | All services (grievance) |
 | https://nagarnigambareilly.com/Download/DOOR_TO_DOOR_COLLECTION.pdf | Door to Door Collection (MSW) — official PDF | Bareilly Nagar Nigam | PDF | B | Bareilly | Waste & Sanitation |
