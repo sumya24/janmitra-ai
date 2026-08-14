@@ -92,16 +92,19 @@ def test_embedding_batch_matches_individual_embeddings():
 def test_chroma_collection_opens_and_reports_expected_size():
     store = _real_store()
     assert store.is_loaded
-    # 689, not the earlier 524 -- the RAG knowledge-base data-foundation research pass (PR #13)
-    # added 51 new VERIFIED records (165 chunks) across every state that previously had zero
-    # verified coverage plus category gaps in states with partial coverage (Rajasthan, Delhi,
-    # Assam, Bihar, Madhya Pradesh, Haryana, Uttar Pradesh, and Water/Roads/Waste/Streetlights
-    # gaps in West Bengal/Gujarat/Kerala/Karnataka/Maharashtra), see
-    # data/rag_knowledge_base/knowledge_records/verified/ and sources/candidate_urls.md for the
-    # full research log. Confirmed by actually running `scripts/build_rag_embeddings.py` against
-    # the real embedding model (intfloat/multilingual-e5-small) and reading the resulting
-    # ChromaDB collection size directly -- not counted by hand.
-    assert store.size == 689
+    # 692, not the earlier 689 -- a follow-up research pass on PR #13 targeted the strongest
+    # remaining leads (thin/channel-only records and specific category gaps) rather than a full
+    # state sweep: 1 new VERIFIED record survived (DL_MCD_SLB_TOILET_SANITATION_SLA, a real
+    # 24-hour complaint-resolution SLA for MCD community/public toilets, found by mining a Delhi
+    # Swachh Bharat Mission Service Level Benchmarking PDF that a prior pass had fetched but not
+    # actually read); 6 other leads (Haryana SWM PDF, Karnataka/Gujarat -- blocked by systemic TLS
+    # cert-chain failures on their .gov.in domains, Andhra Pradesh, Madhya Pradesh, Bihar) were
+    # confirmed genuine dead ends, see data/rag_knowledge_base/sources/candidate_urls.md's "Round
+    # 3" section for the full research log. Confirmed by actually running
+    # `scripts/build_rag_embeddings.py` against the real embedding model
+    # (intfloat/multilingual-e5-small) and reading the resulting ChromaDB collection size directly
+    # -- not counted by hand.
+    assert store.size == 692
 
 
 def test_chroma_persist_dir_is_configurable_not_hardcoded():

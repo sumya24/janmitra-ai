@@ -427,5 +427,18 @@
     "retrieved_at": "2026-08-14T13:38:52.176890Z",
     "geographic_scope": "CITY",
     "notes": "1.5MB, 32-page scanned PDF, fetched and read directly (page-rendered, since the built-in PDF text-extraction path failed on this scanned/image-based file -- same fallback used for the Jaipur Municipal Corporation charter in an earlier pass). Genuinely MCGM's own official document: co-published with PRAJA Foundation (a real, established Mumbai civic-transparency NGO), with signed forewords from the then-Mayor (Hareshwar Patil) and Municipal Commissioner (K. Nalinakshan). Contains real per-department response-time tables for Solid Waste Management, Waterworks, Storm Water Drains, and Sewerage Operations, plus a full 3-step Complaint Redress Procedure and per-ward/per-zone contact directories. IMPORTANT CAVEAT, carried into every KnowledgeRecord.sla field built from this source: this is a 26-year-old document. Phone numbers use the pre-2001 Mumbai numbering scheme and organisational successors have changed (e.g. BSES-suburban -> Reliance Energy -> Adani Electricity) -- every record sourced from this charter is explicitly marked OUTDATED / VERIFY BEFORE PRODUCTION and should not be presented to a citizen as current without independent re-verification. Kept as a SEPARATE, additional record set from this project's existing MH_BMC_SWM_RTI_MANUAL (a 2015 organisational document with no citizen SLA) rather than merged, since they are genuinely two distinct real sources. Used for 4 KnowledgeRecords (Water/Drainage, Roads, Streetlights, and a supplementary dated Solid Waste record) -- see knowledge_records/verified/maharashtra/mumbai.json."
+  },
+  {
+    "source_id": "DL_MCD_SBM_SLB_HANDBOOK",
+    "source_title": "Swachh Bharat Mission — Service Level Benchmarking Handbook, Municipal Corporation of Delhi",
+    "source_organization": "Municipal Corporation of Delhi (MCD)",
+    "source_url": "https://mcdonline.nic.in/portal/downloadFile/slb_final-converted_230110051610110.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-14T14:15:46.149592Z",
+    "geographic_scope": "CITY",
+    "notes": "Image/scanned-style PDF -- WebFetch's own text extractor failed, but the Read tool rendered readable page images directly (same technique used for Jaipur/Mumbai charters last round). Item 20 of the monitoring guideline gives a real 24-hour complaint-resolution commitment, but scoped specifically to community/public toilets (CTs/PTs), not general household garbage collection."
   }
 ]
