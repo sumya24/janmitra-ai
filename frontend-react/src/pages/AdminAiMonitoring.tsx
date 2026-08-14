@@ -47,7 +47,7 @@ export default function AdminAiMonitoring() {
   return (
     <div>
       <TopBar />
-      <div className="page-admin">
+      <div className="page-admin" id="main-content">
         <div className="page-head">
           <div>
             <Link to="/admin" style={{ fontSize: 12.5, color: "var(--ink-2)", display: "inline-block", marginBottom: 8 }}>

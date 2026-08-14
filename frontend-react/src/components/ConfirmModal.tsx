@@ -1,3 +1,5 @@
+import { useModalA11y } from "../lib/useModalA11y";
+
 /** Generic confirm/cancel modal — reused for every destructive Admin action (delete worker,
  * delete complaint) rather than a bespoke confirm dialog per action. Purely presentational and
  * i18n-agnostic: the caller (which already has `lang`/`t`) passes in already-translated labels,
@@ -24,9 +26,10 @@ export default function ConfirmModal({
   onConfirm: () => void;
   onClose: () => void;
 }) {
+  const modalRef = useModalA11y(onClose);
   return (
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && !saving && onClose()}>
-      <div className="modal" style={{ maxWidth: 380 }}>
+      <div ref={modalRef} className="modal" style={{ maxWidth: 380 }} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1}>
         <div className="modal-head">
           <h3 className="display">{title}</h3>
           <button className="x" aria-label={closeLabel} onClick={onClose} disabled={saving}>

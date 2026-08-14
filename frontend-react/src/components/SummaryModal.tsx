@@ -3,6 +3,7 @@ import { t } from "../lib/i18n";
 import type { Complaint } from "../lib/api";
 import StatusBadge from "./StatusBadge";
 import "../styles/dashboard.css";
+import { useModalA11y } from "../lib/useModalA11y";
 
 /** "Summary" -- a quick, no-extra-network-call glance at a complaint (id, status, filed date,
  * location, description, assigned worker), distinct from "View Report" (ReportModal /
@@ -24,11 +25,13 @@ export default function SummaryModal({
     .filter(Boolean)
     .join(", ");
 
+  const modalRef = useModalA11y(onClose);
+
   return (
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal" style={{ maxWidth: 460 }}>
+      <div ref={modalRef} className="modal" style={{ maxWidth: 460 }} role="dialog" aria-modal="true" aria-labelledby="jm-modal-title" tabIndex={-1}>
         <div className="modal-head">
-          <h3 className="display">{t(lang, "worker.summary.title")}</h3>
+          <h3 className="display" id="jm-modal-title">{t(lang, "worker.summary.title")}</h3>
           <button className="x" aria-label={t(lang, "common.close")} onClick={onClose}>
             ✕
           </button>

@@ -139,7 +139,11 @@ test("full complaint lifecycle: reject reassigns to the next worker, accept unlo
   await expect(page.getByText("There is a broken streetlight here.").first()).toBeVisible();
   await expect(page.getByText("Awaiting your response")).toBeVisible();
 
-  await page.getByRole("button", { name: "Accept" }).click();
+  // exact: true -- the worker queue's own "Accepted" filter tab (see WorkerDashboard.tsx) is a
+  // substring match for plain "Accept" too, since that filter's label was disambiguated from the
+  // separate "In progress" filter (both used to read "In progress"/"In Progress" -- now
+  // "Accepted"/"In Progress", see i18n.ts's worker.filterAccepted).
+  await page.getByRole("button", { name: "Accept", exact: true }).click();
   // "In progress" is ambiguous by plain text: it's both the status label and, pre-existing and
   // unrelated to StatusBadge, the "In progress" filter tab's own button text. Scope to the
   // status pill specifically, same as the "resolved" check below.

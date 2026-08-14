@@ -39,6 +39,18 @@
   background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow-lg);
   z-index: 60; animation: modal-in var(--dur) var(--ease-out) both;
 }
+/* Below ~480px the bell's own wrapper (its `position: relative` containing block) is no longer
+   near the topbar's right edge -- `.topbar` wraps to a second row there (see .topbar's
+   flex-wrap), and that row is left-aligned, not right-aligned like the desktop layout this
+   `right: 0` positioning assumes. Anchoring to the trigger's own tiny container then pushed a
+   320px panel mostly off the left edge of the screen (only right corner visible). Switch to
+   viewport-relative fixed positioning instead, which needs no knowledge of where the bell
+   actually sits: left/right insets guarantee full containment. The 108px top clears both the
+   wrapped (2-row) and unwrapped (1-row) header heights -- a little extra gap above the panel in
+   the unwrapped case is harmless, unlike guessing a value that overlaps the header. */
+@media (max-width: 480px) {
+  .notif-panel { position: fixed; top: 108px; left: 12px; right: 12px; width: auto; max-height: min(400px, calc(100vh - 132px)); }
+}
 .notif-panel-head { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-2); padding: 12px 14px 8px; }
 .notif-empty { padding: 20px 14px; text-align: center; font-size: 12.5px; color: var(--ink-3); }
 .notif-item {
@@ -70,7 +82,15 @@
 @keyframes modal-in { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 .overlay {
   position: fixed; inset: 0; background: rgba(15,23,20,0.45); display: flex; align-items: center; justify-content: center;
-  padding: 20px; z-index: 50; animation: overlay-in var(--dur) var(--ease-out) both;
+  /* Was 50 -- the lowest z-index of any fixed overlay in the app (nav-drawer 70-75, evidence
+     lightbox 80, Ask Sarthi widget 90-96, see global.css/AskJanMitraWidget.css), so any of those
+     already-open elements rendered on top of a blocking modal dialog instead of behind it --
+     most visibly the Ask Sarthi FAB/greeting bubble sitting over SettingsModal (and every other
+     modal built on this same .overlay/.modal pair) on citizen pages, where that widget is always
+     mounted. Modals are the one thing that should block interaction with everything else behind
+     them; 150 puts every modal above all of those, while staying below the toast layer (200,
+     global.css) so a success/error toast can still surface over an open modal. */
+  padding: 20px; z-index: 150; animation: overlay-in var(--dur) var(--ease-out) both;
 }
 .modal {
   background: var(--surface); border-radius: 16px; padding: 26px 26px 22px; width: 100%; max-width: 420px;
@@ -82,3 +102,11 @@
 .modal-note { font-size: 12px; color: var(--ink-2); background: var(--status-progress-bg); border-radius: 8px; padding: 10px 12px; margin-bottom: 16px; line-height: 1.45; }
 .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
 .modal-actions .btn { flex: 1; justify-content: center; }
+/* Two side-by-side flex:1 buttons leave each one only ~half the modal's width -- fine for short
+   English labels, but longer translated action labels (e.g. Hindi "बदलावों को सेव करें") wrap
+   inside the half-width button, leaving the row visually lopsided against the shorter one next
+   to it. Below ~420px (this modal's own max-width, so this is the narrowest real case) stack
+   them full-width instead of shrinking further. */
+@media (max-width: 420px) {
+  .modal-actions { flex-direction: column; }
+}
