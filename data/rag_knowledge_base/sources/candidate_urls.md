@@ -79,7 +79,7 @@ The following URLs were found via **WebSearch only** — this environment's WebF
 
 | URL | Source title | Authority | Format | Quality | Cities | Services |
 |---|---|---|---|---|---|---|
-| https://upload.indiacode.nic.in/showfile?actid=AC_KA_71_402_00007_14_1552388734165&type=rule&filename=bbmp_swm.pdf | Bruhat Bengaluru Mahanagara Palike Solid Waste Management Rules (bye-law) | BBMP, via India Code (Govt. of India legislative repository) | PDF | A | Bengaluru | Waste & Sanitation |
+| https://upload.indiacode.nic.in/showfile?actid=AC_KA_71_402_00007_14_1552388734165&type=rule&filename=bbmp_swm.pdf | Bruhat Bengaluru Mahanagara Palike Solid Waste Management Rules (bye-law) | BBMP, via India Code (Govt. of India legislative repository) | PDF | A | Bengaluru | Waste & Sanitation | **[PROMOTED TO VERIFIED — see knowledge_records/verified/, sources/inventory.json]**
 | https://site.bbmp.gov.in/departmentwebsites/BBMPIT/fms.html | Fix My Street / Sahaaya complaint system | BBMP (Information Technology Dept.) | HTML | B | Bengaluru | Waste & Sanitation |
 | https://site.bbmp.gov.in/departmentwebsites/BBMPIT/Pothole%20Fix.html | Pothole Fix / Fix My Street app | BBMP (Information Technology Dept.) | HTML | B | Bengaluru | Roads & Potholes |
 | https://bwssb.karnataka.gov.in/english | BWSSB — Bangalore Water Supply and Sewerage Board (official site) | BWSSB (state statutory board, NOT BBMP) | HTML | B | Bengaluru | Water & Drainage |
@@ -179,7 +179,7 @@ The following URLs were found via **WebSearch only** — this environment's WebF
 | https://tn.data.gov.in/catalog/solid-waste-management-chennai-6 | Solid Waste Management : Chennai (dataset) | Ministry of Housing & Urban Affairs — Smart Cities Mission, via tn.data.gov.in | Dataset (catalog) | C | Chennai | Waste & Sanitation |
 | https://www.data.gov.in/catalog/vehicles-and-land-used-solid-waste-management | Vehicles and Land used for Solid Waste Management | data.gov.in OGD Platform India | Dataset | C | (state-wide, applies to all ULBs) | Waste & Sanitation |
 | https://www.tnurbantree.tn.gov.in/ | tnurbantree.tn.gov.in — Urban e-Governance / Government Orders | Directorate of Municipal Administration, Tamil Nadu (covers all municipalities/corporations except Chennai) | HTML | B | (state-wide) | All services (Directorate of Municipal Administration) |
-| https://ccmc.gov.in/img/upload/CitizensCharterEnglish1.pdf | Coimbatore City Municipal Corporation Citizen's Charter (PDF) | Coimbatore City Municipal Corporation (CCMC) | PDF | A | Coimbatore | All services (citizen charter) |
+| https://ccmc.gov.in/img/upload/CitizensCharterEnglish1.pdf | Coimbatore City Municipal Corporation Citizen's Charter (PDF) | Coimbatore City Municipal Corporation (CCMC) | PDF | A | Coimbatore | All services (citizen charter) | **[PROMOTED TO VERIFIED — see knowledge_records/verified/, sources/inventory.json]**
 | https://ccmc.gov.in/index.php/administration/citizen-charter | Citizen Charter — Coimbatore City Municipal Corporation | CCMC | HTML | A | Coimbatore | All services (citizen charter, HTML) |
 | https://payment.ccmc.gov.in/frmGrievancesRegistration.asp | Grievance Registration — CCMC | CCMC | Web form | B | Coimbatore | All services (grievance registration) |
 | https://www.data.gov.in/catalog/solid-waste-management-coimbatore | Solid Waste Management : Coimbatore (dataset) | Ministry of Housing & Urban Affairs — Smart Cities Mission, via data.gov.in | Dataset (catalog) | C | Coimbatore | Waste & Sanitation |
@@ -240,7 +240,7 @@ The following URLs were found via **WebSearch only** — this environment's WebF
 | https://www.kmcgov.in/KMCPortal/jsp/Solid_Waste_Services.html | Solid Waste Management Services | Kolkata Municipal Corporation | HTML | A | Kolkata | Waste & Sanitation |
 | https://www.kmcgov.in/KMCPortal/jsp/SolidWasteFAQs.jsp | Solid Waste FAQs | Kolkata Municipal Corporation | HTML | A | Kolkata | Waste & Sanitation |
 | https://www.kmcgov.in/KMCPortal/jsp/Water_Supply.html | Water Supply Department page | Kolkata Municipal Corporation | HTML | A | Kolkata | Water & Drainage (water supply) |
-| https://www.kmcgov.in/KMCPortal/downloads/citizens_charter_water_supply.pdf | Citizens' Charter — Water Supply Department | Kolkata Municipal Corporation | PDF | A | Kolkata | Water & Drainage (water supply — citizen charter) |
+| https://www.kmcgov.in/KMCPortal/downloads/citizens_charter_water_supply.pdf | Citizens' Charter — Water Supply Department | Kolkata Municipal Corporation | PDF | A | Kolkata | Water & Drainage (water supply — citizen charter) | **[PROMOTED TO VERIFIED — see knowledge_records/verified/, sources/inventory.json]**
 | https://www.kmcgov.in/KMCPortal/downloads/citizens_charter_water_supply_2016.pdf | Citizen's Charter of Water Supply Department (2016) | Kolkata Municipal Corporation | PDF | A | Kolkata | Water & Drainage (water supply — citizen charter, dated version) |
 | https://www.kmcgov.in/KMCPortal/jsp/WaterConnection.jsp | How to get Water Connection in Your New House? | Kolkata Municipal Corporation | HTML | B | Kolkata | Water & Drainage (new connection) |
 | https://www.kmcgov.in/KMCPortal/jsp/SewerageAndDrainageServices.jsp | Sewerage and Drainage Services | Kolkata Municipal Corporation | HTML | A | Kolkata | Water & Drainage (sewerage/drainage) |

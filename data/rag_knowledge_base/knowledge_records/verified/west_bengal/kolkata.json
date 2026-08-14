@@ -1,0 +1,61 @@
+[
+  {
+    "record_id": "WB_KMC_WATER_SUPPLY_SERVICES",
+    "service_id": "WB_KMC_WATER_SUPPLY_SERVICES",
+    "service_name": "Water Supply — New Connection, Reconnection & Repairs",
+    "sub_service": "New domestic/ICI/bulk-meter connections, reconnection, pipe/ferrule change, tube-well installation",
+    "problem_type": "Need for a new water connection, reconnection after disconnection, or pipe/ferrule repair",
+    "service_category": "WATER_DRAINAGE",
+    "state": "West Bengal",
+    "district": "Kolkata",
+    "city": "Kolkata",
+    "municipality": "Kolkata Municipal Corporation (KMC)",
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "CITY",
+    "department": "Water Supply Department, KMC",
+    "authority": "Assistant Engineer (Water Supply) concerned, or the Director General Water Supply for bulk-meter connections",
+    "description": "KMC's Water Supply Department Citizens' Charter publishes a table of 9 specific services with their own application procedure, documents required, and time limit: new connections for Industrial/Commercial/Institutional (ICI) use, new bulk-meter connections, new domestic connections, new building-construction connections, conversion of a construction connection to domestic use, reconnection of water supply, change of pipe/ferrule size, water-tanker supply, and installation or repair of new tube-wells/borewells (via the State Water Investigation Directorate, SWID).",
+    "procedure": "Application form available at the KMC website; submit with required documents (e.g. trade license, KMC property tax clearance certificate, 'No Objection' certificate from the owner if the applicant is a tenant, occupancy certificate for new buildings) to the Assistant Engineer (Water Supply) concerned or the Ward Office. For new tube-wells, the permit is obtained from the State Water Investigation Directorate, Government of West Bengal, after which KMC issues the license-fee details.",
+    "required_information": [],
+    "required_documents": [
+      "Trade license (for ICI connections)",
+      "KMC property tax clearance certificate",
+      "'No Objection' certificate from the property owner (if the applicant is a tenant)",
+      "Occupancy certificate (for new domestic/building-construction connections)",
+      "Photocopy of the building sanction plan and the building-sanction-fee payment receipt (for new building construction connections)",
+      "Plumber 'Niyog patra' / letter of authorization to a KMC-licensed plumber (for new building construction connections)"
+    ],
+    "sla": "New ICI connection: 4 working days from deposition of necessary charges. New bulk-meter connection: 30 working days (after a departmental inspection following application). New domestic connection: 4 working days. New building-construction connection: 4 working days. Conversion of a building-construction connection to domestic use: 4 working days. Reconnection of water supply: 24 hours. Change of pipe or ferrule size: 4 working days. Water-tanker supply: 2 (unit not specified in the source document). New tube-well/borewell: SWID issues permit-fee details within 2 working days of receiving the permit application; the license-fee receipt itself then serves as the tube-well license.",
+    "expected_response_time": "24 hours for reconnection of water supply",
+    "expected_resolution_time": "4 working days for most new/altered connections; 30 working days for a new bulk-meter connection",
+    "complaint_channel": [
+      "Ward office / Assistant Engineer (Water Supply) concerned, per the published list of 21 local offices and 8 zonal Executive Engineer offices"
+    ],
+    "contact_information": "21 local Water Supply offices (Assistant Engineers), each covering specific ward numbers, are published in the charter -- e.g. Cossipur Section (10, B.T. Road, Kolkata-700002, Ph: 2558 8553) covers wards 1-6; Hatibagan Section (79, Bidhan Sarani, Kolkata-700006, Ph: 2543 1602) covers wards 7-12,15. 8 zonal Executive Engineer offices are also published, e.g. E.E.(North): Hatibagan Section, 79 Bidhan Sarani, Kolkata-700006, Ph 2543 1602, covering wards 1-12, 15-28, 38, 39; E.E.(Central): 5 S.N. Banerjee Road, KMC CMO Building, Kolkata-700013, Ph 2286 1100-1109 (ext 2425), covering wards 13,14, 40-65. A dedicated Tubewell Executive Engineer covers all wards 1-141, same address/ext 2567.",
+    "escalation_procedure": "'For inquiries' and 'For complaints/suggestions' both route to the Zonal Executive Engineer concerned for the relevant local office/ward, per the published list of 21 Assistant Engineer offices and 8 Executive Engineer offices.",
+    "escalation_authority": "Zonal Executive Engineer concerned (North / Central / West / South / Jadavpur / S.S. Unit / G.R. Unit / Tubewell)",
+    "faq": [
+      {
+        "question": "How long does a new domestic water connection take in Kolkata?",
+        "answer": "4 working days from deposition of the necessary charges, per KMC's own Water Supply Citizens' Charter."
+      },
+      {
+        "question": "How fast is a water-supply reconnection done?",
+        "answer": "Within 24 hours, per the same charter."
+      }
+    ],
+    "citizen_guidance": "Water supply depends on availability of surface/ground water at a given point, and new connections may be constrained by the existing distribution network's capacity. Citizens should engage only KMC-licensed plumbers and verify their license papers.",
+    "source_id": "WB_KMC_WATER_SUPPLY_CHARTER",
+    "source_title": "Citizens' Charter — Water Supply Department, Kolkata Municipal Corporation",
+    "source_organization": "Kolkata Municipal Corporation (KMC)",
+    "source_url": "https://www.kmcgov.in/KMCPortal/downloads/citizens_charter_water_supply.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-14T03:44:31.810186+00:00",
+    "created_at": "2026-08-14T03:45:08.701552+00:00"
+  }
+]
