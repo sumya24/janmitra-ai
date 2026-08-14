@@ -67,7 +67,18 @@
    edge full-bleed (that read as too tight, no breathing room at all), capped+centered so there's
    still real margin on either side on an ultrawide monitor instead of the old 1080px column that
    read as boxed in the middle. */
-.page { max-width: 1440px; margin: 0 auto; padding: 30px 28px 60px; }
+/* Bottom padding was 60px -- comfortable everywhere except the one case that matters most: a
+   citizen page whose last card (very often the Feedback form -- CitizenComplaintDetail.tsx) ends
+   up sitting almost flush against the viewport's bottom edge once scrolled all the way down,
+   which is exactly where the fixed Ask Sarthi FAB (bottom: 24px, see AskJanMitraWidget.css) also
+   sits. The two weren't reliably overlapping, but were close enough (sub-10px in testing) that
+   translated text or a slightly taller row would tip it into a real overlap with the feedback
+   submit button. 60 -> 108px gives the FAB's ~80-90px footprint genuine clearance from the last
+   card. .page is also what Worker pages use (WorkerDashboard.tsx/WorkerComplaintDetail.tsx),
+   which is harmless there -- no floating widget on that role, just a little extra breathing room
+   at the very bottom of the scroll. .page-admin (Admin only, never has the widget either) is left
+   at its original 60px since nothing there needed the extra clearance. */
+.page { max-width: 1440px; margin: 0 auto; padding: 30px 28px 108px; }
 .page-admin { max-width: 1440px; margin: 0 auto; padding: 30px 28px 60px; }
 .page-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
 .page-title { font-size: 30px; }

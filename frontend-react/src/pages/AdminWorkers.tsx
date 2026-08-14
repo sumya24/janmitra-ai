@@ -265,7 +265,7 @@ export default function AdminWorkers() {
             {filteredWorkers.length === 0 ? (
               <p style={{ color: "var(--ink-2)" }}>{t(lang, "admin.noSearchResults")}</p>
             ) : (
-              <div className="surface-card" style={{ overflowX: "auto" }}>
+              <div className="surface-card table-scroll" style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 660 }}>
                   <thead>
                     <tr>
