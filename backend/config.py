@@ -20,6 +20,29 @@ class Settings:
     # Sarvam AI (speech-to-text + translation + text-to-speech)
     SARVAM_API_KEY: str = os.getenv("SARVAM_API_KEY", "")
     SARVAM_BASE_URL: str = os.getenv("SARVAM_BASE_URL", "https://api.sarvam.ai")
+    # The `sarvamai` SDK defaults to a 60s httpx timeout when none is passed (see SarvamAI.__init__).
+    # A real network hiccup during live testing surfaced as a citizen-facing complaint-creation
+    # failure that took ~30s to honestly report itself (a lower-level OS connection-attempt
+    # timeout firing before httpx's own 60s ceiling would have) -- every caller of this API
+    # (sarvam_client.py, summary_service.py, answer_generation_service.py, normalization_service.py)
+    # already falls back gracefully on ANY failure (see each module's own docstring), so shortening
+    # this only changes how long a citizen waits before that honest fallback fires, not what
+    # happens when it does.
+    #
+    # Two separate knobs, not one, because the failure observed was specifically a CONNECT timeout
+    # (the TCP handshake itself never completed -- genuine network unreachability) -- a completely
+    # different phase from "the model is still generating a slow-but-real answer" (a READ timeout,
+    # which only starts once a connection already succeeded). sarvam-105b is a reasoning model
+    # (see summary_service.py/answer_generation_service.py's own comments on reasoning_effort) that
+    # legitimately needs real headroom to finish thinking -- capping THAT at the same short value
+    # used for fast STT/translation/TTS calls would turn legitimate slow-but-working answers into
+    # unnecessary fallback-to-raw-excerpt failures, trading one problem for a worse one. Verified
+    # directly that the `sarvamai` SDK accepts an httpx.Timeout with separate connect/read here
+    # (its own type hint only advertises a bare float, but the value is passed straight through to
+    # httpx.Client(timeout=...), which httpx itself documents as accepting either).
+    SARVAM_CONNECT_TIMEOUT_SECONDS: float = float(os.getenv("SARVAM_CONNECT_TIMEOUT_SECONDS", "10"))
+    SARVAM_REQUEST_TIMEOUT_SECONDS: float = float(os.getenv("SARVAM_REQUEST_TIMEOUT_SECONDS", "15"))
+    SARVAM_REASONING_READ_TIMEOUT_SECONDS: float = float(os.getenv("SARVAM_REASONING_READ_TIMEOUT_SECONDS", "45"))
 
     # Ask Sarthi voice assistant TTS (see backend/services/sarvam_client.py's
     # synthesize_speech()) -- one fixed default voice/model for v1, not user-configurable (a

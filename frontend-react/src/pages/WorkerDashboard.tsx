@@ -7,6 +7,7 @@ import StartWorkModal from "../components/StartWorkModal";
 import ProgressUpdateModal from "../components/ProgressUpdateModal";
 import CompleteComplaintModal from "../components/CompleteComplaintModal";
 import ReportModal from "../components/ReportModal";
+import SummaryModal from "../components/SummaryModal";
 import DownloadReportButton from "../components/DownloadReportButton";
 import { useAuth } from "../lib/auth";
 import { useUiLang } from "../lib/uiLang";
@@ -25,7 +26,7 @@ const STATUS_LABEL_KEY = {
   resolved: "worker.resolved",
 } as const;
 
-type ActionModal = "reject" | "start" | "update" | "complete" | "report" | null;
+type ActionModal = "reject" | "start" | "update" | "complete" | "report" | "summary" | null;
 
 export default function WorkerDashboard() {
   const { user, token } = useAuth();
@@ -192,6 +193,9 @@ export default function WorkerDashboard() {
                   )}
                   {c.status === "resolved" && (
                     <div style={{ display: "flex", gap: 6 }}>
+                      <button className="btn btn-ghost btn-sm" onClick={() => setModalFor({ id: c.id, type: "summary" })}>
+                        {t(lang, "worker.viewSummary")}
+                      </button>
                       <button className="btn btn-ghost btn-sm" onClick={() => setModalFor({ id: c.id, type: "report" })}>
                         {t(lang, "worker.viewReport")}
                       </button>
@@ -242,6 +246,12 @@ export default function WorkerDashboard() {
         />
       )}
       {modalFor?.type === "report" && <ReportModal complaintId={modalFor.id} onClose={closeModal} />}
+      {modalFor?.type === "summary" && (() => {
+        const target = complaints.find((c) => c.id === modalFor.id);
+        return target ? (
+          <SummaryModal complaint={target} statusLabel={t(lang, STATUS_LABEL_KEY[target.status])} onClose={closeModal} />
+        ) : null;
+      })()}
     </div>
   );
 }

@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 from backend.config import settings
 from backend.database import init_db
-from backend.routes import admin, ask_janmitra, auth, complaints, notifications
+from backend.routes import admin, ask_janmitra, auth, complaints, locations, notifications
 
 logging.basicConfig(
     level=logging.INFO,
@@ -63,6 +63,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(complaints.router)
+app.include_router(locations.router)
 app.include_router(notifications.router)
 app.include_router(ask_janmitra.router)
 app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_FOLDER), name="uploads")

@@ -2,6 +2,7 @@
 
 import logging
 
+import httpx
 from sarvamai import SarvamAI
 
 from backend.config import settings
@@ -24,7 +25,17 @@ class SarvamClient:
         """Initialize the underlying SarvamAI SDK client, if an API key is configured."""
         self._client: SarvamAI | None = None
         if settings.SARVAM_API_KEY:
-            self._client = SarvamAI(api_subscription_key=settings.SARVAM_API_KEY)
+            # See config.py's SARVAM_CONNECT_TIMEOUT_SECONDS docstring for why this is a separate
+            # connect/read timeout rather than a bare float -- STT/translation/TTS are all fast,
+            # non-reasoning calls, so a short read timeout is correct here (unlike the two
+            # reasoning-model callers, summary_service.py/answer_generation_service.py).
+            timeout = httpx.Timeout(
+                connect=settings.SARVAM_CONNECT_TIMEOUT_SECONDS,
+                read=settings.SARVAM_REQUEST_TIMEOUT_SECONDS,
+                write=settings.SARVAM_REQUEST_TIMEOUT_SECONDS,
+                pool=settings.SARVAM_REQUEST_TIMEOUT_SECONDS,
+            )
+            self._client = SarvamAI(api_subscription_key=settings.SARVAM_API_KEY, timeout=timeout)
         else:
             logger.warning("SARVAM_API_KEY is not set; Sarvam calls will fail until configured.")
 
