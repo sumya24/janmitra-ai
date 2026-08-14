@@ -258,3 +258,72 @@ The following URLs were found via **WebSearch only** — this environment's WebF
 | https://pwd.wb.gov.in/general/login?module=grievance | PWD West Bengal grievance login | Public Works Department, West Bengal | Web app | B | (state-wide) | Roads & Potholes (state PWD, jurisdiction-split reference) |
 | https://udma.wb.gov.in/ | Department of Urban Development & Municipal Affairs | Government of West Bengal | HTML | B | (state-wide) | Urban Development (department) |
 | https://www.data.gov.in/catalog/solid-waste-managementnewtownkolkata | Solid Waste Management_NewTown_Kolkata | Ministry of Housing & Urban Affairs — Smart Cities Mission, via data.gov.in OGD | Dataset (catalog) | C | New Town, Kolkata | Waste & Sanitation |
+
+
+## Fresh research pass: 6 previously-unresearched states (2026-08-14)
+
+Assam, Bihar, Delhi, Haryana, Madhya Pradesh, and Rajasthan had zero prior research (no
+`02_source_inventory/` entry existed for any of them) -- WebFetch worked in this session (unlike
+the environment that produced the original 10-state pass, where it was fully blocked), so these
+were fetched and read directly rather than logged as leads only.
+
+### Assam
+
+| URL | Source title | Authority | Format | Quality | Cities | Services |
+|---|---|---|---|---|---|---|
+| https://gmc.assam.gov.in/resource/citizen-charter | Citizen's Charter | Guwahati Municipal Corporation (GMC) | HTML | B | Guwahati | All services (citizen charter) | **[CHECKED — page loads, but covers only certificate/license/permit processing timelines (birth/death certs, building NOC, trade license, property assessment), not civic complaint SLAs for garbage/water/road/streetlight. Not usable as a KnowledgeRecord.]** |
+| https://gmc.assam.gov.in/portlets/dissatisfied-let-us-know | Dissatisfied? Let Us Know! (grievance page) | Guwahati Municipal Corporation (GMC) | HTML | A | Guwahati | Waste & Sanitation, Water & Drainage, Roads & Potholes, Streetlights | **[PROMOTED TO VERIFIED — see knowledge_records/verified/assam/guwahati.json, sources/inventory.json. Real named officers for water/general grievances, Swachhata App for waste; roads/streetlights only listed with no named contact on this page.]** |
+
+### Bihar
+
+| URL | Source title | Authority | Format | Quality | Cities | Services |
+|---|---|---|---|---|---|---|
+| https://www.pmc.bihar.gov.in/citizen-charter.aspx | Citizen Charter (landing page) | Patna Municipal Corporation (PMC) | HTML | B | Patna | Waste & Sanitation | **[PROMOTED TO VERIFIED (channel-only, SLA NOT FOUND) — see knowledge_records/verified/bihar/patna.json, sources/inventory.json. Links to a fuller Citizen Charter document not reached this pass.]** |
+| Bihar Right to Public Services Act, 2011 (indiacode.nic.in / prsindia.org) | Bihar RTPS Act, 2011 | Government of Bihar | PDF/legislation | B | (state-wide) | All services (statutory framework, not yet checked for a municipal-complaint-specific SLA table) | **[NOT YET PURSUED — real act, exists, but no municipal civic-complaint SLA table located this pass. Worth a dedicated fetch of the Act's schedule/annexures.]** |
+
+### Delhi
+
+| URL | Source title | Authority | Format | Quality | Cities | Services |
+|---|---|---|---|---|---|---|
+| https://mcdonline.nic.in/portal/citizenCharter | Citizen Charter (Health Trade License) | Municipal Corporation of Delhi (MCD) | HTML | B | Delhi | (covers only trade licenses, birth/death certs, e-mutation, veterinary license — NOT garbage/water/drainage/roads/streetlights) | **[CHECKED — confirmed not usable for civic-complaint SLAs, not assumed.]** |
+| https://mcdonline.nic.in/portal/downloadFile/pwm_byelaws_2024_240216075150250.pdf | Plastic Waste Management Bye-laws, 2024 | Municipal Corporation of Delhi (MCD) | PDF | B | Delhi | Waste & Sanitation (plastic-specific regulation, not general garbage-collection complaint SLA) | **[CHECKED — real, live, 5.9MB, dated 23 Jan 2024. Regulatory/prohibition content, not a citizen complaint-response SLA document. Not used as a KnowledgeRecord source for that reason.]** |
+| https://mcdonline.nic.in/portal/mService | Services gateway | Municipal Corporation of Delhi (MCD) | HTML | A | Delhi | Waste & Sanitation (general channel) | **[PROMOTED TO VERIFIED (channel-only, SLA NOT FOUND) — see knowledge_records/verified/delhi/delhi.json, sources/inventory.json. Confirms Citizen's Call Center 155305 and MCD311 app.]** |
+| https://delhijalboard.delhi.gov.in/jalboard/grievance-redressal-mechanism | Grievance Redressal Mechanism | Delhi Jal Board (DJB) | HTML | A | Delhi | Water & Drainage | **[PROMOTED TO VERIFIED — see knowledge_records/verified/delhi/delhi.json, sources/inventory.json. Real 3-level escalation, 21-day PGC auto-trigger, hotline 1916.]** |
+| https://pwddelhi.gov.in/citizen-charter | Citizen Charter | Public Works Department (PWD), Delhi | HTML | B | Delhi | Roads & Potholes, Streetlights | **[PROMOTED TO VERIFIED — see knowledge_records/verified/delhi/delhi.json, sources/inventory.json. General (not category-specific) 24hr-attend/1wk-acknowledge/1mo-interim-reply commitment. Covers PWD-maintained roads only — Delhi's road network is split across PWD/MCD/NHAI by classification.]** |
+| https://pwdsewa.pwddelhi.gov.in/Home/SubmitComplaint/ | PWD Sewa — Submit Complaint | Public Works Department (PWD), Delhi | Web app | B | Delhi | Roads & Potholes, Streetlights (complaint submission) | **[UNREACHABLE — DNS resolution failure (`getaddrinfo ENOTFOUND`) from this environment. Real subdomain referenced elsewhere on pwddelhi.gov.in; worth re-attempting.]** |
+
+### Haryana
+
+| URL | Source title | Authority | Format | Quality | Cities | Services |
+|---|---|---|---|---|---|---|
+| https://www.mcg.gov.in (homepage, ApplicationsSummary.aspx "Citizen Charter Dashboard") | Municipal Corporation Gurugram (MCG) site | Municipal Corporation Gurugram | HTML (JS-rendered) | — | Gurugram | All services | **[NOT USABLE — site renders via client-side JS; static fetch returns only the page header/title, no body content, across 3 separate attempts (homepage, dashboard page). Real phone numbers (toll-free 18001801817, grievance +911244753555, garbage-specific 18001025952) surfaced via WebSearch's own aggregated answer, but this project's own rule is that a fact must come from a directly-fetched primary source, not a search-engine summary that may itself be drawing from a third-party aggregator (complainthub.org and similar sites appeared in the same search) — so NOT promoted to VERIFIED. A real, worthwhile lead for a human to re-check with a JS-capable browser, or via the mcg.gov.in citizen-charter PDF if one can be located directly.]** |
+
+### Madhya Pradesh
+
+| URL | Source title | Authority | Format | Quality | Cities | Services |
+|---|---|---|---|---|---|---|
+| https://cmhelpline.mp.gov.in/About.aspx | About — CM Helpline (181) | Government of Madhya Pradesh | HTML | A | (state-wide) | Waste & Sanitation, Water & Drainage, Roads & Potholes, Streetlights (general channel) | **[PROMOTED TO VERIFIED (state-wide, channel-only, SLA NOT FOUND) — see knowledge_records/verified/madhya_pradesh/statewide.json, sources/inventory.json.]** |
+| https://www.smartcityindore.org/citizen-charter/ | Citizen Charter | Smart City Indore (SPV) | HTML | B | Indore | (Smart City *project* complaint timelines — site/design/execution issue SLAs — not general civic-service complaint SLAs) | **[CHECKED — real page, but it's a Smart City Special Purpose Vehicle project-grievance charter, not a municipal civic-service charter. Not usable as a KnowledgeRecord for garbage/water/road/streetlight complaints.]** |
+| https://imcindore.mp.gov.in/grievance | Grievance | Indore Municipal Corporation (IMC) | HTML (JS-rendered?) | — | Indore | All services | **[NOT USABLE — static fetch returned no page content. A WebSearch-aggregated answer claimed a 24-hour SLA / 10-working-day review timeline attributed to "IMC's citizen charter," but this could not be independently re-confirmed by directly fetching and quoting a primary page this pass, so it was NOT promoted to VERIFIED, consistent with this project's own sourcing rule. Worth a dedicated re-attempt.]** |
+
+### Rajasthan
+
+| URL | Source title | Authority | Format | Quality | Cities | Services |
+|---|---|---|---|---|---|---|
+| http://www.jaipurmc.org/PDF/Auction_MM_RTI_Act_Etc_PDF/CitiChar_SP.pdf | Citizen Charter for Different Urban Services and Utilities | Jaipur Municipal Corporation (JMC) | PDF | A | Jaipur | Waste & Sanitation, Water & Drainage, Roads & Potholes, Streetlights | **[PROMOTED TO VERIFIED — see knowledge_records/verified/rajasthan/jaipur.json, sources/inventory.json. The richest source found in this entire project to date: real per-activity min/max SLA tables across all 4 categories, named 3-level escalation chains, and a full page of real per-zone/per-designation phone numbers. 56.7KB, 11-page PDF; the built-in PDF-to-text path failed on this file's encoding (same failure mode as the earlier BBMP bye-law PDF) — worked around by reading the saved PDF directly with a page-rendering tool instead.]** |
+
+## Follow-up leads surfaced by this pass, not yet pursued
+
+- Surat's `NonWorkingStreetlights` page (https://www.suratmunicipal.gov.in/Departments/NonWorkingStreetlights) — fetched this pass. Real page, but contains only a historical monthly non-working-percentage table (Mar 2017 - Feb 2021), no complaint procedure/SLA. The general online complaint portal (`/OnlineServices/complaint/New`) is linked from the same site but wasn't itself fetched/checked this pass.
+- Surat's drainage/water pages (`drainageintroduction`, `DrainageHowDoI`, `hydraulichome`) — already logged as quality-A leads in the Gujarat section above, still not fetched; would close Gujarat's Water/Drainage gap if promoted.
+- Kolkata's `citizens_charter_water_supply_2016.pdf` (a differently-dated version of the water charter already used) — not compared against the version actually used; check for content drift if both are ever needed.
+- MCD's own citizen-charter PDF for general (non-plastic) solid waste bye-laws — not located this pass; the Plastic Waste Management Bye-laws 2024 found instead are real but out of scope for general garbage-collection SLAs.
+- Bihar's Right to Public Services Act, 2011 — real statutory framework, not yet checked for a municipal-complaint-specific SLA schedule.
+- Haryana (MCG) and Madhya Pradesh (IMC Indore) — both had promising leads that returned no usable static content (JS-rendered sites); worth a re-attempt with a JS-capable fetch or by locating a direct PDF citizen charter instead of the HTML app shell.
+
+## States still with zero verified coverage after this pass
+
+Uttar Pradesh and Haryana. Uttar Pradesh was researched in the original 10-state pass and came
+up empty (a genuine dead end, not "not yet started"). Haryana was attempted fresh this pass
+(see above) — real leads exist (MCG) but nothing independently fetchable/quotable was found; a
+JS-capable browser or a direct PDF citizen-charter search is the likely next step.
