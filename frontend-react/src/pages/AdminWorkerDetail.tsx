@@ -84,7 +84,7 @@ export default function AdminWorkerDetail() {
   return (
     <div>
       <TopBar />
-      <div className="page-admin">
+      <div className="page-admin" id="main-content">
         <div className="page-head">
           <div>
             <Link to="/admin/workers" style={{ fontSize: 12.5, color: "var(--ink-2)", display: "inline-block", marginBottom: 8 }}>
