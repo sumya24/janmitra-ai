@@ -436,3 +436,33 @@ confirmed dead ends (with the specific reason logged for each, per the project's
 ## Uttar Pradesh and Haryana coverage status update
 
 Both states now have real VERIFIED coverage (UP: Lucknow + Varanasi, 3 records; Haryana: Gurugram/GMDA, 1 record) — the "0 verified" gap from the previous session's log is closed for both, though Haryana's coverage remains thin (1 general-channel record, no category-specific SLA) and UP's Waste/Roads/Streetlights (outside Varanasi's water SLA) remain channel-only too.
+
+## Round 4 (2026-08-14, session 4): reaching blocked Karnataka/Gujarat content via alternate paths — zero survivors
+
+Round 3 established that Karnataka's and Gujarat/Ahmedabad's dead ends all shared one root cause: a broken/unusual TLS
+cert chain specific to the `karnataka.gov.in` and `ahmedabadcity.gov.in` domain families in this environment (other
+`.gov.in` domains fetched fine in the same sessions). This round tested 5 specific ways to reach the same underlying
+content through a different, working path, plus 2 alternate-city leads for AP and MP. Result: **0 of 5 leads
+survived** — each failed for a distinct, confirmed reason, not from insufficient effort. This is a genuine, useful
+negative result: it confirms these are real environment/infrastructure limitations, not a search-effort gap.
+
+| Lead | Target | Result | Notes |
+|---|---|---|---|
+| Wayback Machine mirrors of blocked BBMP/AMC pages | Karnataka, Gujarat | **TOOL-BLOCKED (blanket)** | **[CHECKED — WebFetch refuses `web.archive.org` entirely: "Claude Code is unable to fetch from web.archive.org", confirmed with 3 different URL forms (a specific snapshot of `bbmp.gov.in`, a specific snapshot of AMC's Road Resurfacing page, and a raw CDX-style listing URL). This is a tool-level restriction, not a per-page or per-snapshot issue -- Wayback Machine is not a usable workaround path in this environment at all, for any domain, not just Karnataka/Gujarat.]** |
+| `https://upload.indiacode.nic.in/showfile?...&filename=bbmp_rules_2021.pdf...` (BBMP Advertisement Rules 2021, via India Code's working cert chain) | Karnataka | **REAL BUT OFF-TOPIC** | **[CHECKED — fetched successfully (India Code's domain has no TLS issue, confirming the round-3 hypothesis that it's specific to karnataka.gov.in/bbmp.gov.in, not all Karnataka-related content). Read in full via the Read-tool-on-saved-PDF workaround: this is BBMP's Advertisement Rules 2021, entirely about outdoor hoarding/billboard licensing -- zero content about road repair or streetlight complaint SLAs. Confirms BBMP does publish real bye-laws through India Code (same channel as its existing VERIFIED waste bye-law), but this specific one isn't the right subject matter.]** |
+| `https://www.indiacode.nic.in/bitstream/123456789/21664/1/36_of_2025_(e).pdf` (Greater Bengaluru Governance Act, 2024) | Karnataka | **BLOCKED (403)** | **[CHECKED — HTTP 403 Forbidden from indiacode.nic.in itself for this specific bitstream, unlike the showfile-pattern URL above which worked. Not retried a second time per the one-attempt rule; BBMP/GBA's Roads and Streetlights categories remain genuinely open for Bengaluru.]** |
+| Gujarat (Right of Citizens to Public Services) Act, 2013 — SMC's own RCPS page, SUDA's page, and the actual 2016 gazette notification PDF (fetched via India Code's working cert chain and read in full via the Read-tool workaround) | Gujarat | **CONFIRMED NO SCHEDULE** | **[CHECKED — 3 fetches. SMC's and SUDA's own pages both link out to a PDF without displaying schedule content inline. The actual Gujarat Government Gazette notification (13-04-2016) under the Act was read in full: it only constitutes State Appellate Authorities per department (19 departments including "Urban Development and Urban Housing", each just assigned an Additional Chief Secretary/Principal Secretary/Secretary as appellate authority) -- no service-specific schedule of civic services with day limits anywhere in this document. Ahmedabad's Water/Drainage and Roads gaps remain open; this state-law angle is now confirmed exhausted, not just unexplored.]** |
+| `ourvmc.org` (Vijayawada Municipal Corporation) — home page and a specific RTI Information Handbook PDF (`general/ria2018.pdf`), both via explicit `http://` | Andhra Pradesh | **UNREACHABLE (ECONNREFUSED)** | **[CHECKED — both attempts failed with `connect ECONNREFUSED` on port 443. WebFetch auto-upgrades any http:// URL to https://, and this domain appears to have no working TLS listener at all (a different failure class from Karnataka/Gujarat's broken cert chain, closer to `site.bbmp.gov.in`'s connection-refused failure from round 3). A WebSearch summary claims ourvmc.org hosts both a Citizen Charter and a genuine day-based SLA table, but this could not be independently confirmed by any direct fetch and is NOT promoted. AP's 4 categories remain covered only by GVMC's generic IVRS/PGRS channel.]** |
+| `bmconline.gov.in` (Bhopal Municipal Corporation) | Madhya Pradesh | **EMPTY / NO PRIMARY SOURCE** | **[CHECKED — the domain resolves and loads but returns only a bare "App Title" placeholder (client-side-rendered shell), same failure class as `imcindore.mp.gov.in` and `mcdonline.nic.in`'s homepage. A WebSearch for Bhopal-specific grievance/charter content surfaced only a third-party aggregator (complainthub.org) -- explicitly disqualified as a source per this project's primary-source-only rule, not used. MP remains 1 record (state CM Helpline, channel-only).]** |
+
+### Net result of Round 4
+
+No new VERIFIED records this round -- all 5 primary leads (plus 2 sub-leads for BBMP specifically) were run down to a
+confirmed, specific dead end rather than left ambiguous. Karnataka (Roads/Streetlights), Gujarat/Ahmedabad
+(Water/Drainage + Roads), Andhra Pradesh (all 4 categories, generic-channel-only), Madhya Pradesh (1 record,
+channel-only), and Bihar (1 record, channel-only, confirmed exhausted in Round 3) remain open. Given that Round 3
+already confirmed Bihar's RTPS Act angle exhausted and this round confirmed Gujarat's RTS Act angle, Karnataka's
+Wayback/India-Code angles, AP's ourvmc.org angle, and MP's Bhopal angle are ALL exhausted too, these 5 gaps should
+now be treated as durable limitations of this research pipeline (primary-source-only + this environment's TLS/tooling
+constraints) rather than leads still worth re-attempting without a genuinely new angle or a change in environment
+capabilities (e.g. Wayback Machine access, or a working TLS path to karnataka.gov.in/ahmedabadcity.gov.in/ourvmc.org).
