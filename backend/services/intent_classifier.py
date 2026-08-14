@@ -49,6 +49,18 @@ class QuestionIntent(str, Enum):
     # regardless of what was actually asked). UNCLEAR gets its own honest "I didn't understand
     # that" response instead (see nodes.py's unclear_flow_node).
     UNCLEAR = "UNCLEAR"
+    # P0 SAFETY FIX: a bare service-category mention ("garbage", "streetlight repair rules") or a
+    # bare complaint-verb match inside a question-shaped sentence, with NO problem-state language
+    # and NO clear complaint framing -- genuinely ambiguous between "reporting a problem" and
+    # "asking about one". Previously this fell straight through to TYPE_A_COMPLAINT (see the old
+    # `if complaint_matches or category:` fallback this replaces), which is exactly how a
+    # production-safety audit found real, live-reproduced complaints silently filed and assigned
+    # to real workers for pure information questions ("What is the procedure for garbage
+    # collection complaints in Pune?" -> complaint #52; "What are the rules for streetlight
+    # repair in Kanpur?" -> complaint #54). Never guess in either direction: see classify()'s own
+    # tail logic for how this is decided, and orchestration/nodes.py's clarification_flow_node
+    # ("intent_ambiguous" reason) for how the caller asks instead of assuming.
+    TYPE_A_MAYBE = "TYPE_A_MAYBE"
 
 
 @dataclass
@@ -127,9 +139,33 @@ _SERVICE_INFO_KEYWORDS: dict[str, list[str]] = {
            # who only asked when a service runs. "when will" is intentionally NOT added bare here
            # -- it's already a TYPE_C status keyword ("when will my"), checked first in classify()
            # and would win regardless, so adding it here would be redundant, not a fix.
-           "when does", "what time does", "what time is", "how often does", "how often is",
+           #
+           # P0 SAFETY FIX: bare "when does"/"what time does"/"what time is"/"how often does"/
+           # "how often is" were too broad -- "what time is" substring-matches "What time is it
+           # in Mumbai?", a plain small-talk question with zero civic-service content, and routed
+           # it to a RAG answer about an unrelated topic (live-reproduced by the production-safety
+           # audit that found this). Replaced with the same phrases anchored to an actual civic
+           # service word, so a genuine schedule question ("What time does garbage collection
+           # happen?") still matches while a bare time-of-day question does not.
+           "when does collection", "when does garbage collection", "when does pickup",
+           "when does the collection", "when does water supply", "when does the water supply",
+           "what time does collection", "what time does the collection",
+           "what time does garbage collection", "what time does pickup",
+           "what time does water supply", "what time is collection", "what time is the collection",
+           "what time is water supply", "what time is the water supply",
+           "how often does collection", "how often does pickup", "how often does garbage collection",
+           "how often is collection", "how often is pickup",
            "resume collection", "collection schedule", "pickup schedule", "next collection",
+           "collection hours", "pickup hours", "service hours",
            "when is collection", "maintenance schedule", "cleaning schedule",
+           # "What is the procedure for X complaints/repairs?" / "What are the rules for X?" --
+           # clearly information-seeking framing about a civic process, not a complaint (same P0
+           # fix; a live-reproduced example: "What is the procedure for garbage collection
+           # complaints in Pune?" and "What are the rules for streetlight repair in Kanpur?" both
+           # silently became real, filed-and-assigned complaints before this fix, because
+           # "complaints"/"repair" contributed no info-seeking signal of their own).
+           "what is the procedure", "what's the procedure", "the procedure for",
+           "what are the rules", "what is the rule", "the rules for",
            # Same gap, same fix pattern, caught by testing this project's own built-in suggested
            # prompts (frontend-react/src/lib/i18n.ts's "ask.suggested.pothole"/"garbage"/
            # "streetlight", shown to every new user) -- process/policy questions with zero
@@ -224,11 +260,37 @@ _CAPABILITIES_KEYWORDS: dict[str, list[str]] = {
 # downgraded, in `classify()`.
 _COMPLAINT_STATE_KEYWORDS: dict[str, list[str]] = {
     "en": ["not working", "broken", "not collected", "problem", "issue",
-           "leaking", "leak", "overflow", "near my house", "near my home", "near me"],
+           "leaking", "leak", "overflow", "near my house", "near my home", "near me",
+           # "not collected" alone doesn't match "has NOT BEEN collected" (an extra word breaks
+           # the plain substring match) -- a real, measured gap caught by this fix's own test
+           # battery: "Garbage has not been collected from my street for three days." fell
+           # through to the bare-category-only fallback instead of a confident state match.
+           "not been collected", "hasn't been collected", "has not been collected",
+           "isn't being collected", "not being collected",
+           # Romanized/Hinglish state phrases -- same convention already established elsewhere in
+           # this file for _SERVICE_INFO_KEYWORDS's Hinglish entries (see that dict's own
+           # docstring: "this project's classifier has no language-specific routing... these
+           # entries work for romanized input without any other change"). Added after this fix's
+           # own tail-logic rewrite (a bare category match is no longer alone sufficient for
+           # TYPE_A_COMPLAINT) turned a pre-existing romanized-script gap into a real regression:
+           # "Mere ghar ke paas streetlight kharab hai" only matched the English word
+           # "streetlight" (category), with zero state/verb signal in Latin script, so it can no
+           # longer confidently resolve to TYPE_A without this.
+           "kharab hai", "kharab h", "kaam nahi kar raha", "kaam nahi kar rahi",
+           "toota hai", "toota hua hai", "tuta hai", "band hai"],
     "hi": ["काम नहीं कर रहा", "खराब है", "टूटा"],
-    "mr": ["काम करत नाही", "बंद आहे"],
+    # FIX-AND-VERIFY PASS: "बंद आहे" ("is off/closed", used for things like a streetlight) does
+    # NOT match "is broken" for a masculine/feminine noun like a pipe -- Marathi adjectives agree
+    # in gender with the noun ("तुटला" masc., "तुटली" fem., "तुटले" neut.), the same class of gap
+    # this file's own oblique-case comments already document elsewhere. Real, measured: caught by
+    # this fix's own live 6-language test battery -- "माझ्या घराजवळ पाण्याचा पाईप तुटला आहे."
+    # ("the water pipe near my house is broken") fell through to the ambiguous TYPE_A_MAYBE
+    # fallback (safe, but not confident) purely because no gendered "broken" form was covered.
+    "mr": ["काम करत नाही", "बंद आहे", "तुटला आहे", "तुटली आहे", "तुटले आहे"],
     "or": ["କାମ କରୁନାହିଁ", "ଖରାପ"],
-    "gu": ["કામ કરતું નથી", "તૂટેલું"],
+    # Same gap, same fix, for Gujarati: "તૂટેલું" (neuter/masculine-adjacent form) doesn't match
+    # "તૂટેલી" (feminine form, e.g. for પાઇપ/pipe) -- caught the same way, by the same test battery.
+    "gu": ["કામ કરતું નથી", "તૂટેલું", "તૂટેલી"],
     "bn": ["কাজ করছে না", "ভাঙা"],
 }
 _COMPLAINT_META_KEYWORDS: dict[str, list[str]] = {
@@ -416,12 +478,170 @@ def _any_match(text: str, keyword_lists: dict[str, list[str]]) -> list[str]:
     return [kw for kws in keyword_lists.values() for kw in kws if kw.lower() in lowered]
 
 
+# --- P0 SAFETY FIX helpers -- see QuestionIntent.TYPE_A_MAYBE's own docstring for what this
+# closes. `_looks_like_question` distinguishes information-seeking phrasing ("What is the
+# procedure for...?") from a bare fragment/statement -- deliberately simple (a trailing "?" or a
+# leading interrogative word/phrase), matching this file's own established preference for plain,
+# auditable string checks over anything fuzzy. `is_explicit_confirmation`/`is_explicit_
+# cancellation` are used by orchestration/nodes.py's complaint_flow_node to gate the one action
+# in this whole codebase that must NEVER fire on an inferred/guessed signal: actually creating a
+# complaint. Deliberately a narrow allowlist, not a broad "sounds positive" heuristic -- "okay"/
+# "fine"/"continue"/"tell me more" must NOT confirm, and a "yes" that's also a question ("yes,
+# what are the rules?") must not either. No LLM anywhere in this file, including here -- see the
+# module's own top-of-file docstring for why intent-adjacent decisions in this codebase are
+# deterministic string matching, never a model call.
+_QUESTION_MARKERS: dict[str, list[str]] = {
+    "en": ["what", "how", "when", "who", "which", "why", "is there", "are there", "does",
+           "do i", "can i", "could i", "should i", "is it", "are you", "kya", "kaise", "kab"],
+    "hi": ["क्या", "कैसे", "कब", "कहाँ", "कौन"],
+    "mr": ["काय", "कसे", "कधी", "कुठे", "कोण"],
+}
+
+
+def _looks_like_question(text: str) -> bool:
+    stripped = text.strip()
+    if not stripped:
+        return False
+    if stripped.endswith("?"):
+        return True
+    lowered = stripped.lower()
+    for markers in _QUESTION_MARKERS.values():
+        for marker in markers:
+            if lowered.startswith(marker.lower()):
+                return True
+    return False
+
+
+_CONFIRMATION_EXACT_WORDS: dict[str, set[str]] = {
+    "en": {"yes", "yeah", "yep", "yup", "submit", "confirm"},
+    "hi": {"haan", "ha", "हाँ", "हां", "हा"},
+    "mr": {"हो"},
+    # FINAL FIX-AND-VERIFY PASS: Odia/Gujarati/Bengali were previously unconfigured entirely (a
+    # citizen replying "yes" in these languages could never confirm a complaint -- safe, but
+    # incomplete). Words below are real Sarvam-translated output, verified live (see this fix's
+    # own report), extending the exact same allowlist pattern already used for hi/mr -- not a new
+    # mechanism.
+    "or": {"ହଁ"},
+    "gu": {"હા"},
+    "bn": {"হ্যাঁ"},
+}
+_CONFIRMATION_PHRASES: dict[str, list[str]] = {
+    "en": [
+        "yes submit it", "yes, submit it", "yes file it", "yes, file it",
+        "yes register it", "yes, register it", "yes create it", "yes, create it",
+        "yes confirm", "yes, confirm", "submit it", "submit the complaint",
+        "file it", "file the complaint", "register it", "register the complaint",
+        "create it", "create the complaint", "please submit", "please file",
+        "please register", "go ahead and submit", "go ahead and file",
+        "haan submit karo", "ha submit karo", "haan, submit karo", "haan complaint register karo",
+        "ha, complaint register karo",
+    ],
+    "hi": ["हाँ जमा करो", "हाँ दर्ज करो", "शिकायत दर्ज करो", "शिकायत जमा करो", "हाँ सबमिट करो", "जमा करो", "दर्ज करो"],
+    "mr": ["हो सबमिट करा", "हो नोंदवा", "तक्रार नोंदवा", "नोंदवा"],
+    "or": ["ହଁ, ଏହାକୁ ଦାଖଲ କରନ୍ତୁ", "ଏହାକୁ ଦାଖଲ କରନ୍ତୁ", "ଦାଖଲ କରନ୍ତୁ"],
+    "gu": ["હા, તેને સબમિટ કરો", "તે સબમિટ કરો", "સબમિટ કરો"],
+    "bn": ["হ্যাঁ, জমা দিন", "এটা জমা দিন", "জমা দিন"],
+}
+_CANCELLATION_EXACT_WORDS: dict[str, set[str]] = {
+    "en": {"no", "nope", "cancel"},
+    "hi": {"nahi", "नहीं", "ना"},
+    "mr": {"नाही"},
+    "or": {"ନା"},
+    "gu": {"ના"},
+    "bn": {"না"},
+}
+_CANCELLATION_PHRASES: dict[str, list[str]] = {
+    "en": ["no, don't submit", "don't submit", "no don't submit", "never mind", "no thanks",
+           "no cancel", "no, cancel", "cancel it", "cancel the complaint"],
+    "hi": ["मत करो", "रद्द करो", "नहीं, मत करो"],
+    "mr": ["नको", "रद्द करा"],
+    "or": ["ଏହାକୁ ଦାଖଲ କରନ୍ତୁ ନାହିଁ", "ବାତିଲ୍ କରନ୍ତୁ"],
+    "gu": ["તેને સબમિટ કરશો નહીં", "રદ કરો"],
+    "bn": ["এটা জমা দিও না", "বাতিল করুন"],
+}
+
+
+def _normalize_for_confirmation(text: str) -> str:
+    return text.strip().lower().strip(" .!,।")
+
+
+# Deliberately narrow -- a bare yes-word followed CLOSELY (within this many words) by an action
+# word ("yes submit it", "haan complaint register karo") is still an unambiguous confirmation not
+# already covered by the exact `_CONFIRMATION_PHRASES` list below. Checking only a short window
+# right after the yes-word -- not "does an action word appear anywhere at all in the message" --
+# is what keeps this contextual rather than a bare keyword-anywhere match: a longer reply that
+# merely STARTS with a yes-word but goes on to say something else ("yes, I already submitted a
+# complaint about this") has its action-word-shaped substring ("submitted") several words further
+# out, past this window, and correctly does NOT confirm. Real, reported edge case
+# (production-safety review) this window closes: without it, that exact sentence satisfied the
+# old, unbounded "yes-word anywhere + action-word anywhere in the whole message" check. The window
+# is deliberately measured in WORDS after the yes-word, not total message length -- a short
+# genuine reply padded with extra trailing content (e.g. an image/voice endpoint's photo caption
+# folded onto the citizen's own short reply, see orchestration/nodes.py's intent_node docstring)
+# must still confirm correctly, since the action word is still immediately adjacent to "yes" even
+# though the message as a whole is long.
+_CONFIRMATION_FALLBACK_LOOKAHEAD_WORDS = 2
+
+
+def is_explicit_confirmation(text: str) -> bool:
+    """True only for an unambiguous, deterministic "yes, submit this complaint" reply -- see this
+    section's module-level docstring. Never treats a merely positive-sounding or continuation
+    word ("okay", "fine", "continue", "tell me more") as confirmation, and never treats a "yes"
+    that's part of a further question ("yes, what are the rules?") as one either. Also never
+    treats a longer reply that merely STARTS with a yes-word but goes on to say something else
+    ("yes, I already submitted a complaint about this") as confirmation -- see
+    `_CONFIRMATION_FALLBACK_LOOKAHEAD_WORDS`'s own comment. A reply this function doesn't
+    recognize is simply not a confirmation (never a cancellation either) -- the caller
+    (`complaint_flow_node`) re-asks rather than guessing, the safe direction to fail in for a
+    check that gates a database write."""
+    normalized = _normalize_for_confirmation(text)
+    if not normalized or _looks_like_question(text):
+        return False
+    for words in _CONFIRMATION_EXACT_WORDS.values():
+        if normalized in words:
+            return True
+    for phrases in _CONFIRMATION_PHRASES.values():
+        if normalized in phrases:
+            return True
+    words_in_text = normalized.split(" ")
+    first_word = words_in_text[0].strip(",")
+    yes_words = {w for words in _CONFIRMATION_EXACT_WORDS.values() for w in words if w not in {"submit", "confirm"}}
+    if first_word in yes_words:
+        action_words = ["submit", "file", "register", "create", "confirm", "जमा", "दर्ज", "सबमिट", "नोंदव",
+                        "ଦାଖଲ", "ସବମିଟ", "સબમિટ", "জমা"]
+        nearby = " ".join(words_in_text[1:1 + _CONFIRMATION_FALLBACK_LOOKAHEAD_WORDS])
+        if any(w in nearby for w in action_words):
+            return True
+    return False
+
+
+def is_explicit_cancellation(text: str) -> bool:
+    """Deterministic counterpart to `is_explicit_confirmation` -- see that function's docstring."""
+    normalized = _normalize_for_confirmation(text)
+    if not normalized or _looks_like_question(text):
+        return False
+    for words in _CANCELLATION_EXACT_WORDS.values():
+        if normalized in words:
+            return True
+    for phrases in _CANCELLATION_PHRASES.values():
+        if normalized in phrases:
+            return True
+    first_word = normalized.split(" ", 1)[0].strip(",")
+    no_words = {w for words in _CANCELLATION_EXACT_WORDS.values() for w in words if w != "cancel"}
+    return first_word in no_words
+
+
 def classify(question: str) -> ClassificationResult:
-    """Classifies one question. Never raises. A complaint-verb match or a named service category
-    means TYPE_A_COMPLAINT (possibly still missing a category/location, which the caller asks
-    for). Failing that, a real "what can you do" question is CAPABILITIES; anything else that
-    matched nothing at all is UNCLEAR -- never silently defaulted to TYPE_A_COMPLAINT (see
-    QuestionIntent.UNCLEAR's own docstring for the bug this replaced)."""
+    """Classifies one question. Never raises. Strong problem-state language ("broken"/"not
+    working"/...), or a complaint verb outside a question-shaped sentence, means TYPE_A_COMPLAINT
+    (possibly still missing a category/location, which the caller asks for). A bare category
+    mention or complaint-verb match with no such signal, in a question-shaped sentence, is
+    TYPE_B_SERVICE_INFO; the same bare signal in a non-question fragment is TYPE_A_MAYBE -- never
+    guessed straight into TYPE_A_COMPLAINT (see QuestionIntent.TYPE_A_MAYBE's own docstring for
+    the P0 bug this closes). Failing all of that, a real "what can you do" question is
+    CAPABILITIES; anything else that matched nothing at all is UNCLEAR -- never silently
+    defaulted to TYPE_A_COMPLAINT (see QuestionIntent.UNCLEAR's own docstring for the earlier bug
+    this replaced)."""
     text = question.strip()
     requests_new_connection = bool(_any_match(text, _NEW_CONNECTION_TOPIC_KEYWORDS))
 
@@ -446,7 +666,9 @@ def classify(question: str) -> ClassificationResult:
         out_of_scope_label = "NEW_SERVICE_CONNECTION"
 
     service_info_matches = _any_match(text, _SERVICE_INFO_KEYWORDS)
-    complaint_matches = _any_match(text, _COMPLAINT_VERB_KEYWORDS)
+    state_matches = _any_match(text, _COMPLAINT_STATE_KEYWORDS)
+    meta_matches = _any_match(text, _COMPLAINT_META_KEYWORDS)
+    complaint_matches = state_matches + meta_matches  # kept for out_of_scope's own check below
     how_to_file_matches = _any_match(text, _HOW_TO_FILE_COMPLAINT_KEYWORDS)
 
     category = None
@@ -499,7 +721,13 @@ def classify(question: str) -> ClassificationResult:
             requests_new_connection=requests_new_connection,
         )
 
-    if service_info_matches and not complaint_matches:
+    if service_info_matches and not state_matches:
+        # A genuine problem-state signal ("broken"/"leaking"/...) still wins over a service-info
+        # phrase match -- only a bare complaint-VERB match (meta_matches, e.g. "report"/
+        # "complain") is weak enough to be overridden by a clear info-seeking phrase (the old
+        # guard here was `not complaint_matches`, i.e. state+meta combined; loosened to
+        # `not state_matches` as part of the P0 fix below, since meta_matches alone is no longer
+        # trusted as a confident complaint signal either).
         return ClassificationResult(
             intent=QuestionIntent.TYPE_B_SERVICE_INFO,
             service_category=category,
@@ -508,15 +736,59 @@ def classify(question: str) -> ClassificationResult:
             requests_new_connection=requests_new_connection,
         )
 
-    # TYPE_A: an explicit complaint-verb match, or a named civic category -- real signal that
-    # this is (or is about) a civic complaint, even if the category/location still needs
-    # clarifying. Checked before CAPABILITIES/UNCLEAR below so an actual complaint always wins.
-    if complaint_matches or category:
+    if state_matches:
+        # Strong, unambiguous problem-state language -- confidently a real complaint regardless
+        # of sentence shape or category (category, if still missing, is asked for by the caller).
         return ClassificationResult(
             intent=QuestionIntent.TYPE_A_COMPLAINT,
             service_category=category,
             out_of_scope_service=None,
             matched_keywords=complaint_matches + category_matches,
+            requests_new_connection=requests_new_connection,
+        )
+
+    if meta_matches and not _looks_like_question(text):
+        # A complaint-shaped verb ("report"/"complain"/शिकायत/तक्रार/...) with no problem-state
+        # language, and NOT phrased as a question -- e.g. "I want to file a complaint." Kept
+        # confidently TYPE_A (see test_classifier_real_complaint_with_no_category_still_type_a).
+        return ClassificationResult(
+            intent=QuestionIntent.TYPE_A_COMPLAINT,
+            service_category=category,
+            out_of_scope_service=None,
+            matched_keywords=complaint_matches + category_matches,
+            requests_new_connection=requests_new_connection,
+        )
+
+    # P0 SAFETY FIX (see QuestionIntent.TYPE_A_MAYBE's own docstring, and the production-safety
+    # audit that found this): what's left here is either a bare CATEGORY mention with no
+    # complaint-shaped language at all (e.g. "garbage in Pune"), or a bare META verb match inside
+    # a clearly question-shaped sentence (e.g. "complain" matching only as a substring of the
+    # plural noun "complaints" in "What is the procedure for garbage collection complaints in
+    # Pune?"). Neither is, on its own, confident evidence of a real complaint -- both are equally
+    # consistent with an information question about that category. Previously this fell straight
+    # through to TYPE_A_COMPLAINT (`if complaint_matches or category:`), which is the exact P0
+    # bug this closes: that sentence, and "What are the rules for streetlight repair in Kanpur?",
+    # both silently became real, filed-and-assigned complaints before this fix. Never guess in
+    # either direction: a clearly question-phrased message is treated as information-seeking
+    # (TYPE_B, answered via RAG, which already handles "no matching record" honestly); anything
+    # else with only this weak a signal is genuinely ambiguous and gets TYPE_A_MAYBE, which asks
+    # the citizen directly instead of assuming either way (see orchestration/nodes.py's
+    # clarification_flow_node "intent_ambiguous" branch).
+    if category or meta_matches:
+        weak_matched_keywords = category_matches or meta_matches
+        if _looks_like_question(text):
+            return ClassificationResult(
+                intent=QuestionIntent.TYPE_B_SERVICE_INFO,
+                service_category=category,
+                out_of_scope_service=None,
+                matched_keywords=weak_matched_keywords,
+                requests_new_connection=requests_new_connection,
+            )
+        return ClassificationResult(
+            intent=QuestionIntent.TYPE_A_MAYBE,
+            service_category=category,
+            out_of_scope_service=None,
+            matched_keywords=weak_matched_keywords,
             requests_new_connection=requests_new_connection,
         )
 
