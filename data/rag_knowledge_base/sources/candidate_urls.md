@@ -327,3 +327,86 @@ Uttar Pradesh and Haryana. Uttar Pradesh was researched in the original 10-state
 up empty (a genuine dead end, not "not yet started"). Haryana was attempted fresh this pass
 (see above) — real leads exist (MCG) but nothing independently fetchable/quotable was found; a
 JS-capable browser or a direct PDF citizen-charter search is the likely next step.
+
+
+## Continued research pass (2026-08-14, session 2): Haryana retry, UP fresh attempt, category gaps
+
+Follow-up to the "6 previously-unresearched states" pass above. This session: retried Haryana
+with a different authority (GMDA instead of MCG), attempted UP fresh with real WebFetch (the
+original 10-state pass never touched it beyond WebSearch), and filled category gaps in West
+Bengal/Gujarat/Kerala/Karnataka/Maharashtra using already-logged candidate URLs plus new leads.
+
+### Haryana (retry)
+
+| URL | Source title | Authority | Format | Quality | Cities | Services |
+|---|---|---|---|---|---|---|
+| https://services.gmda.gov.in/ | Services Portal | Gurugram Metropolitan Development Authority (GMDA) | HTML | B | Gurugram | Waste & Sanitation (general channel) | **[PROMOTED TO VERIFIED — see knowledge_records/verified/haryana/gurugram.json, sources/inventory.json. GMDA is distinct from MCG; real toll-free 18001801817 independently confirmed via direct fetch this time (was previously only seen via an unconfirmed WebSearch summary).]** |
+| https://ulbharyana.gov.in/Website/Faridabad/Images/c7f73535-d387-4b0d-8cac-a37a78605b0d.pdf | Solid Waste (Management & Handling) Bye-laws, 2019 | Faridabad Municipal Corporation, via Haryana ULB Directorate | PDF | A (real, unusable) | Faridabad | Waste & Sanitation | **[CHECKED — real, live, 6.5MB PDF. Scanned/image-based with no extractable text layer; this environment has no OCR/poppler available. Genuinely real bye-law, just unreadable by current tooling — worth re-attempting with OCR capability.]** |
+| https://www.mcg.gov.in (retry, ApplicationsSummary.aspx) | Municipal Corporation Gurugram | MCG | HTML (JS-rendered) | — | Gurugram | All services | **[STILL NOT USABLE on retry — confirmed via direct fetch that mcg.gov.in genuinely is Municipal Corporation of *Gurugram* (not Ghaziabad, despite one ambiguous WebSearch result), but every page attempted returns only the header/title, no body content.]** |
+| https://ulbharyana.gov.in/img/pdf/SWM%20Policy%20and%20Strategy%20on%20Solid%20Waste%20Management.pdf | SWM Policy and Strategy | Directorate of Urban Local Bodies, Haryana | PDF | — (dead) | (state-wide) | Waste & Sanitation | **[CHECKED — 404, page removed/moved. Appeared as a live search result but the URL is dead.]** |
+| Gurugram Municipal Corporation Solid Waste Management Bylaws, 2025 (draft) | — | MCG | — | — | Gurugram | Waste & Sanitation | **[NOT YET ENACTED — reported via news sources as still awaiting state government approval; not a usable source until finalized and published.]** |
+
+### Uttar Pradesh (fresh attempt with real WebFetch)
+
+| URL | Source title | Authority | Format | Quality | Cities | Services |
+|---|---|---|---|---|---|---|
+| https://lmc.up.nic.in | Official Website | Lucknow Municipal Corporation (LMC) | HTML | B | Lucknow | Waste & Sanitation | **[PROMOTED TO VERIFIED — see knowledge_records/verified/uttar_pradesh/lucknow.json, sources/inventory.json. Real Mayor's Office helpline for garbage-overcharging complaints.]** |
+| https://jn.upsdc.gov.in | UP Jal Nigam homepage | UP Jal Nigam | HTML | B | (state-wide) | Water & Drainage | **[CHECKED — real contact info (phone, named Web Information Manager) but no citizen charter/SLA on this page. Links to e-nagarsewaup.gov.in.]** |
+| https://e-nagarsewaup.gov.in/ | e-Nagar Sewa UP (state ULB citizen services portal) | Government of Uttar Pradesh | HTML | B | (state-wide) | All services | **[NOT USABLE — page only returns a redirect message, no further content reachable this pass.]** |
+| https://nnvns.org.in | Varanasi Nagar Nigam homepage | Varanasi Nagar Nigam (VNN) | HTML | A | Varanasi | Waste & Sanitation, Roads & Potholes, Streetlights (general channel + toll-free) | **[CHECKED, led to Citizen Charter page below.]** |
+| https://nnvns.org.in/nnvns/index.php?option=com_content&view=article&id=224&lang=en&Itemid=238 | Citizen Charter | Varanasi Nagar Nigam (VNN) | HTML | A | Varanasi | Water & Drainage (real 15-day connection SLA), Waste & Sanitation, Roads & Potholes, Streetlights (general channel) | **[PROMOTED TO VERIFIED — see knowledge_records/verified/uttar_pradesh/varanasi.json, sources/inventory.json.]** |
+| https://jalkalvaranasi.org (and /pgr) | Varanasi Jal Kal (water/sewerage board) | Jal Kal Vibhag, Varanasi | HTML | — | Varanasi | Water & Drainage | **[UNREACHABLE — connection refused, 2 separate attempts (base domain and /pgr path).]** |
+
+### West Bengal (Roads gap)
+
+| URL | Source title | Authority | Format | Quality | Cities | Services |
+|---|---|---|---|---|---|---|
+| https://pwd.wb.gov.in/general/login?module=grievance | Grievance Portal | Public Works Department, West Bengal | Web app | A | (state-wide, covers Kolkata) | Roads & Potholes | **[PROMOTED TO VERIFIED — see knowledge_records/verified/west_bengal/kolkata.json, sources/inventory.json. Closes the Roads gap left by KMC's own unusable Roads page (see earlier session's log). Real WhatsApp helpline 9073362000, explicitly covers roads/bridges/culverts damage and workmanship complaints.]** |
+
+### Gujarat (Water/Drainage + Roads gaps)
+
+| URL | Source title | Authority | Format | Quality | Cities | Services |
+|---|---|---|---|---|---|---|
+| https://www.suratmunicipal.gov.in/departments/hydraulichome | Water Supply (Hydraulic) — Home | Surat Municipal Corporation (SMC) | HTML | A (checked, thin) | Surat | Water & Drainage | **[CHECKED — real page, general complaint channels only (portal, apps), no SLA.]** |
+| https://www.suratmunicipal.gov.in/departments/drainageintroduction | Drainage — Introduction | SMC | HTML | A (checked, thin) | Surat | Water & Drainage | **[CHECKED — functions description only, no SLA or contact details.]** |
+| https://www.suratmunicipal.gov.in/Departments/DrainageHowDoI | Drainage — How Do I Get a Connection? | SMC | HTML | A | Surat | Water & Drainage | **[PROMOTED TO VERIFIED — see knowledge_records/verified/gujarat/surat.json, sources/inventory.json. Real 15-day connection-approval SLA.]** |
+| https://www.suratmunicipal.gov.in/Home/TollFreeNumbers | Toll Free Numbers | SMC | HTML | A | Surat | Roads & Potholes (general channel), Waste & Sanitation (C&D/plastic-specific lines) | **[PROMOTED TO VERIFIED — see knowledge_records/verified/gujarat/surat.json, sources/inventory.json. Used as Surat's general Roads complaint channel (no roads-specific line published).]** |
+| https://www.suratmunicipal.gov.in/Departments/RoadDevelopmentHome | Road Development Introduction/Projects | SMC | HTML | A (checked, thin) | Surat | Roads & Potholes | **[CHECKED — completed-project statistics table only, no complaint SLA.]** |
+| https://ahmedabadcity.gov.in/portal/jsp/Static_pages/pi_RoadResurfacing.jsp | Road Resurfacing | Ahmedabad Municipal Corporation (AMC) | HTML | A (unreachable) | Ahmedabad | Roads & Potholes | **[UNREACHABLE — SSL certificate verification failure ("unable to verify the first certificate"), same failure class as tnurbantree.tn.gov.in from an earlier pass. Ahmedabad's own Water/Roads gaps remain open; AMC's Comprehensive Complaint Redressal System (155303, already logged elsewhere in this project's Ahmedabad waste record) plausibly covers roads too per a WebSearch summary, but this was not independently confirmed via a directly-fetched primary page, so not promoted.]** |
+
+### Kerala (Waste/Roads/Streetlights gaps)
+
+| URL | Source title | Authority | Format | Quality | Cities | Services |
+|---|---|---|---|---|---|---|
+| https://kochicorporation.lsgkerala.gov.in/en/solid-waste-management/368 | Solid Waste Management | Cochin Corporation | HTML | A (checked, thin) | Kochi | Waste & Sanitation | **[CHECKED — only navigation/header content returned, no substantive complaint procedure.]** |
+| https://kochicorporation.lsgkerala.gov.in/en/form/public-grievance-cellnew | Public Grievance Cell | Cochin Corporation | Web form | A | Kochi | Waste & Sanitation, Roads & Potholes, Streetlights (general channel) | **[PROMOTED TO VERIFIED — see knowledge_records/verified/kerala/kochi.json, sources/inventory.json. 3 records (Waste/Roads/Streetlights), general channel, no category-specific SLA.]** |
+
+### Karnataka (Water gap; Roads/Streetlights still open)
+
+| URL | Source title | Authority | Format | Quality | Cities | Services |
+|---|---|---|---|---|---|---|
+| https://bwssb.karnataka.gov.in/page/Contact+Us/Contact+Info/en | Contact Info | Bangalore Water Supply and Sewerage Board (BWSSB) | HTML | A | Bengaluru | Water & Drainage | **[PROMOTED TO VERIFIED — see knowledge_records/verified/karnataka/bengaluru.json, sources/inventory.json. Real call center 1916, Safai Mitra 14420.]** |
+| https://www.bwssb.karnataka.gov.in/all_complaint_details?info=1480 | Complaint details/procedure | BWSSB | HTML | — | Bengaluru | Water & Drainage | **[UNREACHABLE — TLSV1_ALERT_UNRECOGNIZED_NAME (SNI/TLS config issue).]** |
+| https://bbmp.sahaaya.in | Sahaaya citizen grievance portal | BBMP | HTML | — | Bengaluru | Roads & Potholes, Streetlights | **[UNREACHABLE — certificate altname mismatch (cert covers *.nammabengaluru.org.in, not this hostname).]** |
+| https://sahaaya.nammabengaluru.org.in | Sahaaya (alternate domain) | BBMP | HTML | — | Bengaluru | Roads & Potholes, Streetlights | **[UNREACHABLE — DNS resolution failure.]** |
+| https://site.bbmp.gov.in | BBMP official site | BBMP | HTML | — | Bengaluru | Roads & Potholes, Streetlights | **[UNREACHABLE — connection refused.]** |
+| BBMP control room 080-22660000, helpline 1533, BESCOM 1912 (streetlight electrical faults) | — | BBMP / BESCOM | — | D (secondary only) | Bengaluru | Roads & Potholes, Streetlights | **[NOT PROMOTED — these numbers surfaced only via WebSearch-aggregated answers citing third-party sites (godigit.com, thinkbangalore.com), never independently confirmed via a directly-fetched primary .gov.in page. Per this project's primary-source-only rule, logged here as an unconfirmed lead, not used as a KnowledgeRecord source. Karnataka's Roads/Streetlights gaps remain genuinely open.]** |
+
+### Maharashtra (Water/Roads/Streetlights gaps + a stronger Waste source)
+
+| URL | Source title | Authority | Format | Quality | Cities | Services |
+|---|---|---|---|---|---|---|
+| https://portal.mcgm.gov.in/... (Lodging Civic Complaints, Complaint Registration, ContactUs, Water Supply Project pages) | Various | Brihanmumbai Municipal Corporation (BMC/MCGM) | Legacy SAP NetWeaver portal | — | Mumbai | All services | **[SYSTEMATICALLY UNUSABLE — every page on portal.mcgm.gov.in returns only "Could not open iView. The iView is not compatible with your browser..." across 3 separate URLs attempted. This is BMC's primary complaint/contact portal and it is not fetchable by any static tool used this pass.]** |
+| https://praja.org/praja_docs/praja_downloads/CITIZEN%20CHARTER.pdf | Citizens' Charter (June 1999) | Municipal Corporation of Greater Mumbai, with PRAJA Foundation | PDF (scanned) | A (real, dated) | Mumbai | Water & Drainage, Roads & Potholes, Streetlights, Waste & Sanitation (supplementary) | **[PROMOTED TO VERIFIED, explicitly flagged OUTDATED / VERIFY BEFORE PRODUCTION — see knowledge_records/verified/maharashtra/mumbai.json, sources/inventory.json. Genuinely MCGM's own signed 1999 charter (Mayor + Municipal Commissioner), hosted by the NGO co-publisher rather than mcgm.gov.in directly — same "real document, third-party-hosted" precedent as the Punjab Patiala charter (Azure blob storage) and BBMP bye-law (India Code) in earlier sessions. 26 years old: every record built from it carries an explicit staleness warning and the phone numbers/contact directory are NOT reproduced in the KnowledgeRecords themselves for that reason (only in this source's own inventory notes, pointing back to the original PDF).]** |
+
+## Follow-up leads surfaced by this session, not yet pursued
+
+- Faridabad's real, live Solid Waste Bye-laws 2019 PDF — needs OCR capability this environment doesn't have.
+- Ahmedabad's Roads page and BWSSB's complaint-details page — both blocked by SSL/TLS issues from this environment; a human browser would likely succeed where automated fetch failed.
+- BBMP's Sahaaya portal (Roads/Streetlights for Bengaluru) — 3 different hostnames all failed for different technical reasons (cert mismatch, DNS, connection refused); worth a dedicated retry.
+- Ahmedabad's own Water/Drainage and Roads categories remain fully open (Surat's were closed this pass; Ahmedabad's were not attempted beyond the failed Roads fetch).
+- Varanasi Jal Kal's own dedicated site (jalkalvaranasi.org) — connection refused twice; VNN's general charter was used instead and already covers water with a real SLA, but Jal Kal's own site might have richer detail if it becomes reachable later.
+
+## Uttar Pradesh and Haryana coverage status update
+
+Both states now have real VERIFIED coverage (UP: Lucknow + Varanasi, 3 records; Haryana: Gurugram/GMDA, 1 record) — the "0 verified" gap from the previous session's log is closed for both, though Haryana's coverage remains thin (1 general-channel record, no category-specific SLA) and UP's Waste/Roads/Streetlights (outside Varanasi's water SLA) remain channel-only too.
