@@ -57,7 +57,7 @@ The following URLs were found via **WebSearch only** — this environment's WebF
 |---|---|---|---|---|---|---|
 | https://ahmedabadcity.gov.in/portal/jsp/Static_pages/pi_ccharter.jsp | Citizen Charter :: Ahmedabad Municipal Corporation | Ahmedabad Municipal Corporation (AMC) | HTML | A | Ahmedabad | All services (Citizen Charter) |
 | https://ahmedabadcity.gov.in/StaticPage/solid_waste_mgmt | Solid Waste Management — AMC | AMC | HTML | A | Ahmedabad | Waste & Sanitation |
-| https://ahmedabadcity.gov.in/Images/_SWM%20Dept_SWM%20BREIF%20NOTE%20IN%20ENGLISH.pdf | SWM Dept — Brief Note (PDF) | AMC | PDF | A | Ahmedabad | Waste & Sanitation |
+| https://ahmedabadcity.gov.in/Images/_SWM%20Dept_SWM%20BREIF%20NOTE%20IN%20ENGLISH.pdf | SWM Dept — Brief Note (PDF) | AMC | PDF | A | Ahmedabad | Waste & Sanitation | **[PROMOTED TO VERIFIED — see knowledge_records/verified/, sources/inventory.json]**
 | https://amccrs.apphost.in/AMCPortal | AMCCRS — Comprehensive Complaint Redressal System | AMC | Web app | B | Ahmedabad | All services (complaint portal) |
 | https://www.suratmunicipal.gov.in/Downloads/CitizenCharter | Citizen Charter | Surat Municipal Corporation (SMC) | HTML | A | Surat | All services (Citizen Charter) |
 | https://www.suratmunicipal.gov.in/departments/solidwastemanagementhome | Solid Waste Management Home | SMC | HTML | A | Surat | Waste & Sanitation |
@@ -103,7 +103,7 @@ The following URLs were found via **WebSearch only** — this environment's WebF
 | https://mykochi.lsgkerala.gov.in/index/complaintstatus | My Kochi — All Complaints / Complaint Status | Cochin Corporation (LSGD Kerala) | Web app | B | Kochi | All services (status check) |
 | https://kochicorporation.lsgkerala.gov.in/en/solid-waste-management/368 | Solid Waste Management | Cochin Corporation (LSGD Kerala) | HTML | A | Kochi | Waste & Sanitation |
 | https://kochicorporation.lsgkerala.gov.in/en/list-empanelment-agencies-solid-waste-management/491 | List of Empanelment Agencies for Solid Waste Management | Cochin Corporation (LSGD Kerala) | HTML | A | Kochi | Waste & Sanitation |
-| https://kochicorporation.lsgkerala.gov.in/system/files/2022-02/Septage_management_bylaw.pdf | Septage Management Byelaw (Draft) | Cochin Corporation (LSGD Kerala) | PDF | A | Kochi | Water & Drainage (sewerage) |
+| https://kochicorporation.lsgkerala.gov.in/system/files/2022-02/Septage_management_bylaw.pdf | Septage Management Byelaw (Draft) | Cochin Corporation (LSGD Kerala) | PDF | A | Kochi | Water & Drainage (sewerage) | **[PROMOTED TO VERIFIED — see knowledge_records/verified/, sources/inventory.json]**
 | https://kochicorporation.lsgkerala.gov.in/en/engineering | Engineering | Cochin Corporation (LSGD Kerala) | HTML | B | Kochi | Roads & Potholes / Streetlights |
 | https://tmc.lsgkerala.gov.in/en/grievances-redressal-mechanism/1749 | Grievances Redressal Mechanism | Thiruvananthapuram Municipal Corporation (LSGD Kerala) | HTML | B | Thiruvananthapuram | All services (grievance mechanism) |
 | https://tmc.lsgkerala.gov.in/en/public-grievance-cell | Public Grievance Cell | Thiruvananthapuram Municipal Corporation (LSGD Kerala) | HTML | B | Thiruvananthapuram | All services (grievance cell) |
@@ -135,7 +135,7 @@ The following URLs were found via **WebSearch only** — this environment's WebF
 | https://services.india.gov.in/service/detail/check-complaint-status-for-pune-municipal-corporation-maharashtra | Check Complaint Status for PMC | National Government Services Portal (Govt. of India) | HTML | B | Pune | All services |
 | https://dm.mcgm.gov.in/central-complaint-registration-system | Central Complaint Registration System | BMC / Disaster Management, MCGM | HTML | B | Mumbai | All services |
 | https://portal.mcgm.gov.in/irj/portal/anonymous/qlcomplaintreg?guest_user=english | Lodging Civic Complaints / Complaint Registration | BMC (MCGM) | Web form | B | Mumbai | All services |
-| https://www.mcgm.gov.in/irj/go/km/docs/documents/MCGM%20Department%20List/ChiefEngineerSolidWasteManagement/RTI%20Manuals/CESWM_RTI_E02.pdf | Solid Waste Management dept RTI Manual (Sec 4(1)(b)) | BMC — Chief Engineer, Solid Waste Management | PDF | A | Mumbai | Waste & Sanitation |
+| https://www.mcgm.gov.in/irj/go/km/docs/documents/MCGM%20Department%20List/ChiefEngineerSolidWasteManagement/RTI%20Manuals/CESWM_RTI_E02.pdf | Solid Waste Management dept RTI Manual (Sec 4(1)(b)) | BMC — Chief Engineer, Solid Waste Management | PDF | A | Mumbai | Waste & Sanitation | **[PROMOTED TO VERIFIED — see knowledge_records/verified/, sources/inventory.json]**
 | https://portal.mcgm.gov.in/irj/portal/anonymous/qltendersswm_new | Solid Waste Management (portal section) | BMC (MCGM) | HTML | B | Mumbai | Waste & Sanitation |
 | https://portal.mcgm.gov.in/irj/portal/anonymous/qlwardc?guest_user=english | WardC — MyBMC | BMC (MCGM) | HTML | B | Mumbai | All services (ward-level) |
 | https://www.nmcnagpur.gov.in/grievance/ | Grievance Redressal System — NMC | Nagpur Municipal Corporation | HTML | B | Nagpur | All services |
@@ -192,10 +192,10 @@ The following URLs were found via **WebSearch only** — this environment's WebF
 
 | URL | Source title | Authority | Format | Quality | Cities | Services |
 |---|---|---|---|---|---|---|
-| https://www.ghmc.gov.in/CitizenCharter/CitizenCharter-19.06.pdf | Citizen's Charter — Hyderabad | Greater Hyderabad Municipal Corporation (GHMC) | PDF | A | Hyderabad | All services (Citizen's Charter) |
+| https://www.ghmc.gov.in/CitizenCharter/CitizenCharter-19.06.pdf | Citizen's Charter — Hyderabad | Greater Hyderabad Municipal Corporation (GHMC) | PDF | A | Hyderabad | All services (Citizen's Charter) | **[PROMOTED TO VERIFIED — see knowledge_records/verified/, sources/inventory.json]**
 | https://igs.ghmc.gov.in/ | Grievances — Integrated Grievance System (IGS) | GHMC | Web app | A | Hyderabad | All services (grievance system) |
 | https://ghmconlinegrievance.cgg.gov.in/ | GHMC Online Grievance | GHMC, hosted via Centre for Good Governance (cgg.gov.in) | Web app | B | Hyderabad | All services (grievance system, alt.) |
-| https://www.hyderabadwater.gov.in/application/files/7417/3185/0800/updated_citizen_charter.pdf | Citizen's Charter of HMWSSB | Hyderabad Metropolitan Water Supply & Sewerage Board (HMWSSB) — separate statutory board, NOT GHMC | PDF | A | Hyderabad | Water & Drainage |
+| https://www.hyderabadwater.gov.in/application/files/7417/3185/0800/updated_citizen_charter.pdf | Citizen's Charter of HMWSSB | Hyderabad Metropolitan Water Supply & Sewerage Board (HMWSSB) — separate statutory board, NOT GHMC | PDF | A | Hyderabad | Water & Drainage | **[PROMOTED TO VERIFIED — see knowledge_records/verified/, sources/inventory.json]**
 | https://www.hyderabadwater.gov.in/en/index.php/contact-us | Contact Us — HMWSSB | HMWSSB | HTML | A | Hyderabad | Water & Drainage |
 | https://gwmc.gov.in/grievance_registration.aspx | Grievance Registration — GWMC | Greater Warangal Municipal Corporation (GWMC) | Web form | A | Warangal | All services (grievance mechanism) |
 | https://gwmc.gov.in/ContactUs_New.aspx | Contact Us — GWMC | GWMC | HTML | A | Warangal | All services (contact) |

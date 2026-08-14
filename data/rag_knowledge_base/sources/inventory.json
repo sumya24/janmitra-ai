@@ -89,5 +89,70 @@
     "retrieved_at": "2026-08-14T03:44:53.285807+00:00",
     "geographic_scope": "CITY",
     "notes": "62-page PDF, downloaded and provided directly by the user (WebFetch was unavailable this pass). Full text read directly. Hosted on India Code, the Government of India's own legislative-instrument repository -- a formal bye-law, not a citizen-facing procedural page, so it's strong on segregation duties, collection frequency, and the penalty/appeal structure, but does NOT state a numeric complaint-to-resolution SLA for garbage collection (only collection *frequency* norms) -- recorded honestly as SLA NOT FOUND rather than inferred. Used for 1 KnowledgeRecord -- see knowledge_records/verified/karnataka/bengaluru.json."
+  },
+  {
+    "source_id": "KL_KOCHI_SEPTAGE_MANAGEMENT_BYELAW",
+    "source_title": "Septage Management Byelaw (Draft) — Kochi Municipal Corporation",
+    "source_organization": "Kochi Municipal Corporation",
+    "source_url": "https://kochicorporation.lsgkerala.gov.in/system/files/2022-02/Septage_management_bylaw.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-14T05:17:45.050384+00:00",
+    "geographic_scope": "CITY",
+    "notes": "18-page draft byelaw PDF, downloaded and provided directly by the user (WebFetch was unavailable this pass). Full text read directly. Regulates on-site sanitation (septic tanks, pits) citywide: desludging fees (Rs.400/trip + Rs.3000-5000 tariff by tank size), a vehicle-pass system for desludging operators (Annexures I-IV), a Rs.25000 spot fine for illegal septage dumping, a recommended 2-3 year desludging interval, and a ban on pit/twin-pit/hanging latrines with a Rs.10000/15400 conversion subsidy. Used for 1 KnowledgeRecord -- see knowledge_records/verified/kerala/kochi.json."
+  },
+  {
+    "source_id": "MH_BMC_SWM_RTI_MANUAL",
+    "source_title": "Solid Waste Management Department RTI Manual (Section 4(1)(b))",
+    "source_organization": "Municipal Corporation of Greater Mumbai (MCGM / BMC)",
+    "source_url": "https://www.mcgm.gov.in/irj/go/km/docs/documents/MCGM%20Department%20List/ChiefEngineerSolidWasteManagement/RTI%20Manuals/CESWM_RTI_E02.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": "2015-03-31",
+    "retrieved_at": "2026-08-14T05:17:45.050384+00:00",
+    "geographic_scope": "CITY",
+    "notes": "RTI-disclosure organizational manual (Section 4(1)(b)), downloaded and provided directly by the user (WebFetch was unavailable this pass). Full text read directly. Describes dept structure, ~450 gms/person/day waste generation, 78% door-to-door / 22% community-bin collection, 4 refuse transfer stations, 3 dumping grounds (2 under biomining), and the Greater Mumbai Cleanliness & Sanitation Byelaws 2006 fine schedule enforced by Clean-up Marshals since 2007. NOT a citizen-facing charter -- no numeric complaint-to-resolution SLA is stated, recorded honestly as SLA NOT FOUND rather than inferred. Used for 1 KnowledgeRecord -- see knowledge_records/verified/maharashtra/mumbai.json."
+  },
+  {
+    "source_id": "GJ_AMC_SWM_BRIEF_NOTE",
+    "source_title": "Solid Waste Management Department — Brief Note",
+    "source_organization": "Ahmedabad Municipal Corporation (AMC)",
+    "source_url": "https://ahmedabadcity.gov.in/Images/_SWM%20Dept_SWM%20BREIF%20NOTE%20IN%20ENGLISH.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-14T05:17:45.050384+00:00",
+    "geographic_scope": "CITY",
+    "notes": "8-page organizational brief note, downloaded and provided directly by the user (WebFetch was unavailable this pass). Full text read directly. Covers ~4100 MT/day generation, door-to-door collection history (since 2009, citywide by 2017), 8 Refuse Transfer Stations with addresses, C&D waste complaints via CCRS 155303, dead-animal collection via a dedicated phone line, and Mobile Sanitation Court enforcement stats (2,25,442 cases / Rs.9.43 Crore penalties by Sept 2016). No numeric complaint-to-resolution SLA stated, recorded as SLA NOT FOUND. Used for 1 KnowledgeRecord -- see knowledge_records/verified/gujarat/ahmedabad.json."
+  },
+  {
+    "source_id": "TS_GHMC_CITIZEN_CHARTER_2013",
+    "source_title": "Citizen's Charter — Greater Hyderabad Municipal Corporation",
+    "source_organization": "Greater Hyderabad Municipal Corporation (GHMC)",
+    "source_url": "https://www.ghmc.gov.in/CitizenCharter/CitizenCharter-19.06.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": "2013-05-10",
+    "last_updated": null,
+    "retrieved_at": "2026-08-14T05:17:45.050384+00:00",
+    "geographic_scope": "CITY",
+    "notes": "Citizen's Charter PDF, downloaded and provided directly by the user (WebFetch was unavailable this pass). Full text read directly. Prepared 10 May 2013 with next review stated as due before 13 May 2014 -- an old, dated document; no evidence within it of a later revision, so all SLA facts drawn from it are flagged OUTDATED / VERIFY BEFORE PRODUCTION in the KnowledgeRecords built from it. Covers sweeping/garbage (48h), streetlights (48h), potholes (15 days), road-cutting permission (30 days), and water-stagnation removal (48h). Used for 4 KnowledgeRecords -- see knowledge_records/verified/telangana/hyderabad.json."
+  },
+  {
+    "source_id": "TS_HMWSSB_CITIZENS_CHARTER_2024",
+    "source_title": "Citizens Charter — Hyderabad Metropolitan Water Supply & Sewerage Board (HMWSSB)",
+    "source_organization": "Hyderabad Metropolitan Water Supply & Sewerage Board (HMWSSB)",
+    "source_url": "https://www.hyderabadwater.gov.in/application/files/7417/3185/0800/updated_citizen_charter.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": "2024-05-01",
+    "last_updated": "2024-05-01",
+    "retrieved_at": "2026-08-14T05:17:45.050384+00:00",
+    "geographic_scope": "CITY",
+    "notes": "12-page Citizens Charter PDF, downloaded and provided directly by the user (WebFetch was unavailable this pass). Full text read directly. Dated May 2024 -- the most recently updated source in this research pass. Rich SLA table (1-7 days across 14 service types: no water supply, leakage, sewerage chokage/overflow, billing, dial-a-tanker, etc.), 25 O&M Divisions with named officers/phone numbers by ward (Annexures 2/3). Confirms HMWSSB is a statutory board separate from GHMC, handling water supply/sewerage while GHMC handles waste/roads/streetlights/storm drainage. Used for 1 KnowledgeRecord -- see knowledge_records/verified/telangana/hyderabad.json."
   }
 ]

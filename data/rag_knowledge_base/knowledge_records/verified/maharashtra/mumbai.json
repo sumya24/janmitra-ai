@@ -1,0 +1,56 @@
+[
+  {
+    "record_id": "MH_BMC_SWM_RTI_MANUAL",
+    "service_id": "MH_BMC_SWM_RTI_MANUAL",
+    "service_name": "Solid Waste Management — Department Structure, Byelaw Fines & Grievance Enforcement",
+    "sub_service": "Door-to-door/community-bin collection, cleanliness byelaw fines, Clean-up Marshal enforcement",
+    "problem_type": "Littering, unsegregated waste, uncleaned premises ('Clean Aangan'), biomedical/C&D waste violations",
+    "service_category": "WASTE_SANITATION",
+    "state": "Maharashtra",
+    "district": null,
+    "city": "Mumbai",
+    "municipality": "Municipal Corporation of Greater Mumbai (MCGM / BMC)",
+    "zone": null,
+    "ward": null,
+    "area": null,
+    "geographic_scope": "CITY",
+    "department": "Solid Waste Management Department, MCGM (Chief Engineer SWM; 24 Administrative Wards)",
+    "authority": "Chief Engineer, Solid Waste Management, MCGM; ward-level Clean-up Marshals",
+    "description": "This is MCGM's Solid Waste Management Department RTI Manual (Section 4(1)(b) disclosure, revised to 31.03.2015) — an organizational/administrative document, not a citizen-facing service charter. It describes: waste generation of roughly 450 gms/person/day citywide; collection split 78% door-to-door and 22% via community bins across the 24 Administrative Wards; 4 refuse transfer stations (Mahalaxmi, Kurla, Versova, Gorai) feeding the Deonar, Mulund, and Kanjur dumping grounds (the latter two under biomining projects). Enforcement runs under the 'Greater Mumbai Cleanliness & Sanitation Byelaws, 2006', which set a detailed fine schedule: littering Rs. 200; failing to maintain a clean 'Aangan' (frontage) Rs. 1,000-10,000; handing over unsegregated waste Rs. 100-500; improper biomedical-waste disposal Rs. 20,000. These byelaws have been enforced by dedicated 'Clean-up Marshals' since 15.11.2007.",
+    "procedure": "Waste is collected via scheduled door-to-door pickup (78% of the city) or community bins (22%) by ward. Byelaw violations (littering, unsegregated handover, uncleaned frontage, improper biomedical-waste disposal) are enforced on the spot by Clean-up Marshals under the 2006 byelaws' fine schedule.",
+    "required_information": [],
+    "required_documents": [],
+    "sla": "SLA NOT FOUND — this document is an organizational/administrative manual (not a citizen-facing charter) and does not state a numeric complaint-to-resolution timeline.",
+    "expected_response_time": null,
+    "expected_resolution_time": null,
+    "complaint_channel": [],
+    "contact_information": null,
+    "escalation_procedure": "On-the-spot fines under the Greater Mumbai Cleanliness & Sanitation Byelaws, 2006, levied by Clean-up Marshals: littering Rs. 200; not maintaining a clean Aangan/frontage Rs. 1,000-10,000; unsegregated waste handover Rs. 100-500; improper biomedical-waste disposal Rs. 20,000.",
+    "escalation_authority": "Chief Engineer, Solid Waste Management, MCGM",
+    "faq": [
+      {
+        "question": "What is the fine for littering in Mumbai?",
+        "answer": "Rs. 200, enforced on the spot by a Clean-up Marshal under the Greater Mumbai Cleanliness & Sanitation Byelaws, 2006."
+      },
+      {
+        "question": "What is the fine for handing over unsegregated waste?",
+        "answer": "Rs. 100-500 under the same 2006 byelaws."
+      },
+      {
+        "question": "Does this document state a complaint-resolution SLA?",
+        "answer": "No — it is an organizational RTI manual describing department structure and the byelaw fine schedule, not a citizen service-response-time charter."
+      }
+    ],
+    "citizen_guidance": "Segregate waste before handover and keep your frontage ('Aangan') clean — Clean-up Marshals can fine violations on the spot (littering Rs. 200, unsegregated waste Rs. 100-500, uncleaned frontage Rs. 1,000-10,000, improper biomedical-waste disposal Rs. 20,000).",
+    "source_id": "MH_BMC_SWM_RTI_MANUAL",
+    "source_title": "Solid Waste Management Department RTI Manual (Section 4(1)(b))",
+    "source_organization": "Municipal Corporation of Greater Mumbai (MCGM / BMC)",
+    "source_url": "https://www.mcgm.gov.in/irj/go/km/docs/documents/MCGM%20Department%20List/ChiefEngineerSolidWasteManagement/RTI%20Manuals/CESWM_RTI_E02.pdf",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": "2015-03-31",
+    "retrieved_at": "2026-08-14T05:16:40.981009+00:00",
+    "created_at": "2026-08-14T05:16:40.981009+00:00"
+  }
+]
