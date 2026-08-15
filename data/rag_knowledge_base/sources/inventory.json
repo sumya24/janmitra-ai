@@ -765,5 +765,31 @@
     "retrieved_at": "2026-08-15T13:40:34.597732Z",
     "geographic_scope": "CITY",
     "notes": "Supplementary source for the same Nagpur Roads record above -- found via the same site-map navigation. Real slug /hot-mix-plant-department (with '-department' suffix), distinct from the bare '/hot-mix-plant' guess that 404'd last round. Names Executive Engineer Ajay Dahake (9923359756), Deputy Engineer Abhijit Bhure, and 2 Junior Engineers."
+  },
+  {
+    "source_id": "WB_HOWRAH_GOVIN_PUBLIC_UTILITY_HMC",
+    "source_title": "Howrah Municipal Corporation -- Public Utility Listing (Howrah District Website)",
+    "source_organization": "Howrah District Administration, Government of West Bengal",
+    "source_url": "https://howrah.gov.in/public-utility/howrah-municipal-corporation/",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-15T19:16:02.667545Z",
+    "geographic_scope": "CITY",
+    "notes": "Closes Howrah's zero-coverage gap with a general (non-category-specific) real channel -- same pattern as Lucknow (round 8), Gaya/Gurugram/Warangal/Mysuru (round 7). myhmc.in (HMC's own domain, including static PDF uploads under wp-content/uploads) confirmed 403-blocked across 2 rounds -- this round additionally confirmed the block applies even to a specific static PDF asset (The-Howrah-Municipal-Corporation-Levy-of-Charges-for-Supply-of-Water-Regulations-2007.pdf), not just dynamic pages. howrah.gov.in (the district government's own, genuinely separate domain) was navigated via its real 'HMC Related Services' page and 'Public Utilities' listing; its own 'Solid Waste Management' page is a 'Coming Soon' placeholder and its 'Citizen Charter' document category has no HMC-specific document. A WebSearch for a primary-sourced Howrah citizen charter PDF found only an HMC Act 2019 legal text (framework-only, no service SLA) hosted on the blocked myhmc.in domain, and a Scribd-hosted PDF (a third-party redistribution site, explicitly disqualified as a source per this project's primary-source-only rule, not used)."
+  },
+  {
+    "source_id": "RJ_LSG_ULB_JODHPUR_CITIZEN_CHARTER",
+    "source_title": "Citizen Charter / Nodal Officer -- ULB Jodhpur (Rajasthan LSG Portal)",
+    "source_organization": "Local Self Government (LSG) Department, Government of Rajasthan / Jodhpur Municipal Corporation",
+    "source_url": "https://lsg.urban.rajasthan.gov.in/content/raj/udh/ulb-jodhpur/en/citizen-corner/citizen-charter.html",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-15T19:16:02.667545Z",
+    "geographic_scope": "CITY",
+    "notes": "Closes Jodhpur's zero-coverage gap with a general (non-category-specific) real channel -- same pattern as Howrah this round, Lucknow (round 8), Gaya/Gurugram/Warangal/Mysuru (round 7). Unlike Jaipur's rich SLA-table citizen charter (found on JMC's own working domain), Jodhpur's equivalent page on Rajasthan's statewide LSG portal is a real, reachable, but genuinely unpopulated template (page literally titled 'Citizen Charter' contains only a static nodal-officer contact box, last site update 28/03/2016) -- confirmed by raw HTML inspection, not a WebFetch rendering failure. jodhpurmc.org (confirmed dead in a prior round), urban.rajasthan.gov.in/mcjs (bare page fragment), and Jodhpur Development Authority/jdajodhpur.org (expired TLS cert; also statutorily out-of-scope for routine civic complaints) were also checked this round and add nothing further."
   }
 ]

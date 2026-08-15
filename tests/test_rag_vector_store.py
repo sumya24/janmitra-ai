@@ -92,20 +92,20 @@ def test_embedding_batch_matches_individual_embeddings():
 def test_chroma_collection_opens_and_reports_expected_size():
     store = _real_store()
     assert store.is_loaded
-    # 842, not the earlier 836 -- round 9 retried 4 dead ends confirmed in round 8, but only via
-    # genuinely new angles. Faridabad Water closed via PHED Haryana's own Field Office Telephone
-    # Directory (a real, separate state department from the TLS-blocked mcfaridabad.com/.in) --
-    # a named Executive Engineer for "Faridabad PHED No. 1". Nagpur Roads closed via NMC's own
-    # site-map page (not further URL guessing), which revealed the real slugs
-    # /public-work-department and /hot-mix-plant-department (both distinct from the 6 guesses
-    # that 404'd in round 8). Both cities now have full 4-category coverage. Bengaluru
-    # (Roads/Streetlights, via CPGRAMS + data.gov.in) and Patna (Streetlights, via PMC's other
-    # officer-listing pages) were also retried via new angles but confirmed dead again -- see
-    # data/rag_knowledge_base/sources/candidate_urls.md's "Round 9" section for the full log.
-    # Confirmed by actually running `scripts/build_rag_embeddings.py` against the real embedding
-    # model (intfloat/multilingual-e5-small) and reading the resulting ChromaDB collection size
-    # directly -- not counted by hand.
-    assert store.size == 842
+    # 866, not the earlier 842 -- round 11 closed 2 of 3 zero-coverage cities left over from early
+    # rounds. Howrah (West Bengal) and Jodhpur (Rajasthan) both moved from 0 to full 4-category
+    # coverage via general (SLA-not-found) channels: Howrah via howrah.gov.in's own Public Utility
+    # listing (a genuinely different, working domain from the 403-blocked myhmc.in), Jodhpur via
+    # Rajasthan's statewide LSG portal naming a real Commissioner as nodal officer (jodhpurmc.org
+    # itself stayed unretried, confirmed dead in an earlier round). Vijayawada (Andhra Pradesh)
+    # stayed at 0 VERIFIED -- its last plausible angle, 2 services.india.gov.in URLs, were
+    # confirmed to redirect to a generic landing page (the whole detail-page URL structure is
+    # retired), joining its already-confirmed-dead client-rendered shell and connection-refused
+    # domains -- see data/rag_knowledge_base/sources/candidate_urls.md's "Round 11" section for
+    # the full log. Confirmed by actually running `scripts/build_rag_embeddings.py` against the
+    # real embedding model (intfloat/multilingual-e5-small) and reading the resulting ChromaDB
+    # collection size directly -- not counted by hand.
+    assert store.size == 866
 
 
 def test_chroma_persist_dir_is_configurable_not_hardcoded():
