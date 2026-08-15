@@ -92,20 +92,20 @@ def test_embedding_batch_matches_individual_embeddings():
 def test_chroma_collection_opens_and_reports_expected_size():
     store = _real_store()
     assert store.is_loaded
-    # 836, not the earlier 809 -- round 8 targeted 4 cities' explicitly-untried category gaps
-    # (Patna, Faridabad, Nagpur, Lucknow), adding 9 new VERIFIED records: real, named-officer,
-    # department-specific contacts for Patna Water+Roads, Faridabad Roads+Streetlights, and
-    # Nagpur Waste+Streetlights (each via that city's own municipal corporation site), plus a
-    # general (non-category-specific) Control Room channel for Lucknow Roads+Water+Streetlights.
-    # 3 targeted gaps were confirmed as genuine dead ends rather than closed: Patna Streetlights
-    # (the only relevant page is a pure installation-count MIS table, zero complaint content),
-    # Faridabad Water (mcfaridabad.com is entirely TLS-blocked, a new domain-block finding), and
-    # Nagpur Roads (6 URL-pattern guesses on NMC's own domain all 404'd) -- see
-    # data/rag_knowledge_base/sources/candidate_urls.md's "Round 8" section for the full log.
+    # 842, not the earlier 836 -- round 9 retried 4 dead ends confirmed in round 8, but only via
+    # genuinely new angles. Faridabad Water closed via PHED Haryana's own Field Office Telephone
+    # Directory (a real, separate state department from the TLS-blocked mcfaridabad.com/.in) --
+    # a named Executive Engineer for "Faridabad PHED No. 1". Nagpur Roads closed via NMC's own
+    # site-map page (not further URL guessing), which revealed the real slugs
+    # /public-work-department and /hot-mix-plant-department (both distinct from the 6 guesses
+    # that 404'd in round 8). Both cities now have full 4-category coverage. Bengaluru
+    # (Roads/Streetlights, via CPGRAMS + data.gov.in) and Patna (Streetlights, via PMC's other
+    # officer-listing pages) were also retried via new angles but confirmed dead again -- see
+    # data/rag_knowledge_base/sources/candidate_urls.md's "Round 9" section for the full log.
     # Confirmed by actually running `scripts/build_rag_embeddings.py` against the real embedding
     # model (intfloat/multilingual-e5-small) and reading the resulting ChromaDB collection size
     # directly -- not counted by hand.
-    assert store.size == 836
+    assert store.size == 842
 
 
 def test_chroma_persist_dir_is_configurable_not_hardcoded():

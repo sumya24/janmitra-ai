@@ -726,5 +726,44 @@
     "retrieved_at": "2026-08-15T12:41:37.111197Z",
     "geographic_scope": "CITY",
     "notes": "Closes Lucknow's Roads/Water/Streetlights gaps with a general (not category-specific) real channel -- same pattern as round 7's Gaya/Gurugram/Warangal/Mysuru re-categorizations. LMC's homepage nav was checked and has no dedicated Water/Jal Kal, Roads/Engineering, or Electrical department pages/officer directory. Lucknow Jal Sansthan's own domain (jklmc.gov.in) failed with 'unable to get local issuer certificate' (a genuine TLS failure, not missing content). The online complaint-lodging form (lmc.up.nic.in/complaint.aspx and /Complaint/Complaint.aspx) both hit an infinite redirect loop on direct fetch, so its per-category options (confirmed to exist via WebSearch summary only) could not be independently verified and are NOT used here."
+  },
+  {
+    "source_id": "HR_PHED_FIELD_OFFICE_TELEPHONE_DIRECTORY",
+    "source_title": "Field Office(s) Telephone Directory -- Public Health Engineering Department, Haryana",
+    "source_organization": "Public Health Engineering Department (PHED), Haryana",
+    "source_url": "https://phedharyana.gov.in/Telephone_Dir/TelDir.aspx?id=w",
+    "source_type": "OFFICIAL_GOVERNMENT_PDF",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-15T13:40:34.597732Z",
+    "geographic_scope": "STATE",
+    "notes": "Closes Faridabad's Water/Drainage gap, the one Round 8 category confirmed as a dead end due to mcfaridabad.com/.in being entirely TLS/access-blocked. New angle: PHED Haryana (phedharyana.gov.in) is the actual state water-supply department, a genuinely different body from Municipal Corporation Faridabad. Its homepage links to a real 'Field Office (SE & EE) Directory' which turned out to be a server-generated PDF (not an HTML page) -- read via the established Read-tool-on-saved-PDF workaround. Names Sh. Rahul Berwal, EE, Faridabad PHED No. 1, with a direct mobile and email. The statewide directory also covers all other Haryana districts, so is a reusable source for future rounds on other Haryana cities' Water/Drainage gaps."
+  },
+  {
+    "source_id": "MH_NMC_PUBLIC_WORKS_DEPT_PAGE",
+    "source_title": "Public Works Department -- Nagpur Municipal Corporation",
+    "source_organization": "Nagpur Municipal Corporation (NMC)",
+    "source_url": "https://nmcnagpur.gov.in/public-work-department",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-15T13:40:34.597732Z",
+    "geographic_scope": "CITY",
+    "notes": "Closes Nagpur's Roads/Potholes gap, the one Round 8 category confirmed as a dead end after 6 URL-pattern guesses all 404'd. New angle: rather than guessing further, found NMC's real site navigation via its Marathi site-map page (nmcnagpur.gov.in/site-map / /site-map-marathi), which listed the actual link text 'Public Work Department' (singular 'Work') with real slug /public-work-department -- a pattern (singular noun + '-department' suffix) distinct from every one of the 6 guesses tried last round. Confirms real named Chief Engineer (Leena Upadhye) and Executive Engineer (Kamlesh Chavan, 9823010329)."
+  },
+  {
+    "source_id": "MH_NMC_HOT_MIX_PLANT_DEPT_PAGE",
+    "source_title": "Hot Mix Plant Department -- Nagpur Municipal Corporation",
+    "source_organization": "Nagpur Municipal Corporation (NMC)",
+    "source_url": "https://nmcnagpur.gov.in/hot-mix-plant-department",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-15T13:40:34.597732Z",
+    "geographic_scope": "CITY",
+    "notes": "Supplementary source for the same Nagpur Roads record above -- found via the same site-map navigation. Real slug /hot-mix-plant-department (with '-department' suffix), distinct from the bare '/hot-mix-plant' guess that 404'd last round. Names Executive Engineer Ajay Dahake (9923359756), Deputy Engineer Abhijit Bhure, and 2 Junior Engineers."
   }
 ]
