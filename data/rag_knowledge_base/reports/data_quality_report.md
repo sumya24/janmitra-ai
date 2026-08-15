@@ -1,6 +1,6 @@
 # RAG Knowledge Base — Data Quality Report
 
-Generated: 2026-08-15T13:40:40.700469+00:00
+Generated: 2026-08-15T14:59:59.242038+00:00
 
 ## Scope accounting (honest summary)
 
