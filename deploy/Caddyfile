@@ -9,7 +9,7 @@
 {$SITE_ADDRESS:http://:80} {
 	encode gzip
 
-	@backend path /auth* /admin* /complaints* /notifications* /ask-janmitra* /uploads* /health
+	@backend path /auth* /admin* /complaints* /notifications* /ask-janmitra* /locations* /uploads* /health
 	handle @backend {
 		reverse_proxy backend:8000
 	}
