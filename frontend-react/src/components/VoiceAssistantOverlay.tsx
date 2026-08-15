@@ -188,8 +188,15 @@ export default function VoiceAssistantOverlay({ onClose }: { onClose: () => void
           ✕
         </button>
 
-        <div className="voice-overlay-mascot">
-          <Mascot state={mascotState} size={80} />
+        {/* The animated glow is purely decorative (aria-hidden) and keyed off `phase`, not
+            `mascotState` -- phase has a real "error" state mascotState collapses into "idle",
+            and the glow should visibly dim/redden on error rather than keep pulsing like
+            nothing's wrong. */}
+        <div className={`voice-orb voice-orb-${phase}`}>
+          <div className="voice-orb-glow" aria-hidden="true" />
+          <div className="voice-overlay-mascot">
+            <Mascot state={mascotState} size={80} />
+          </div>
         </div>
 
         <div className="voice-overlay-state" aria-live="polite">
