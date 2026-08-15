@@ -92,24 +92,20 @@ def test_embedding_batch_matches_individual_embeddings():
 def test_chroma_collection_opens_and_reports_expected_size():
     store = _real_store()
     assert store.is_loaded
-    # 809, not the earlier 758 -- round 7 had two parts. Part 1 was a pure re-categorization audit
-    # (no new fetching): several already-verified general-purpose channels (Gaya, Gurugram,
-    # Warangal, Mysuru, plus Indore's Garbage category) were filed under WASTE_SANITATION only
-    # (one category per record), so they never surfaced for Roads/Water/Streetlights queries even
-    # though their own descriptions already said they were category-agnostic -- each source was
-    # re-fetched to confirm nothing category-specific was missed, then 13 new correctly-categorized
-    # records were added citing the same already-verified sources. Part 2 closed 3 of 4 targeted
-    # gaps with 4 new records: Kolkata Roads (KMC's Common Complaint e-Form), Chennai Water/
-    # Drainage (CMWSSB's own Citizen's Charter -- a rich, detailed SLA table across 13 service
-    # types, comparable to Jaipur's charter), and Thiruvananthapuram Roads+Waste (Smart
-    # Trivandrum's live complaint-tracking dashboard). NDMC Streetlights was confirmed as a
-    # genuine source limitation (all 41 SLA-table rows checked, no streetlight line item exists)
-    # rather than a research gap -- see data/rag_knowledge_base/sources/candidate_urls.md's
-    # "Round 7" section for the full log. Confirmed by actually running
-    # `scripts/build_rag_embeddings.py` against the real embedding model
-    # (intfloat/multilingual-e5-small) and reading the resulting ChromaDB collection size directly
-    # -- not counted by hand.
-    assert store.size == 809
+    # 836, not the earlier 809 -- round 8 targeted 4 cities' explicitly-untried category gaps
+    # (Patna, Faridabad, Nagpur, Lucknow), adding 9 new VERIFIED records: real, named-officer,
+    # department-specific contacts for Patna Water+Roads, Faridabad Roads+Streetlights, and
+    # Nagpur Waste+Streetlights (each via that city's own municipal corporation site), plus a
+    # general (non-category-specific) Control Room channel for Lucknow Roads+Water+Streetlights.
+    # 3 targeted gaps were confirmed as genuine dead ends rather than closed: Patna Streetlights
+    # (the only relevant page is a pure installation-count MIS table, zero complaint content),
+    # Faridabad Water (mcfaridabad.com is entirely TLS-blocked, a new domain-block finding), and
+    # Nagpur Roads (6 URL-pattern guesses on NMC's own domain all 404'd) -- see
+    # data/rag_knowledge_base/sources/candidate_urls.md's "Round 8" section for the full log.
+    # Confirmed by actually running `scripts/build_rag_embeddings.py` against the real embedding
+    # model (intfloat/multilingual-e5-small) and reading the resulting ChromaDB collection size
+    # directly -- not counted by hand.
+    assert store.size == 836
 
 
 def test_chroma_persist_dir_is_configurable_not_hardcoded():

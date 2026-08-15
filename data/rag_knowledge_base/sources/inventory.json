@@ -648,5 +648,83 @@
     "retrieved_at": "2026-08-15T06:36:35.885421Z",
     "geographic_scope": "CITY",
     "notes": "Closes Thiruvananthapuram's 2 remaining categories (Roads, Waste). A different page from smarttvm.tmc.lsgkerala.gov.in's root (already cited for Water/Septage and Streetlights) -- this /complaint/report page is a live complaint-tracking dashboard showing real filed complaints and their categories. tmc.lsgkerala.gov.in/en/page/33 (Solid Waste Management informational page) was also checked but returned only nav/footer content, no substantive procedure."
+  },
+  {
+    "source_id": "BR_PMC_WATER_BOARD_PAGE",
+    "source_title": "Water Board Details -- Patna Municipal Corporation",
+    "source_organization": "Patna Municipal Corporation (PMC)",
+    "source_url": "https://www.pmc.bihar.gov.in/SWMWaterSupply.aspx",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-15T12:41:37.111197Z",
+    "geographic_scope": "CITY",
+    "notes": "Closes Patna's Water/Drainage gap. 4 real, named circle-wise Pipeline Inspectors with direct mobile numbers confirmed via direct fetch. No numeric SLA."
+  },
+  {
+    "source_id": "BR_PMC_OFFICE_DIRECTORY",
+    "source_title": "Office Directory -- Patna Municipal Corporation",
+    "source_organization": "Patna Municipal Corporation (PMC)",
+    "source_url": "https://www.pmc.bihar.gov.in/office-directory.aspx",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-15T12:41:37.111197Z",
+    "geographic_scope": "CITY",
+    "notes": "Closes Patna's Roads gap. Real Chief Municipal Engineer and Executive Engineer (Civil) contacts confirmed via direct fetch. Streetlights remains open: the 'Installation of Street Lights' link on PMC's site (assets/pdf/MIS Electric.pdf) was fetched and read in full -- confirmed to be genuinely just a ward-wise streetlight INSTALLATION COUNT table (81,504 total citywide), an Excel-exported MIS report with zero complaint mechanism, contact info, or SLA content. No dedicated Electrical/Street Light department page or officer found elsewhere on the site."
+  },
+  {
+    "source_id": "HR_ULBHARYANA_MCF_OFFICERS_DIRECTORY",
+    "source_title": "Officers Directory -- Municipal Corporation Faridabad (Haryana ULB Portal)",
+    "source_organization": "Municipal Corporation Faridabad (MCF)",
+    "source_url": "https://ulbharyana.gov.in/Faridabad/404",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-15T12:41:37.111197Z",
+    "geographic_scope": "CITY",
+    "notes": "Closes Faridabad's Roads and Streetlights gaps with a rich, real, named-officer directory (60+ entries across Administration, Engineering, Planning, District Attorney, Accounts, Taxation, MOH & Sanitation, and Establishment branches). Water remains open: MCF's own domain (mcfaridabad.com) failed with 'unable to verify the first certificate' on 2 separate pages this round (/contact and /faridabad-water-supply-sewerage-services/), and mcfaridabad.in returned HTTP 403 -- both are genuine TLS/access failures, not missing content. No distinct water-supply officer/department was found in the Officers Directory itself (the many 'JE(HKRNL)' entries under Engineering are ambiguous contract-staff designations, not clearly water-specific, so not used to avoid misattribution)."
+  },
+  {
+    "source_id": "MH_NMC_SOLID_WASTE_MGMT_PAGE",
+    "source_title": "Solid Waste Management Department -- Nagpur Municipal Corporation",
+    "source_organization": "Nagpur Municipal Corporation (NMC)",
+    "source_url": "https://nmcnagpur.gov.in/solid-waste-management",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-15T12:41:37.111197Z",
+    "geographic_scope": "CITY",
+    "notes": "Closes Nagpur's Waste/Sanitation gap. Real Deputy Commissioner and Chief Sanitary Officer contacts confirmed via direct fetch of a department-page URL guessed from the pattern established by nmcnagpur.gov.in/electrical-department. Supplemented with all 10 zone-wise Chief Sanitary Officers from the separate /zonal-officers page (explicitly labeled 'Zonal Officer's/Chief Sanitory Officer's Name' -- confirming these are sanitation-specific, not general zone contacts)."
+  },
+  {
+    "source_id": "MH_NMC_ELECTRICAL_DEPT_PAGE",
+    "source_title": "Electrical Department -- Nagpur Municipal Corporation",
+    "source_organization": "Nagpur Municipal Corporation (NMC)",
+    "source_url": "https://nmcnagpur.gov.in/electrical-department",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-15T12:41:37.111197Z",
+    "geographic_scope": "CITY",
+    "notes": "Closes Nagpur's Streetlights gap. Real Executive Engineer (Electrical) contact confirmed via direct fetch. Roads remains open: 6 URL-pattern guesses tried against nmcnagpur.gov.in (/public-works, /public-works-department, /engineering-department, /roads-department, /public-health-engineering, /hot-mix-plant) all returned HTTP 404, despite NMC's own homepage nav confirming 'Public Works' and other engineering departments exist by name -- their actual URL slugs could not be determined this pass. The public grievance-registration system (/grievance/complaint_form.php) and grievance-redressal login (/grievance/) are both gated behind OTP/username-password authentication with no public category list visible."
+  },
+  {
+    "source_id": "UP_LMC_HELPLINE_PAGE",
+    "source_title": "Control Room / Helpline -- Lucknow Municipal Corporation",
+    "source_organization": "Lucknow Municipal Corporation (LMC) / Lucknow Nagar Nigam",
+    "source_url": "https://lmc.up.nic.in/helpline.aspx",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-15T12:41:37.111197Z",
+    "geographic_scope": "CITY",
+    "notes": "Closes Lucknow's Roads/Water/Streetlights gaps with a general (not category-specific) real channel -- same pattern as round 7's Gaya/Gurugram/Warangal/Mysuru re-categorizations. LMC's homepage nav was checked and has no dedicated Water/Jal Kal, Roads/Engineering, or Electrical department pages/officer directory. Lucknow Jal Sansthan's own domain (jklmc.gov.in) failed with 'unable to get local issuer certificate' (a genuine TLS failure, not missing content). The online complaint-lodging form (lmc.up.nic.in/complaint.aspx and /Complaint/Complaint.aspx) both hit an infinite redirect loop on direct fetch, so its per-category options (confirmed to exist via WebSearch summary only) could not be independently verified and are NOT used here."
   }
 ]
