@@ -4,6 +4,7 @@ import { useUiLang } from "../lib/uiLang";
 import { SUPPORTED_LANGUAGES, t, type LangCode } from "../lib/i18n";
 import { api, ApiError } from "../lib/api";
 import { useToast } from "../lib/toast";
+import { useModalA11y } from "../lib/useModalA11y";
 
 export default function AddWorkerModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const { token } = useAuth();
@@ -50,11 +51,13 @@ export default function AddWorkerModal({ onClose, onCreated }: { onClose: () => 
     }
   }
 
+  const modalRef = useModalA11y(onClose);
+
   return (
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal">
+      <div ref={modalRef} className="modal" role="dialog" aria-modal="true" aria-labelledby="jm-modal-title" tabIndex={-1}>
         <div className="modal-head">
-          <h3 className="display">{t(lang, "addWorker.title")}</h3>
+          <h3 className="display" id="jm-modal-title">{t(lang, "addWorker.title")}</h3>
           <button className="x" aria-label={t(lang, "common.close")} onClick={onClose}>
             ✕
           </button>
