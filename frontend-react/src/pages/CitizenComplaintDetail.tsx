@@ -77,7 +77,7 @@ export default function CitizenComplaintDetail() {
     return (
       <div>
         <TopBar />
-        <div className="page">
+        <div className="page" id="main-content">
           <div className="skeleton" style={{ width: "40%", height: 20, marginBottom: 16 }} />
           <div className="skeleton" style={{ width: "100%", height: 120 }} />
         </div>
@@ -89,7 +89,7 @@ export default function CitizenComplaintDetail() {
     return (
       <div>
         <TopBar />
-        <div className="page">
+        <div className="page" id="main-content">
           <Link to="/citizen/complaints" className="btn btn-ghost btn-sm" style={{ marginBottom: 16 }}>
             ← {t(lang, "citizen.detail.back")}
           </Link>
@@ -111,7 +111,7 @@ export default function CitizenComplaintDetail() {
   return (
     <div>
       <TopBar />
-      <div className="page">
+      <div className="page" id="main-content">
         <Link to="/citizen/complaints" className="btn btn-ghost btn-sm" style={{ marginBottom: 16 }}>
           ← {t(lang, "citizen.detail.back")}
         </Link>

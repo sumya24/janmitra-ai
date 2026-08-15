@@ -4,6 +4,7 @@ import { useUiLang } from "../lib/uiLang";
 import { SUPPORTED_LANGUAGES, t, type LangCode } from "../lib/i18n";
 import { api, ApiError, type WorkerSummary } from "../lib/api";
 import { useToast } from "../lib/toast";
+import { useModalA11y } from "../lib/useModalA11y";
 
 /** Edits a worker's profile (name/ward/language) and, optionally in the same submit, resets
  * their password -- two separate backend calls (PATCH .../workers/{id} and POST
@@ -62,11 +63,13 @@ export default function EditWorkerModal({
     }
   }
 
+  const modalRef = useModalA11y(onClose);
+
   return (
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && !saving && onClose()}>
-      <div className="modal">
+      <div ref={modalRef} className="modal" role="dialog" aria-modal="true" aria-labelledby="jm-modal-title" tabIndex={-1}>
         <div className="modal-head">
-          <h3 className="display">{t(lang, "admin.editWorkerTitle")}</h3>
+          <h3 className="display" id="jm-modal-title">{t(lang, "admin.editWorkerTitle")}</h3>
           <button className="x" aria-label={t(lang, "common.close")} onClick={onClose} disabled={saving}>
             ✕
           </button>

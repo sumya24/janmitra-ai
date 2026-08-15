@@ -20,6 +20,7 @@ export default function AskJanMitraWidget() {
   const [open, setOpen] = useState(false);
   const [everOpened, setEverOpened] = useState(false);
   const [showGreeting, setShowGreeting] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   // Periodic nudge: show the greeting bubble a little after load, then again every so often --
   // but only until the widget's actually been used once this session, so it doesn't keep
@@ -39,6 +40,24 @@ export default function AskJanMitraWidget() {
     const hide = setTimeout(() => setShowGreeting(false), 4000);
     return () => clearTimeout(hide);
   }, [showGreeting]);
+
+  // The anchor is position: fixed in the bottom-right corner of the viewport, so the greeting
+  // bubble renders on top of whatever real page content happens to be sitting there -- on a
+  // long page (e.g. a resolved complaint's Resolution Report card) that's often actual text the
+  // citizen is trying to read, not empty background, and the bubble's opaque surface genuinely
+  // hides it underneath for the ~4s it's up. Rather than only firing near load (still possible to
+  // scroll down within 1.6s) or shrinking the bubble (it's already a compact 240px max-width),
+  // suppress it once the page itself has scrolled any real distance -- by then the citizen is
+  // reading something, not looking at an empty first screen, and that's exactly when covering
+  // content is the wrong tradeoff for an unprompted nudge.
+  useEffect(() => {
+    function onScroll() {
+      setScrolled(window.scrollY > 120);
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // Close on Escape, same as any other overlay/drawer.
   useEffect(() => {
@@ -83,7 +102,7 @@ export default function AskJanMitraWidget() {
           persistent composer, unlike the old form layout), so leaving the FAB visible+clickable
           there blocked it. Standard behavior for a launcher button once its own panel is open. */}
       <div className={`ask-widget-anchor${open ? " ask-widget-anchor-hidden" : ""}`}>
-        <div className={`ask-widget-greeting ${showGreeting && !open ? "visible" : ""}`}>
+        <div className={`ask-widget-greeting ${showGreeting && !open && !scrolled ? "visible" : ""}`}>
           <Mascot state="greeting" size={20} />
           {t(lang, "ask.widget.greeting")}
         </div>
