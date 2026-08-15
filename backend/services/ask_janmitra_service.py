@@ -392,7 +392,10 @@ class AskJanMitraService:
             "user_message": question,
             "original_language": language,
             "input_type": "text",
-            "conversation_history": [{"role": t.role, "content": t.content} for t in conversation_history],
+            "conversation_history": [
+                {"role": t.role, "content": t.content, "complaint_workflow_state": t.complaint_workflow_state}
+                for t in conversation_history
+            ],
             "input_mode": input_mode,
             "vision_used": has_image,
             "tts_used": input_mode in ("VOICE_ASSISTANT", "IMAGE_VOICE_ASSISTANT"),
@@ -511,5 +514,6 @@ class AskJanMitraService:
             routed_to=final_state.get("routed_to", "NONE_OUT_OF_SCOPE"),
             answer_was_llm_generated=final_state.get("answer_was_llm_generated", False),
             complaint_id=final_state.get("complaint_id"),
+            complaint_workflow_state=final_state.get("complaint_workflow_state"),
         )
         return response, final_state, latency_ms
