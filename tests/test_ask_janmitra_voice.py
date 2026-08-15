@@ -12,6 +12,7 @@ uses) -- the tests at the bottom of this file are the phase-7 verification that 
 end to end, including the "image with no spoken text" clarification path.
 """
 
+import json
 from unittest.mock import Mock
 
 import backend.routes.ask_janmitra as ask_janmitra_module
@@ -65,7 +66,7 @@ def _install_real_service(
 ):
     store, provider = _get_shared_chroma_deps()
     fake_answers = Mock()
-    fake_answers.generate = Mock(side_effect=lambda q, chunks, lang: (q, False))
+    fake_answers.generate = Mock(side_effect=lambda q, chunks, lang, context_labels=None: (q, False))
 
     fake_sarvam = Mock()
     if stt_error:
@@ -194,19 +195,32 @@ def test_voice_requires_authentication(client, monkeypatch):
 
 
 def test_voice_can_file_a_real_complaint_from_the_transcribed_text(client, monkeypatch, make_citizen, db_session, make_worker):
+    """P0 SAFETY FIX (production-safety audit): category + location resolving together no longer
+    creates a complaint on the first call -- see tests/test_ask_janmitra.py's
+    test_type_a_complaint_creates_and_assigns_complaint for the full rationale."""
     fake_sarvam = _install_real_service(monkeypatch, transcript="Street light near my home is not working.")
     make_worker(phone="9000099207", ward="Mohali")
     token, _ = make_citizen(phone="9000000207")
 
     response = _ask_voice(client, token, location_text="Mohali")
-
     assert response.status_code == 200, response.text
     body = response.json()
-    assert body["routed_to"] == "COMPLAINT_CREATED"
-    assert body["complaint_id"] is not None
+    assert body["routed_to"] == "NONE_AWAITING_CONFIRMATION"
+    assert body.get("complaint_id") is None
+
+    fake_sarvam.transcribe = Mock(return_value="Yes, submit it.")
+    history = json.dumps([
+        {"role": "user", "content": "Street light near my home is not working."},
+        {"role": "assistant", "content": body["answer"]},
+    ])
+    confirm = _ask_voice(client, token, conversation_history=history)
+    assert confirm.status_code == 200, confirm.text
+    confirm_body = confirm.json()
+    assert confirm_body["routed_to"] == "COMPLAINT_CREATED"
+    assert confirm_body["complaint_id"] is not None
 
     db = db_session()
-    complaint = db.query(Complaint).filter(Complaint.id == body["complaint_id"]).one()
+    complaint = db.query(Complaint).filter(Complaint.id == confirm_body["complaint_id"]).one()
     assert complaint.original_text == "Street light near my home is not working."
     db.close()
 
@@ -271,14 +285,26 @@ def test_voice_plus_image_can_file_a_real_complaint_with_evidence(client, monkey
 
     from backend.models import ComplaintEvidence
 
-    _install_real_service(monkeypatch, transcript="Street light near my home is not working.")
+    fake_sarvam = _install_real_service(monkeypatch, transcript="Street light near my home is not working.")
     make_worker(phone="9000099211", ward="Mohali")
     token, _ = make_citizen(phone="9000000211")
 
     response = _ask_voice(client, token, image_bytes=_JPEG_BYTES, location_text="Mohali")
-
     assert response.status_code == 200, response.text
     body = response.json()
+    # P0 SAFETY FIX (production-safety audit): confirmation required before creation -- see
+    # tests/test_ask_janmitra.py's test_type_a_complaint_creates_and_assigns_complaint. Image
+    # re-attached on the confirmation call, matching the backend's per-request statelessness.
+    assert body.get("complaint_id") is None
+
+    fake_sarvam.transcribe = Mock(return_value="Yes, submit it.")
+    history = json.dumps([
+        {"role": "user", "content": "Street light near my home is not working."},
+        {"role": "assistant", "content": body["answer"]},
+    ])
+    confirm = _ask_voice(client, token, image_bytes=_JPEG_BYTES, conversation_history=history)
+    assert confirm.status_code == 200, confirm.text
+    body = confirm.json()
     assert body["routed_to"] == "COMPLAINT_CREATED"
     complaint_id = body["complaint_id"]
     assert complaint_id is not None

@@ -80,6 +80,13 @@ def test_route_after_intent_capabilities():
     assert _route_after_intent({"intent": QuestionIntent.CAPABILITIES.value, "out_of_scope_service": None}) == "capabilities_flow"
 
 
+def test_route_after_intent_greeting():
+    """PRODUCTION ARCHITECTURE UPGRADE: a greeting must route to its own dedicated flow, never
+    into location_resolution/complaint_flow (which would ask a complaint-shaped clarification
+    question in response to "Hello")."""
+    assert _route_after_intent({"intent": QuestionIntent.GREETING.value, "out_of_scope_service": None}) == "greeting_flow"
+
+
 def test_route_after_intent_unclear():
     assert _route_after_intent({"intent": QuestionIntent.UNCLEAR.value, "out_of_scope_service": None}) == "unclear_flow"
 
@@ -124,6 +131,10 @@ def test_graph_compiles_with_expected_nodes():
         "__start__", "input_processing", "language_detection", "intent_classification",
         "location_resolution", "complaint_flow", "rag_flow", "status_flow",
         "clarification_flow", "out_of_scope_flow", "capabilities_flow", "unclear_flow",
+        # PRODUCTION ARCHITECTURE UPGRADE: "greeting_flow" added -- see graph.py's own module
+        # docstring/route_after_intent for the new GREETING branch this exhaustive set must stay
+        # in sync with.
+        "greeting_flow",
         "response_generation", "__end__",
     }
     assert nodes == expected
@@ -136,13 +147,16 @@ def test_multi_turn_complaint_filing_category_then_location(client, monkeypatch,
     """TURN 1: 'I want to file a complaint.' -> asks for the issue.
     TURN 2: 'Streetlight.' -> asks for the location (category now known from THIS turn alone).
     TURN 3: 'Use my current location.' (+ explicit location_text, standing in for a real
-    'use current location' UI action) -> resolves, category recovered from TURN 2's history,
-    complaint filed. Verifies the graph "does not lose previously collected information"
-    (spec's own wording) across three separate, stateless HTTP requests -- exactly how this
-    codebase's multi-turn conversation support already worked pre-graph (client-resent
-    conversation_history, see docs/ask_janmitra_rag_architecture.md's "why no server-side
-    conversation store" note) -- the graph adds routing/state structure on top, not a new
-    persistence mechanism.
+    'use current location' UI action) -> resolves, category recovered from TURN 2's history --
+    P0 SAFETY FIX (production-safety audit): this no longer files the complaint immediately; it
+    shows a confirmation summary instead, with complaint_id still null.
+    TURN 4: 'Yes, submit it.' -> the complaint is actually filed only now, using the category
+    recovered from TURN 2 and the location recovered from TURN 3.
+    Verifies the graph "does not lose previously collected information" (spec's own wording)
+    across four separate, stateless HTTP requests -- exactly how this codebase's multi-turn
+    conversation support already worked pre-graph (client-resent conversation_history, see
+    docs/ask_janmitra_rag_architecture.md's "why no server-side conversation store" note) -- the
+    graph adds routing/state structure on top, not a new persistence mechanism.
     """
     _install_real_service(monkeypatch)
     make_worker(phone="9100099002", ward="Mohali")
@@ -171,12 +185,22 @@ def test_multi_turn_complaint_filing_category_then_location(client, monkeypatch,
     turn3 = _ask(client, token, "Use my current location.", conversation_history=history, location_text="Mohali")
     assert turn3.status_code == 200
     body3 = turn3.json()
-    assert body3["routed_to"] == "COMPLAINT_CREATED"
+    assert body3["routed_to"] == "NONE_AWAITING_CONFIRMATION"
     assert body3["service_category"] == "STREETLIGHTS"  # recovered from turn 2, not lost
-    assert body3["complaint_id"] is not None
+    assert body3.get("complaint_id") is None
+    assert db_session().query(Complaint).count() == 0
+
+    history.append(ConversationTurn(role="user", content="Use my current location.").model_dump())
+    history.append(ConversationTurn(role="assistant", content=body3["answer"]).model_dump())
+    turn4 = _ask(client, token, "Yes, submit it.", conversation_history=history)
+    assert turn4.status_code == 200
+    body4 = turn4.json()
+    assert body4["routed_to"] == "COMPLAINT_CREATED"
+    assert body4["service_category"] == "STREETLIGHTS"
+    assert body4["complaint_id"] is not None
 
     db = db_session()
-    complaint = db.query(Complaint).filter(Complaint.id == body3["complaint_id"]).first()
+    complaint = db.query(Complaint).filter(Complaint.id == body4["complaint_id"]).first()
     assert complaint is not None
     assert complaint.ward == "Mohali"
     assert complaint.status == "assigned"
@@ -211,7 +235,7 @@ def test_category_recovery_returns_none_when_history_has_no_category():
 
 def test_complaint_agent_failure_returns_honest_error_not_a_fake_complaint_id(client, monkeypatch, make_citizen, make_worker):
     fake_answers = Mock()
-    fake_answers.generate = lambda q, chunks, lang: ("x", False)
+    fake_answers.generate = lambda q, chunks, lang, context_labels=None: ("x", False)
 
     class _RaisingComplaintAgent:
         def create_complaint(self, **kwargs):
@@ -223,8 +247,18 @@ def test_complaint_agent_failure_returns_honest_error_not_a_fake_complaint_id(cl
     make_worker(phone="9100099031", ward="Mohali")
     token, _ = make_citizen(phone="9100000031")
     resp = _ask(client, token, "Street light not working in Mohali.", location_text="Mohali")
-    assert resp.status_code == 200  # handled gracefully, not a 500
+    assert resp.status_code == 200
     body = resp.json()
-    assert body["routed_to"] == "COMPLAINT_CREATION_FAILED"
+    assert body["routed_to"] == "NONE_AWAITING_CONFIRMATION"  # P0 fix: confirmation first
     assert body.get("complaint_id") is None
-    assert "couldn't file" in body["answer"].lower()
+
+    history = [
+        ConversationTurn(role="user", content="Street light not working in Mohali.").model_dump(),
+        ConversationTurn(role="assistant", content=body["answer"]).model_dump(),
+    ]
+    confirm_resp = _ask(client, token, "Yes, submit it.", conversation_history=history)
+    assert confirm_resp.status_code == 200  # handled gracefully, not a 500
+    confirm_body = confirm_resp.json()
+    assert confirm_body["routed_to"] == "COMPLAINT_CREATION_FAILED"
+    assert confirm_body.get("complaint_id") is None
+    assert "couldn't file" in confirm_body["answer"].lower()

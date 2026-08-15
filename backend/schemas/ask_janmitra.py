@@ -20,6 +20,16 @@ class ConversationTurn(BaseModel):
 
     role: str  # "user" | "assistant"
     content: str
+    # BUG FIX (live Marathi validation): optional, explicit echo of THIS turn's own
+    # AskJanMitraResponse.complaint_workflow_state (see that field's own docstring) when `role`
+    # is "assistant" -- lets the caller round-trip Sarthi's own complaint-flow state as DATA
+    # instead of the backend having to re-derive "was the last turn a confirmation prompt?" by
+    # pattern-matching `content`'s human-readable, LLM-translated text (see orchestration/
+    # nodes.py's `_awaiting_confirmation`/`_last_turn_invites_complaint_reply`, which now check
+    # this field FIRST). Optional and defaults to None specifically so an older/unaware caller
+    # that only ever sent {role, content} keeps working exactly as before, via the same
+    # marker-text fallback this field is meant to make unnecessary once adopted.
+    complaint_workflow_state: str | None = None
 
 
 class AskJanMitraRequest(BaseModel):
@@ -89,6 +99,16 @@ class AskJanMitraResponse(BaseModel):
     # complaint form does, and reports the resulting ID back here so the frontend/citizen can
     # look it up (e.g. via the existing GET /complaints or a future TYPE_C status question).
     complaint_id: int | None = None
+    # BUG FIX (live Marathi validation): explicit complaint-flow state for THIS response, mirrored
+    # from the graph's own internal `GraphState.complaint_workflow_state` (see that field's own
+    # docstring in orchestration/state.py for the full value list: "DRAFT" | "AWAITING_
+    # CONFIRMATION" | "CONFIRMED" | "CANCELLED", or None when this turn wasn't complaint-shaped
+    # at all). A caller that resends this value on the matching ConversationTurn lets Sarthi
+    # recognize its own pending-confirmation state as DATA rather than by re-parsing this
+    # response's own (possibly non-English, LLM-translated, non-deterministically-phrased)
+    # `answer` text on the next turn -- see ConversationTurn.complaint_workflow_state's own
+    # docstring for the full rationale and the live bug this closes.
+    complaint_workflow_state: str | None = None
 
 
 class AskVoiceResponse(AskJanMitraResponse):

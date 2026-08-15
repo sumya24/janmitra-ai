@@ -41,11 +41,28 @@ class AnswerGenerationService:
         else:
             logger.warning("LLM_API_KEY is not set; Ask Sarthi will fall back to raw excerpts, not LLM-generated prose.")
 
-    def generate(self, question: str, context_chunks: list[str], language_name: str) -> tuple[str, bool]:
+    def generate(
+        self, question: str, context_chunks: list[str], language_name: str,
+        context_labels: list[str] | None = None,
+    ) -> tuple[str, bool]:
         """Returns (answer_text, was_llm_generated). was_llm_generated=False means the fallback
         template was used (LLM unconfigured or the call failed) -- callers/tests can assert on
-        this rather than guessing from the text shape."""
-        context = "\n\n---\n\n".join(context_chunks)
+        this rather than guessing from the text shape.
+
+        `context_labels`, if given, must be the same length as `context_chunks` -- one short
+        "VERIFIED | Topic: ..." label per chunk (see rag_retriever.chunk_context_label), shown to
+        the LLM alongside that chunk's content so it can tell a topically-mismatched-but-
+        same-category record apart from one that actually answers the question (see that
+        function's own docstring for the live Bhubaneswar case this closes). Optional and
+        defaults to None so any caller not yet passing it keeps behaving exactly as before.
+        Deliberately NOT folded into `context_chunks` itself: `_fallback_answer` echoes a chunk's
+        content verbatim when no LLM is available, and must never leak this internal label into a
+        citizen-facing answer."""
+        if context_labels:
+            prompt_chunks = [f"[{label}]\n{chunk}" for label, chunk in zip(context_labels, context_chunks)]
+        else:
+            prompt_chunks = context_chunks
+        context = "\n\n---\n\n".join(prompt_chunks)
 
         if self._client is None:
             return self._fallback_answer(context_chunks), False
