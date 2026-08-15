@@ -77,22 +77,52 @@ export default function Signup() {
           <form onSubmit={handleSubmit} noValidate>
             <div className={`field ${fieldErrors.fullName ? "has-error" : ""}`}>
               <label htmlFor="signup-name">{t(lang, "auth.field.name")}</label>
-              <input id="signup-name" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} />
-              {fieldErrors.fullName && <div className="field-error">{t(lang, "common.fieldRequired")}</div>}
+              <input
+                id="signup-name"
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                aria-invalid={fieldErrors.fullName || undefined}
+                aria-describedby={fieldErrors.fullName ? "signup-name-error" : undefined}
+              />
+              {fieldErrors.fullName && (
+                <div className="field-error" id="signup-name-error">
+                  {t(lang, "common.fieldRequired")}
+                </div>
+              )}
             </div>
             <div className={`field ${fieldErrors.phone ? "has-error" : ""}`}>
               <label htmlFor="signup-phone">{t(lang, "auth.field.phone")}</label>
-              <input id="signup-phone" type="tel" placeholder="98xxxxxxxx" value={phone} onChange={(e) => setPhone(e.target.value)} />
+              <input
+                id="signup-phone"
+                type="tel"
+                placeholder="98xxxxxxxx"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                aria-invalid={fieldErrors.phone || undefined}
+                aria-describedby={fieldErrors.phone ? "signup-phone-error" : undefined}
+              />
               {fieldErrors.phone && (
-                <div className="field-error">
+                <div className="field-error" id="signup-phone-error">
                   {t(lang, phone.trim() ? "common.invalidPhone" : "common.fieldRequired")}
                 </div>
               )}
             </div>
             <div className={`field ${fieldErrors.password ? "has-error" : ""}`}>
               <label htmlFor="signup-password">{t(lang, "auth.field.password")}</label>
-              <input id="signup-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-              {fieldErrors.password && <div className="field-error">{t(lang, "common.fieldRequired")}</div>}
+              <input
+                id="signup-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                aria-invalid={fieldErrors.password || undefined}
+                aria-describedby={fieldErrors.password ? "signup-password-error" : undefined}
+              />
+              {fieldErrors.password && (
+                <div className="field-error" id="signup-password-error">
+                  {t(lang, "common.fieldRequired")}
+                </div>
+              )}
             </div>
             <HomeLocationPicker lang={lang} onChange={setHomeLocation} hasError={fieldErrors.ward} />
             {fieldErrors.ward && <div className="field-error home-location-error">{t(lang, "signup.homeLocation.required")}</div>}

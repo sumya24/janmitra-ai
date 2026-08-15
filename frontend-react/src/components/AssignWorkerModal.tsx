@@ -4,6 +4,7 @@ import { useUiLang } from "../lib/uiLang";
 import { t } from "../lib/i18n";
 import { api, ApiError, type WorkerSummary } from "../lib/api";
 import { useToast } from "../lib/toast";
+import { useModalA11y } from "../lib/useModalA11y";
 
 /** Manually assigns a complaint to a specific worker — the fix for a complaint stuck "pending"
  * because assign_next_worker's automatic ward-matching (see backend/services/
@@ -45,11 +46,13 @@ export default function AssignWorkerModal({
     }
   }
 
+  const modalRef = useModalA11y(onClose);
+
   return (
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && !saving && onClose()}>
-      <div className="modal">
+      <div ref={modalRef} className="modal" role="dialog" aria-modal="true" aria-labelledby="jm-modal-title" tabIndex={-1}>
         <div className="modal-head">
-          <h3 className="display">{t(lang, "admin.assignModalTitle")}</h3>
+          <h3 className="display" id="jm-modal-title">{t(lang, "admin.assignModalTitle")}</h3>
           <button className="x" aria-label={t(lang, "common.close")} onClick={onClose} disabled={saving}>
             ✕
           </button>

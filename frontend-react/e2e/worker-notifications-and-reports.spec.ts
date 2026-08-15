@@ -143,7 +143,10 @@ test("worker notification bell, detail-page card rules per status, report visibi
 
   // Optional progress update -- again, the modal's submit button shares the trigger's text.
   await page.getByRole("button", { name: "Add Update" }).click();
-  await page.getByLabel("Update").fill("Extra pickup completed, bin is now empty.");
+  // getByRole("textbox", ...) + exact -- plain getByLabel("Update") now also matches the modal's
+  // own dialog element: it's accessible-named "Add Progress Update" via aria-labelledby (added
+  // for real screen-reader users, see useModalA11y.ts), which contains "Update" as a substring.
+  await page.getByRole("textbox", { name: "Update", exact: true }).fill("Extra pickup completed, bin is now empty.");
   await modal.getByRole("button", { name: "Add Update", exact: true }).click();
   await expect(page.getByText("Extra pickup completed, bin is now empty.")).toBeVisible();
 

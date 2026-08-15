@@ -34,6 +34,7 @@ export default function HomeLocationPicker({
 }) {
   const [states, setStates] = useState<LocationOption[]>([]);
   const [stateId, setStateId] = useState<number | "">("");
+  const [statesLoaded, setStatesLoaded] = useState(false);
 
   const [cities, setCities] = useState<LocationOption[]>([]);
   const [cityId, setCityId] = useState<number | "">("");
@@ -51,7 +52,7 @@ export default function HomeLocationPicker({
   const [localitiesLoaded, setLocalitiesLoaded] = useState(false);
 
   useEffect(() => {
-    api.listStates().then(setStates).catch(() => setStates([]));
+    api.listStates().then((s) => { setStates(s); setStatesLoaded(true); }).catch(() => setStatesLoaded(true));
   }, []);
 
   const cityName = cityId !== "" ? cities.find((c) => c.id === cityId)?.name ?? "" : cityText.trim();
@@ -150,12 +151,18 @@ export default function HomeLocationPicker({
 
       <div className="field home-location-row">
         <label htmlFor="signup-home-state">{t(lang, "signup.homeLocation.state")}</label>
-        <select id="signup-home-state" value={stateId} onChange={(e) => handleStateChange(e.target.value)}>
-          <option value="">{t(lang, "signup.homeLocation.statePlaceholder")}</option>
-          {states.map((s) => (
-            <option key={s.id} value={s.id}>{s.name}</option>
-          ))}
-        </select>
+        {!statesLoaded ? (
+          <select id="signup-home-state" value="" disabled>
+            <option value="">{t(lang, "signup.homeLocation.statePlaceholder")}</option>
+          </select>
+        ) : (
+          <select id="signup-home-state" value={stateId} onChange={(e) => handleStateChange(e.target.value)}>
+            <option value="">{t(lang, "signup.homeLocation.statePlaceholder")}</option>
+            {states.map((s) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+        )}
       </div>
 
       <div className="field home-location-row">

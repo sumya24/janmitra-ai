@@ -74,7 +74,7 @@ export default function AdminComplaintDetail() {
     return (
       <div>
         <TopBar />
-        <div className="page">
+        <div className="page" id="main-content">
           <div className="skeleton" style={{ width: "40%", height: 20, marginBottom: 16 }} />
           <div className="skeleton" style={{ width: "100%", height: 120 }} />
         </div>
@@ -86,7 +86,7 @@ export default function AdminComplaintDetail() {
     return (
       <div>
         <TopBar />
-        <div className="page">
+        <div className="page" id="main-content">
           <Link to="/admin" className="btn btn-ghost btn-sm" style={{ marginBottom: 16 }}>
             ← {t(lang, "worker.detail.back")}
           </Link>
@@ -106,7 +106,7 @@ export default function AdminComplaintDetail() {
   return (
     <div>
       <TopBar />
-      <div className="page">
+      <div className="page" id="main-content">
         <Link to="/admin" className="btn btn-ghost btn-sm" style={{ marginBottom: 16 }}>
           ← {t(lang, "worker.detail.back")}
         </Link>
