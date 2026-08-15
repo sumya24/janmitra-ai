@@ -44,11 +44,11 @@ from backend.services.intent_classifier import (
     is_explicit_cancellation,
     is_explicit_confirmation,
 )
-from backend.services.location_extractor import LocationExtractor, LocationResolution
+from backend.services.location_extractor import LocationExtractor, LocationResolution, known_aliases_for_city
 from backend.services.location_resolver import LocationResolver, ResolvedLocation
 from backend.services.observability import tracing
 from backend.services.orchestration.state import GraphState
-from backend.services.rag_retriever import RagRetriever
+from backend.services.rag_retriever import RagRetriever, chunk_context_label
 from backend.services.sarvam_client import AIServiceError
 from backend.services.translation_service import TranslationService
 
@@ -300,7 +300,30 @@ def _last_assistant_turn_matches(conversation_history: list[dict] | None, marker
     return any(marker in content for marker in markers)
 
 
+def _last_assistant_turn_state(conversation_history: list[dict] | None) -> str | None:
+    """BUG FIX (live Marathi validation): the explicit `complaint_workflow_state` a compliant
+    caller echoes back on the last assistant turn (see `ConversationTurn.complaint_workflow_state`
+    and `AskJanMitraResponse.complaint_workflow_state`'s own docstrings for the full round-trip).
+    Returns None when the last turn isn't an assistant turn, or the field is absent/None -- either
+    because this turn genuinely wasn't complaint-shaped, or because the caller predates this field
+    -- both cases fall back to the existing marker-text matching in the callers below, so nothing
+    that worked before regresses."""
+    if not conversation_history:
+        return None
+    last = conversation_history[-1]
+    if last.get("role") != "assistant":
+        return None
+    return last.get("complaint_workflow_state")
+
+
 def _last_turn_invites_complaint_reply(conversation_history: list[dict] | None) -> bool:
+    explicit_state = _last_assistant_turn_state(conversation_history)
+    if explicit_state is not None:
+        # DRAFT: category and/or location still being clarified. AWAITING_CONFIRMATION: the
+        # confirmation prompt itself. Both invite a reply that continues the SAME complaint flow;
+        # CONFIRMED/CANCELLED are terminal -- the next message starts fresh (see
+        # GraphState.complaint_workflow_state's own docstring for the full value list).
+        return explicit_state in ("DRAFT", "AWAITING_CONFIRMATION")
     return _last_assistant_turn_matches(conversation_history, _COMPLAINT_FLOW_PROMPT_MARKERS)
 
 
@@ -483,6 +506,31 @@ def out_of_scope_flow_node(state: GraphState, config: RunnableConfig) -> dict[st
         "response_text": _localize(text, state, config),
         "routed_to": "NONE_OUT_OF_SCOPE",
         "insufficient_knowledge": True,
+        "sources": [],
+    }
+
+
+# ------------------------------------------------------------------
+# greeting flow -- PRODUCTION ARCHITECTURE UPGRADE: a real, in-domain, fully-answerable
+# conversational opener (see QuestionIntent.GREETING's own docstring). A static, warm answer --
+# same reasoning as capabilities_flow_node just below (a fixed fact about this deployment, no RAG
+# lookup needed) -- deliberately does NOT try to parse/echo back a self-introduced name ("my name
+# is Sumit") -- that would need real name-extraction logic for a purely cosmetic touch, exactly
+# the kind of complexity this codebase's own conventions warn against adding without a measured
+# need (see e.g. answer_generation_service.py's plain template fallback).
+# ------------------------------------------------------------------
+
+
+def greeting_flow_node(state: GraphState, config: RunnableConfig) -> dict[str, Any]:
+    text = (
+        "Hello! I'm Sarthi, your civic services assistant. I can help you report a civic issue "
+        "(garbage or waste, water or drainage, roads or potholes, and streetlights), check the "
+        "status of a complaint you've already filed, or answer questions about local civic "
+        "services. What would you like help with?"
+    )
+    return {
+        "response_text": _localize(text, state, config),
+        "routed_to": "NONE_GREETING",
         "sources": [],
     }
 
@@ -755,11 +803,12 @@ def rag_flow_node(state: GraphState, config: RunnableConfig) -> dict[str, Any]:
         }
 
     context_chunks = [r.metadata["content"] for r in outcome.results]
+    context_labels = [chunk_context_label(r) for r in outcome.results]
     answer_span = tracing.start_child_run(
         root, "answer_generation", "llm",
         inputs={"question": tracing.redact_text(text), "language": language_name, "context_chunk_count": len(context_chunks)},
     )
-    answer_text, was_llm_generated = deps.answer_service.generate(text, context_chunks, language_name)
+    answer_text, was_llm_generated = deps.answer_service.generate(text, context_chunks, language_name, context_labels)
     tracing.end_run(
         answer_span,
         outputs={"answer_was_llm_generated": was_llm_generated, "answer": tracing.redact_text(answer_text)},
@@ -833,11 +882,20 @@ def _awaiting_confirmation(conversation_history: list[dict]) -> bool:
     """True when the LAST turn in `conversation_history` is Sarthi's own confirmation prompt (see
     `_build_confirmation_prompt`) -- the one signal complaint_flow_node uses to decide whether
     THIS turn's message should be interpreted as a confirmation/cancellation reply at all, rather
-    than a fresh message. Matches `_CONFIRMATION_PROMPT_MARKERS` (defined above, alongside this
-    module's other complaint-flow prompt markers) -- for a language not covered there this text
-    match can still miss, but the failure mode of a miss is only ever one extra "please confirm"
-    round-trip (see complaint_flow_node's own docstring), never a skipped confirmation -- the safe
-    direction to fail in for a check that gates a database write."""
+    than a fresh message.
+
+    BUG FIX (live Marathi validation): checks the explicit, caller-echoed
+    `complaint_workflow_state` (`_last_assistant_turn_state`) FIRST -- this is language-independent
+    by construction, so a Sarvam-generated Marathi confirmation prompt whose exact wording was
+    never seen at fix-time still gates correctly. Only when that field is absent (an
+    older/unaware caller, or a turn genuinely predating this field) does this fall back to the
+    original `_CONFIRMATION_PROMPT_MARKERS` text match -- for a language not covered there this
+    text match can still miss, but the failure mode of a miss is only ever one extra "please
+    confirm" round-trip (see complaint_flow_node's own docstring), never a skipped confirmation --
+    the safe direction to fail in for a check that gates a database write."""
+    explicit_state = _last_assistant_turn_state(conversation_history)
+    if explicit_state is not None:
+        return explicit_state == "AWAITING_CONFIRMATION"
     return _last_assistant_turn_matches(conversation_history, _CONFIRMATION_PROMPT_MARKERS)
 
 
@@ -864,6 +922,29 @@ def _recover_complaint_draft_from_history(state: GraphState) -> tuple[ServiceCat
     return None, state.get("normalized_message") or state.get("user_message", "")
 
 
+def _find_worker_ward_text_with_aliases(deps: GraphDeps, ctx: RequestContext, hint: str) -> str | None:
+    """LOCATION NORMALIZATION FIX (live Hindi validation): `LocationResolver.find_worker_ward_text`
+    itself is deliberately left untouched (exact/substring matching only, no alias awareness --
+    see this codebase's own instruction to preserve it) -- this wraps it with ONE extra,
+    general fallback: if `hint` doesn't directly match any worker, and `hint` happens to be (or
+    contain) a RAG-gazetteer CANONICAL city name, also try every known alias of that city (see
+    `known_aliases_for_city`'s own docstring for the full root-cause explanation and why this
+    isn't specific to Mohali). Every tier of `_resolve_worker_ward_text` below calls this instead
+    of the resolver method directly, so "equivalent city names resolve consistently" holds
+    uniformly rather than being patched into only the one tier that happened to reproduce the bug
+    live. Never invents a match beyond what `find_worker_ward_text` itself would already accept
+    for the ALIAS text -- this only widens WHICH strings get tried, not HOW a string is judged to
+    match."""
+    match = deps.location_resolver.find_worker_ward_text(ctx.db, hint)
+    if match is not None:
+        return match
+    for alias in known_aliases_for_city(hint):
+        match = deps.location_resolver.find_worker_ward_text(ctx.db, alias)
+        if match is not None:
+            return match
+    return None
+
+
 def _resolve_worker_ward_text(
     deps: GraphDeps, ctx: RequestContext, state: GraphState, complaint_text: str
 ) -> tuple[str | None, Any, ResolvedLocation | None]:
@@ -888,9 +969,9 @@ def _resolve_worker_ward_text(
     values, used only when a complaint is actually created, for the richer state/district/.../
     locality ID chain (see complaint_flow_node's own comment on why a resolved Ward's bare name
     is not, by itself, sufficient)."""
-    worker_ward_text = deps.location_resolver.find_worker_ward_text(ctx.db, ctx.location_text or "")
+    worker_ward_text = _find_worker_ward_text_with_aliases(deps, ctx, ctx.location_text or "")
     if worker_ward_text is None:
-        worker_ward_text = deps.location_resolver.find_worker_ward_text(ctx.db, complaint_text)
+        worker_ward_text = _find_worker_ward_text_with_aliases(deps, ctx, complaint_text)
     if worker_ward_text is None:
         # `find_worker_ward_text` matches a hint that IS (close to) a bare city/ward name -- an
         # exact match, or the city named inside a structured "Ward N -- Locality, City" ward (see
@@ -902,7 +983,7 @@ def _resolve_worker_ward_text(
         # dedicated "Mohali." reply already would. Deliberately does not touch
         # `find_worker_ward_text` itself (see this codebase's own instruction to preserve it).
         for token in re.findall(r"[^\s,.;:!?()]+", complaint_text):
-            match = deps.location_resolver.find_worker_ward_text(ctx.db, token)
+            match = _find_worker_ward_text_with_aliases(deps, ctx, token)
             if match is not None:
                 worker_ward_text = match
                 break
@@ -915,7 +996,7 @@ def _resolve_worker_ward_text(
         # from whatever city name comes back, exactly like the text-based path above.
         gps_resolved = deps.location_resolver.resolve_coordinates(ctx.latitude, ctx.longitude)
         if gps_resolved.city_name:
-            worker_ward_text = deps.location_resolver.find_worker_ward_text(ctx.db, gps_resolved.city_name)
+            worker_ward_text = _find_worker_ward_text_with_aliases(deps, ctx, gps_resolved.city_name)
     # TARGETED SAFETY FIX: `location_city`/`location_state` are excluded here when their OWN
     # source (set by `location_node`'s `_resolve_location`) is "citizen_home_ward" -- that
     # resolver has its own, separate ctx.user.ward fallback (used for RAG's "answer scoped to
@@ -929,7 +1010,7 @@ def _resolve_worker_ward_text(
     if worker_ward_text is None and state.get("location_source") != "citizen_home_ward":
         for hint in (state.get("location_city"), state.get("location_state")):
             if hint:
-                worker_ward_text = deps.location_resolver.find_worker_ward_text(ctx.db, hint)
+                worker_ward_text = _find_worker_ward_text_with_aliases(deps, ctx, hint)
                 if worker_ward_text is not None:
                     break
     if worker_ward_text is None:
@@ -948,10 +1029,10 @@ def _resolve_worker_ward_text(
             content = turn.get("content", "")
             if not content:
                 continue
-            match = deps.location_resolver.find_worker_ward_text(ctx.db, content)
+            match = _find_worker_ward_text_with_aliases(deps, ctx, content)
             if match is None:
                 for token in re.findall(r"[^\s,.;:!?()\"]+", content):
-                    match = deps.location_resolver.find_worker_ward_text(ctx.db, token)
+                    match = _find_worker_ward_text_with_aliases(deps, ctx, token)
                     if match is not None:
                         break
             if match is not None:
@@ -999,7 +1080,7 @@ def _resolve_own_ward_worker_text(deps: GraphDeps, ctx: RequestContext) -> tuple
     to route a complaint into another citizen's ward."""
     if not ctx.user.ward:
         return None, None
-    worker_ward_text = deps.location_resolver.find_worker_ward_text(ctx.db, ctx.user.ward)
+    worker_ward_text = _find_worker_ward_text_with_aliases(deps, ctx, ctx.user.ward)
     if worker_ward_text is None:
         return None, None
     resolved_ward = deps.location_resolver.resolve_ward_by_text(ctx.db, worker_ward_text)
@@ -1070,7 +1151,29 @@ def complaint_flow_node(state: GraphState, config: RunnableConfig) -> dict[str, 
 
     confirmed = awaiting_confirmation and is_explicit_confirmation(text)
 
-    if awaiting_confirmation:
+    # CONVERSATION & REQUEST/RESPONSE ALIGNMENT AUDIT: a reply to Sarthi's own confirmation
+    # prompt is normally never itself the complaint description (see the comment on the `else`
+    # branch below) -- EXCEPT when the reply is confidently, independently complaint-shaped on
+    # its OWN terms, e.g. "I have another complaint." Live-tested gap this closes: previously ANY
+    # non-confirm/non-cancel reply here fell straight to `_recover_complaint_draft_from_history`,
+    # silently re-showing the STALE pending draft's confirmation prompt even when the citizen had
+    # just described a genuinely different, new complaint -- a real request/response mismatch
+    # (never a safety issue: the stale draft was never confirmed/created, so there is nothing to
+    # lose by abandoning it). Reuses `classify()`'s OWN existing confident tier (state/meta
+    # signal, not a question, not the weaker TYPE_A_MAYBE guess -- see intent_classifier.py's own
+    # docstring) as the sole signal -- no new keyword list, no new classifier.
+    fresh_complaint_signal = classify(text) if awaiting_confirmation and not confirmed else None
+    is_fresh_complaint = bool(fresh_complaint_signal and fresh_complaint_signal.intent == QuestionIntent.TYPE_A_COMPLAINT)
+
+    if is_fresh_complaint:
+        # Deliberately does NOT fall back to `_recover_category_from_history` when this new
+        # statement doesn't itself name a category (e.g. "I have another complaint.") -- that
+        # history-recovery fallback exists for building up ONE continuous complaint across turns,
+        # not for guessing that a citizen's brand-new issue must share the STALE, unrelated
+        # pending draft's category. Honestly asks instead (see the `category is None` branch
+        # below), exactly like a genuinely fresh conversation would.
+        category, complaint_text = fresh_complaint_signal.service_category, text
+    elif awaiting_confirmation:
         # This turn's message is a reply to Sarthi's OWN confirmation prompt -- it is never
         # itself the complaint description (whether it's "yes, submit it", "no", or an ambiguous
         # "okay"). Recover the real description/category from history instead of the OLD
@@ -1299,25 +1402,112 @@ def complaint_flow_node(state: GraphState, config: RunnableConfig) -> dict[str, 
 
 # ------------------------------------------------------------------
 # response_generation -- terminal node. Every flow node above already sets response_text/
-# routed_to/etc.; this node's job is purely observability (see graph.py) plus filling in any
-# field a flow node didn't set, so AskJanMitraResponse construction never has to guess.
+# routed_to/etc.; this node fills in any field a flow node didn't set (so AskJanMitraResponse
+# construction never has to guess), then acts as this graph's FINAL RESPONSE GROUNDING /
+# VALIDATION stage (GROUNDING #2 -- see this module's top-of-file docstring for the distinction
+# from GROUNDING #1, the RAG/rules context `rag_flow_node`/`location_node` gather BEFORE
+# planning/reasoning). PRODUCTION ARCHITECTURE UPGRADE: this node's name/graph-node-id
+# (`"response_generation"`) is kept unchanged -- renaming it purely to match an architecture
+# diagram's terminology would have broken tests/test_orchestration_graph.py's existing exhaustive
+# node-set/routing assertions (real, uncommitted P0-era safety work this phase was explicitly
+# told to keep intact) for zero functional benefit; what changed is what this node actually DOES,
+# not what it's called.
+#
+# Every check below is deterministic (no LLM call -- consistent with this whole module's
+# established convention, see intent_classifier.py's own docstring for why intent-adjacent
+# decisions here are never a model call) and is a BACKSTOP, not the primary defense --
+# complaint_flow_node's confirmation gate is what actually prevents an unconfirmed complaint from
+# being created; these checks only catch the case where the FINAL text/state still disagrees with
+# what actually happened, which should structurally never occur but costs little to verify
+# explicitly.
+#
+# SELF-CHECK -> REPLAN -> RE-VALIDATE, bounded: a real, executed loop (see `_MAX_GROUNDING_
+# REPLANS`), not merely "correct once and hope" -- the corrected response is re-run through the
+# SAME checks before being accepted, so this stage can prove convergence rather than assume it.
+# The "replan" itself is a deterministic recomputation of the correct response DIRECTLY from
+# already-verified state -- never a second LLM call/retry against the same state, which could
+# simply repeat the same mistake (or a different one) each time; a bounded, deterministic
+# correction is the safer choice, and is why one retry is always enough here (every correction
+# below is a fixed, already-safe template -- see `_run_grounding_checks`'s own docstring for why
+# a corrected response can never itself trip these same checks again).
 # ------------------------------------------------------------------
 
 
-# P0 SAFETY FIX (Part 12): a deterministic (no LLM -- see this module's own established
-# convention) response/action consistency check. This is a backstop, not the primary defense --
-# complaint_flow_node's confirmation gate (see that function's own docstring) is what actually
-# prevents an unconfirmed complaint from being created; this only catches the case where
-# response_text and complaint_id disagree despite that, which should never happen but costs
-# little to guard against. Deliberately specific phrases ("has been filed"/"has been
-# registered"/"has been created"), not bare words like "filed"/"assigned" -- those bare words
-# also appear in perfectly legitimate STATUS-CHECK responses about an EXISTING complaint (see
-# status_flow_node's own status_text templates, e.g. "assigned to a worker, awaiting their
-# acceptance."), which never set `complaint_id` on the response and must not be flagged.
+# P0 SAFETY FIX (Part 12): specific phrases ("has been filed"/"has been registered"/"has been
+# created"), not bare words like "filed"/"assigned" -- those bare words also appear in perfectly
+# legitimate STATUS-CHECK responses about an EXISTING complaint (see status_flow_node's own
+# status_text templates, e.g. "assigned to a worker, awaiting their acceptance."), which never
+# set `complaint_id` on the response and must not be flagged.
 _UNSAFE_COMPLETION_CLAIM_PHRASES = ("has been filed", "has been registered", "has been created")
+
+# PRODUCTION ARCHITECTURE UPGRADE: the one `routed_to` value that legitimately carries a
+# `complaint_id` -- every other value (RAG/status/clarification/out-of-scope/capabilities/
+# greeting/unclear/awaiting-confirmation/cancelled/creation-failed/...) must never carry one. This
+# generalizes the text-phrase check above (which only catches an unsafe CLAIM in the wording) into
+# a structural invariant over the actual typed fields the API response is built from (see
+# ask_janmitra_service.py's `_run()`, which reads `complaint_id`/`routed_to` straight off this
+# graph's final state, never inferring either from `response_text`) -- the two checks catch
+# different failure shapes: wording that lies vs. state that disagrees with itself.
+_ROUTED_TO_IMPLYING_COMPLAINT_CREATED = "COMPLAINT_CREATED"
+
+# One replan attempt is always sufficient here (see the module-level comment above for why), but
+# this is still a real, enforced bound -- not an assumption -- so a future new check that DOESN'T
+# converge in one correction fails loudly (via the "still failing" branch below) instead of
+# looping forever.
+_MAX_GROUNDING_REPLANS = 1
+
+
+def _run_grounding_checks(response_text: str, routed_to: str, sources: list, complaint_id: Any, insufficient_knowledge: bool) -> list[str]:
+    """Pure check pass -- no mutation, no side effects. Returns the list of failed check names
+    (empty means PASS). Called once per attempt by `response_generation_node`'s bounded replan
+    loop; also what proves a replanned response actually converged, by being called again on the
+    corrected values."""
+    failed: list[str] = []
+
+    claims_completion = any(phrase in response_text.lower() for phrase in _UNSAFE_COMPLETION_CLAIM_PHRASES)
+    if claims_completion and not complaint_id:
+        failed.append("unsafe_completion_claim")
+
+    if routed_to == "RAG" and not sources and not insufficient_knowledge:
+        failed.append("rag_zero_sources_not_flagged")
+
+    if complaint_id and routed_to != _ROUTED_TO_IMPLYING_COMPLAINT_CREATED:
+        failed.append("complaint_id_without_created_routing")
+
+    return failed
+
+
+def _replan_response(checks_failed: list[str], state: GraphState, config: RunnableConfig) -> dict[str, Any]:
+    """REPLAN step: deterministically recomputes the fields needed to fix every check named in
+    `checks_failed` -- never a re-generation of the SAME response, always a fixed, already-safe
+    honest fallback derived directly from what's actually verified (see this module's own
+    docstring for why this is safer than a second LLM attempt)."""
+    correction: dict[str, Any] = {}
+    if "unsafe_completion_claim" in checks_failed:
+        logger.error("Ask Sarthi response_generation: response text claimed complaint completion with no complaint_id -- replanning.")
+        correction["response_text"] = _localize(
+            "I couldn't complete that request. Please try again, or use the complaint form directly.", state, config,
+        )
+        correction["routed_to"] = "COMPLAINT_CREATION_FAILED"
+    if "rag_zero_sources_not_flagged" in checks_failed:
+        logger.error("Ask Sarthi response_generation: RAG response has zero sources and is not flagged insufficient_knowledge -- replanning.")
+        correction["response_text"] = _localize(
+            "I couldn't find reliable information for that. Please try again, or contact your local municipal office directly.",
+            state, config,
+        )
+        correction["insufficient_knowledge"] = True
+    if "complaint_id_without_created_routing" in checks_failed:
+        logger.error("Ask Sarthi response_generation: complaint_id present without COMPLAINT_CREATED routing -- replanning.")
+        correction["response_text"] = _localize(
+            "I couldn't complete that request. Please try again, or use the complaint form directly.", state, config,
+        )
+        correction["routed_to"] = "COMPLAINT_CREATION_FAILED"
+        correction["complaint_id"] = None
+    return correction
 
 
 def response_generation_node(state: GraphState, config: RunnableConfig) -> dict[str, Any]:
+    root = _trace_root(config)
     defaults: dict[str, Any] = {}
     if "response_text" not in state:
         defaults["response_text"] = _localize("I'm not sure how to help with that yet.", state, config)
@@ -1330,29 +1520,46 @@ def response_generation_node(state: GraphState, config: RunnableConfig) -> dict[
     routed_to = state.get("routed_to") or defaults.get("routed_to")
     sources = state["sources"] if "sources" in state else defaults.get("sources")
     complaint_id = state.get("complaint_id")
+    insufficient_knowledge = bool(state.get("insufficient_knowledge"))
 
-    claims_completion = any(phrase in response_text.lower() for phrase in _UNSAFE_COMPLETION_CLAIM_PHRASES)
-    if claims_completion and not complaint_id:
-        logger.error(
-            "Ask Sarthi response_generation: response text claimed complaint completion with no "
-            "complaint_id -- suppressing unsafe response (routed_to=%s).", routed_to,
+    grounding_span = tracing.start_child_run(
+        root, "final_response_grounding", "chain",
+        inputs={"routed_to": routed_to, "has_complaint_id": bool(complaint_id), "source_count": len(sources or [])},
+    )
+
+    checks_failed = _run_grounding_checks(response_text, routed_to, sources, complaint_id, insufficient_knowledge)
+    replans = 0
+    while checks_failed and replans < _MAX_GROUNDING_REPLANS:
+        correction = _replan_response(checks_failed, state, config)
+        defaults.update(correction)
+        response_text = correction.get("response_text", response_text)
+        routed_to = correction.get("routed_to", routed_to)
+        complaint_id = correction.get("complaint_id", complaint_id) if "complaint_id" in correction else complaint_id
+        insufficient_knowledge = correction.get("insufficient_knowledge", insufficient_knowledge)
+        replans += 1
+        # RE-VALIDATE: the corrected response must actually pass before being accepted -- this is
+        # what makes this a real "replan then re-check" cycle, not "correct once and assume".
+        checks_failed = _run_grounding_checks(response_text, routed_to, sources, complaint_id, insufficient_knowledge)
+
+    if checks_failed:
+        # Bounded-retry circuit breaker: should be unreachable (every correction above is a fixed
+        # template that can never itself trip these same checks -- see `_replan_response`'s own
+        # docstring), but if a future check is added that doesn't converge in one replan, fail
+        # loudly and safely here rather than looping or shipping an ungrounded response.
+        logger.critical(
+            "Ask Sarthi response_generation: final response STILL failed grounding after %d replan(s): %s -- "
+            "forcing safest possible fallback.", replans, checks_failed,
         )
-        defaults["response_text"] = _localize(
-            "I couldn't complete that request. Please try again, or use the complaint form directly.",
-            state, config,
-        )
+        defaults["response_text"] = _localize("I couldn't complete that request. Please try again.", state, config)
         defaults["routed_to"] = "COMPLAINT_CREATION_FAILED"
+        defaults["complaint_id"] = None
 
-    # A RAG answer must never look citation-backed with zero sources unless it's already honestly
-    # flagged insufficient_knowledge (rag_flow_node's own "I don't currently have reliable
-    # information" template always sets that flag, so this should never fire in practice -- a
-    # backstop for the same reason as the check above, not the primary defense).
-    if routed_to == "RAG" and not sources and not state.get("insufficient_knowledge"):
-        logger.error("Ask Sarthi response_generation: RAG response has zero sources and is not flagged insufficient_knowledge -- suppressing.")
-        defaults["response_text"] = _localize(
-            "I couldn't find reliable information for that. Please try again, or contact your local municipal office directly.",
-            state, config,
-        )
-        defaults["insufficient_knowledge"] = True
+    defaults["grounding_passed"] = not checks_failed
+    defaults["grounding_checks_failed"] = checks_failed
+    defaults["grounding_replan_count"] = replans
+    tracing.end_run(
+        grounding_span,
+        outputs={"grounding_passed": not checks_failed, "checks_failed": checks_failed, "replan_count": replans},
+    )
 
     return defaults

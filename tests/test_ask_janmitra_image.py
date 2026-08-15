@@ -17,6 +17,7 @@ and the same file-upload assertion style as test_evidence.py (real disk persiste
 content-type/size validation).
 """
 
+import json
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -75,7 +76,7 @@ def _install_real_service(monkeypatch, *, caption: str | None = _FAKE_CAPTION, c
     # Echoes the query text back as the "answer" -- lets tests assert on exactly what text
     # reached RAG (e.g. whether an image caption got folded into it), not just that *an* answer
     # came back.
-    fake_answers.generate = Mock(side_effect=lambda q, chunks, lang: (q, False))
+    fake_answers.generate = Mock(side_effect=lambda q, chunks, lang, context_labels=None: (q, False))
 
     fake_vision = Mock()
     if caption_error:
@@ -166,9 +167,24 @@ def test_image_plus_complaint_creates_real_photo_path_and_evidence_row(client, m
     token, _ = make_citizen(phone="9000000111")
 
     response = _ask_image(client, token, "Street light near my home is not working.", location_text="Mohali")
-
     assert response.status_code == 200, response.text
     body = response.json()
+    # P0 SAFETY FIX (production-safety audit): category + location resolving together no longer
+    # creates a complaint on the first call -- see tests/test_ask_janmitra.py's
+    # test_type_a_complaint_creates_and_assigns_complaint for the full rationale. The image is
+    # re-attached on the confirmation call below (the backend has no server-side session to
+    # remember the first call's already-saved file -- see complaint_flow_node's own docstring on
+    # statelessness), matching how a real client would need to resend it too.
+    assert body["routed_to"] == "NONE_AWAITING_CONFIRMATION"
+    assert body.get("complaint_id") is None
+
+    history = json.dumps([
+        {"role": "user", "content": "Street light near my home is not working."},
+        {"role": "assistant", "content": body["answer"]},
+    ])
+    confirm = _ask_image(client, token, "Yes, submit it.", conversation_history=history)
+    assert confirm.status_code == 200, confirm.text
+    body = confirm.json()
     assert body["routed_to"] == "COMPLAINT_CREATED"
     complaint_id = body["complaint_id"]
     assert complaint_id is not None

@@ -18,6 +18,12 @@ intent_classification  (wraps intent_classifier.classify())
   |
   +-- TYPE_C_STATUS --------------------------------> status_flow
   +-- out_of_scope_service set ---------------------> out_of_scope_flow
+  +-- GREETING ("Hello", "Hi, my name is Sumit") ---> greeting_flow (real, static answer -- see
+  |                                                    nodes.py's greeting_flow_node; PRODUCTION
+  |                                                    ARCHITECTURE UPGRADE, closes the request/
+  |                                                    response MISMATCH where a greeting got the
+  |                                                    same generic "I didn't understand that"
+  |                                                    reply as any other unrecognized message)
   +-- CAPABILITIES ("what can you do?") ------------> capabilities_flow (real, static answer --
   |                                                    see nodes.py's capabilities_flow_node)
   +-- UNCLEAR (no signal matched at all) -----------> unclear_flow (honest "I didn't understand
@@ -25,6 +31,11 @@ intent_classification  (wraps intent_classifier.classify())
   |                                                    clarification -- see nodes.py's
   |                                                    unclear_flow_node docstring for the bug
   |                                                    this replaced)
+  +-- TYPE_A_MAYBE (bare category/verb, no confident -> clarification_flow ("intent_ambiguous" --
+  |    complaint- or question-shaped language --         asks "report a problem, or get
+  |    see intent_classifier.py's QuestionIntent.         information?" instead of guessing;
+  |    TYPE_A_MAYBE docstring for the P0 bug this         see the production-safety fix that
+  |    prevents)                                          added this)
   +-- else ------------------------------------------> location_resolution
                                                              |
                                                              v
@@ -75,6 +86,7 @@ from backend.services.orchestration.nodes import (
     capabilities_flow_node,
     clarification_flow_node,
     complaint_flow_node,
+    greeting_flow_node,
     input_processing_node,
     intent_node,
     language_node,
@@ -107,10 +119,21 @@ def _route_after_intent(state: GraphState) -> str:
         return "status_flow"
     if state.get("out_of_scope_service"):
         return "out_of_scope_flow"
+    if state.get("intent") == QuestionIntent.GREETING.value:
+        # PRODUCTION ARCHITECTURE UPGRADE: see nodes.py's greeting_flow_node -- a real,
+        # tailored answer for small talk, never the complaint-shaped clarification questions
+        # location_resolution/complaint_flow would otherwise ask.
+        return "greeting_flow"
     if state.get("intent") == QuestionIntent.CAPABILITIES.value:
         return "capabilities_flow"
     if state.get("intent") == QuestionIntent.UNCLEAR.value:
         return "unclear_flow"
+    if state.get("intent") == QuestionIntent.TYPE_A_MAYBE.value:
+        # P0 SAFETY FIX: a bare category/complaint-verb signal with no confident complaint-shaped
+        # or question-shaped language (see intent_classifier.py's QuestionIntent.TYPE_A_MAYBE
+        # docstring) -- never routed into complaint_flow on a guess. Asks the citizen directly
+        # instead (see nodes.py's clarification_flow_node "intent_ambiguous" branch).
+        return "clarification_flow"
     return "location_resolution"
 
 
@@ -149,6 +172,7 @@ def build_graph() -> CompiledStateGraph:
     graph.add_node("status_flow", status_flow_node)
     graph.add_node("clarification_flow", clarification_flow_node)
     graph.add_node("out_of_scope_flow", out_of_scope_flow_node)
+    graph.add_node("greeting_flow", greeting_flow_node)
     graph.add_node("capabilities_flow", capabilities_flow_node)
     graph.add_node("unclear_flow", unclear_flow_node)
     graph.add_node("response_generation", response_generation_node)
@@ -167,8 +191,10 @@ def build_graph() -> CompiledStateGraph:
         {
             "status_flow": "status_flow",
             "out_of_scope_flow": "out_of_scope_flow",
+            "greeting_flow": "greeting_flow",
             "capabilities_flow": "capabilities_flow",
             "unclear_flow": "unclear_flow",
+            "clarification_flow": "clarification_flow",
             "location_resolution": "location_resolution",
         },
     )
@@ -187,6 +213,7 @@ def build_graph() -> CompiledStateGraph:
     graph.add_edge("status_flow", "response_generation")
     graph.add_edge("clarification_flow", "response_generation")
     graph.add_edge("out_of_scope_flow", "response_generation")
+    graph.add_edge("greeting_flow", "response_generation")
     graph.add_edge("capabilities_flow", "response_generation")
     graph.add_edge("unclear_flow", "response_generation")
     graph.add_edge("response_generation", END)
