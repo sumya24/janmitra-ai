@@ -4,6 +4,7 @@ import { useUiLang } from "../lib/uiLang";
 import { t } from "../lib/i18n";
 import { api, ApiError, type Complaint } from "../lib/api";
 import MultiPhotoUpload from "./MultiPhotoUpload";
+import { useModalA11y } from "../lib/useModalA11y";
 
 /** Mandatory initial-assessment modal, shown only once a complaint is ACCEPTED. Submitting moves
  * the complaint straight to IN_PROGRESS (no separate "confirm start" step) -- see
@@ -46,11 +47,13 @@ export default function StartWorkModal({
     }
   }
 
+  const modalRef = useModalA11y(onClose);
+
   return (
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && !saving && onClose()}>
-      <div className="modal">
+      <div ref={modalRef} className="modal" role="dialog" aria-modal="true" aria-labelledby="jm-modal-title" tabIndex={-1}>
         <div className="modal-head">
-          <h3 className="display">{t(lang, "worker.start.title")}</h3>
+          <h3 className="display" id="jm-modal-title">{t(lang, "worker.start.title")}</h3>
           <button className="x" aria-label={t(lang, "common.close")} onClick={onClose} disabled={saving}>
             ✕
           </button>
