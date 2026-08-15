@@ -609,5 +609,44 @@
     "retrieved_at": "2026-08-15T06:01:26.071766Z",
     "geographic_scope": "CITY",
     "notes": "Closes Varanasi's Roads/Streetlights category gap using the same real toll-free/app channel already confirmed for VNN's existing general-grievance record (UP_VNN_GENERAL_GRIEVANCE_CHANNEL, categorized WASTE_SANITATION and thus not surfaced for Roads/Streetlights queries) -- these 2 new records correctly categorize the same real channel for retrieval. Two additional real contact numbers (toll-free 18001805567, landline 0542-2720005) confirmed via direct fetch of VNN's home page, not previously recorded. e-nagarsewaup.gov.in's own grievance page and varanasi.nic.in's grievance-lodging page were also checked this pass but redirect to either UP-statewide (jansunwai.up.nic.in) or generic descriptions with no VNN-specific or category-specific content."
+  },
+  {
+    "source_id": "WB_KMC_COMPLAINT_FORM",
+    "source_title": "Common Complaint e-Form -- Kolkata Municipal Corporation",
+    "source_organization": "Kolkata Municipal Corporation (KMC)",
+    "source_url": "https://www.kmcgov.in/KMCPortal/ComplaintFormAction.do",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-15T06:36:35.885421Z",
+    "geographic_scope": "CITY",
+    "notes": "Closes Kolkata's last missing category (Roads/Potholes). Found via KMC's homepage navigation -> 'Engineering (Civil)' -> Manholes.jsp, which explicitly mentions pothole repair procedure, then the Common Complaint e-Form itself which lists the exact category (code 12, 19 categories total). No numeric SLA or direct KMC Control Room phone number found on either official page -- a phone number (033-2286 1212 / toll-free 1800 345 3375) surfaced only via a third-party aggregator (indiacustomercare.com), not confirmed via direct fetch of an official page, so deliberately NOT used."
+  },
+  {
+    "source_id": "TN_CMWSSB_CITIZEN_CHARTER",
+    "source_title": "Citizen's Charter -- Chennai Metropolitan Water Supply and Sewerage Board (CMWSSB)",
+    "source_organization": "Chennai Metropolitan Water Supply and Sewerage Board (CMWSSB)",
+    "source_url": "https://cmwssb.tn.gov.in/citizencharter",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-15T06:36:35.885421Z",
+    "geographic_scope": "CITY",
+    "notes": "Closes Chennai's last missing category (Water & Drainage) with a rich, detailed, real numeric SLA table -- comparable in quality to Jaipur's charter, the project's previous richest source. Found via cmwssb.tn.gov.in (CMWSSB's own domain, distinct from chennaicorporation.gov.in used for the 3 existing GCC contact records), specifically the /citizencharter page reached after first checking /complaint-redressal and /complaints-grievance (both real but SLA-table-free, giving only the 24x7 Complaint Cell number and the 3-minute internal SMS-handoff commitment)."
+  },
+  {
+    "source_id": "KL_TVM_SMART_PORTAL_COMPLAINT_REPORT",
+    "source_title": "Complaint Report Dashboard -- Smart Trivandrum",
+    "source_organization": "Thiruvananthapuram Municipal Corporation",
+    "source_url": "https://smarttvm.tmc.lsgkerala.gov.in/complaint/report",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-15T06:36:35.885421Z",
+    "geographic_scope": "CITY",
+    "notes": "Closes Thiruvananthapuram's 2 remaining categories (Roads, Waste). A different page from smarttvm.tmc.lsgkerala.gov.in's root (already cited for Water/Septage and Streetlights) -- this /complaint/report page is a live complaint-tracking dashboard showing real filed complaints and their categories. tmc.lsgkerala.gov.in/en/page/33 (Solid Waste Management informational page) was also checked but returned only nav/footer content, no substantive procedure."
   }
 ]

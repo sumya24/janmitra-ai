@@ -1,5 +1,42 @@
 # RAG Knowledge Base — Source Research Log
 
+## Round 7 (2026-08-15, session 7): audit + re-categorization + 4 targeted new fetches
+
+Two-part round. Part 1 was a pure audit/re-categorization pass (no new research) fixing a
+schema-driven retrieval gap: several already-verified general-purpose channels were filed under
+WASTE_SANITATION only (one category per record), so they never surfaced for Roads/Water/
+Streetlights queries even though their own descriptions already say they're category-agnostic.
+Part 2 was 4 small, targeted new fetches. 17 new VERIFIED records total.
+
+### Part 1 — re-categorization (audit, every source re-fetched to double-check nothing was missed)
+
+| City | Source re-fetched | Result |
+|---|---|---|
+| Gaya, Bihar | gayamunicipal.net | **[CONFIRMED GENERAL — added ROADS_POTHOLES, WATER_DRAINAGE, STREETLIGHTS variants of BR_GMC_GENERAL_GRIEVANCE_CHANNEL, same source. Re-fetch confirmed only the single Feedback/Complain link and Waste-search tools, no category breakdown.]** |
+| Gurugram, Haryana | services.gmda.gov.in | **[CONFIRMED GENERAL — added the same 3 category variants of HR_GMDA_GENERAL_GRIEVANCE. Re-fetch confirmed only Register/Status/Callback/Old-Age-Services options, no category breakdown.]** |
+| Warangal, Telangana | gwmc.gov.in | **[CONFIRMED GENERAL — added the same 3 category variants of TS_GWMC_GENERAL_GRIEVANCE_CHANNEL. Re-fetch confirmed only a general helpline number and Grievance Registration/Report links.]** |
+| Mysuru, Karnataka | mysore.nic.in MCC page | **[CONFIRMED GENERAL — added the same 3 category variants of KA_MCC_GENERAL_GRIEVANCE_CHANNEL. Re-fetch confirmed only Commissioner's Office phone/email/address.]** |
+| Indore, Madhya Pradesh | smartcityindore.org/grievance-registration/ | **[CONFIRMED — re-fetch listed all 9 categories verbatim in order (Garbage, Road & Footpath, Public Toilets/Urinals, Park & Play Ground, Water Supply, Sewerage/Drainage, Public Health, Street Light, Other); "Garbage" is genuinely the first category and had no record built from it despite the other 3 (Water/Roads/Streetlights) already existing. Added MP_IMC_SMARTCITY_WASTE_CHANNEL, same source.]** |
+
+13 new records from Part 1 (3×4 cities + 1 Indore), all citing already-existing SourceRecord entries — no new inventory.json entries needed for this part.
+
+### Part 2 — new targeted fetches
+
+| Gap | Result | Notes |
+|---|---|---|
+| **New Delhi (NDMC) — Streetlights** | **CONFIRMED SLA NOT FOUND (0 new records)** | **[CHECKED — re-fetched ndmc.gov.in/SLA.aspx and extracted all 41 line items verbatim (Health/Welfare/Architect/Electric/Water/Estate/Civil Engineering/Enforcement/Horticulture/Accounts departments). Genuinely zero streetlight/electrical-lighting/lamp-post line item exists in this table — confirmed absent, not missed. This is an honest source limitation, not a fetch failure; no record built.]** |
+| **Kolkata, West Bengal — Roads/Potholes** | **PROMOTED TO VERIFIED** | **[PROMOTED TO VERIFIED — see knowledge_records/verified/west_bengal/kolkata.json (WB_KMC_ROADS_GRIEVANCE_CHANNEL), sources/inventory.json. KMC's homepage navigation led to Engineering (Civil) → Manholes.jsp (real pothole-repair procedure: "Inform the local Ward Office/Borough Office/KMC Control Room") and then KMC's Common Complaint e-Form (ComplaintFormAction.do), which lists "Repair of potholes in Roads / Footpath and related" as category code 12 of 19. No numeric SLA or direct KMC Control Room phone number found on either official page — a number surfaced only via a third-party aggregator, not used. Closes Kolkata's last missing category.]** |
+| **Chennai, Tamil Nadu — Water & Drainage** | **PROMOTED TO VERIFIED (rich)** | **[PROMOTED TO VERIFIED — see knowledge_records/verified/tamil_nadu/chennai.json (TN_CMWSSB_WATER_SEWERAGE_SLA), sources/inventory.json. cmwssb.tn.gov.in (Chennai Metrowater's own domain, distinct from chennaicorporation.gov.in already used for GCC's 3 contact records) — after checking /complaint-redressal and /complaints-grievance (both real, giving the 24x7 Complaint Cell number and a genuine 3-minute internal-SMS-handoff commitment but no SLA table), the /citizencharter page gave a rich, detailed, real numeric SLA table across 13 water/sewerage service types (2 to 20 days depending on category) — comparable in quality to Jaipur's charter, the project's previous richest single source. Closes Chennai's last missing category.]** |
+| **Thiruvananthapuram, Kerala — Roads & Waste** | **PROMOTED TO VERIFIED (2 records)** | **[PROMOTED TO VERIFIED — see knowledge_records/verified/kerala/thiruvananthapuram.json (KL_TVM_ROADS_CHANNEL, KL_TVM_WASTE_CHANNEL), sources/inventory.json. A different page from smarttvm.tmc.lsgkerala.gov.in's root (already used for Water/Septage and Streetlights) — /complaint/report is a live complaint-tracking dashboard showing real filed complaints (e.g. an actual logged "Road pothhole" complaint, ref REV42348) confirming a "General Complaints[Rev]" category covers roads, and 3 named waste categories (Waste Related Complaints, Waste Littering, Spot the Dump). Both share the single general municipal number (9496434488) rather than a dedicated line like Water/Septage or Streetlights have. tmc.lsgkerala.gov.in/en/page/33 (a Solid Waste Management informational page) was also checked but returned only nav/footer content. Closes Thiruvananthapuram's last 2 missing categories — the city now has all 4 categories covered.]** |
+
+### Net result of Round 7
+
+17 new VERIFIED records (93 → 110). Part 1 was zero-fetch-risk (pure re-categorization of
+already-verified content) and closed 13 category gaps across 5 cities. Part 2 closed 3 of 4
+targeted gaps (Kolkata, Chennai, Thiruvananthapuram all now have full 4-category coverage);
+NDMC Streetlights was confirmed as a genuine source limitation (SLA table exists but doesn't
+cover this category), not a research gap.
+
 ## Round 6 (2026-08-14, session 6, FINAL ROUND): 4 targeted gaps
 
 Final round, scoped to exactly 4 remaining gaps rather than a broad sweep. 3 of 4 produced new

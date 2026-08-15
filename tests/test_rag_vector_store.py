@@ -92,19 +92,24 @@ def test_embedding_batch_matches_individual_embeddings():
 def test_chroma_collection_opens_and_reports_expected_size():
     store = _real_store()
     assert store.is_loaded
-    # 758, not the earlier 740 -- round 6 (the final, targeted round) closed 3 of 4 remaining
-    # gaps: Delhi's MCD-Streetlights (a correctly-categorized record using MCD's existing real
-    # 155305/MCD311 channel, confirmed via 3 separate MCD pages with zero streetlight-specific
-    # SLA found), Indore's Water/Roads/Streetlights (via Smart City Indore's own
-    # /grievance-registration/ page, a genuinely different page from the ones already exhausted
-    # in rounds 4-5), and Varanasi's Roads/Streetlights (2 correctly-categorized records using
-    # VNN's existing real 1533/SMART KASHI APP channel plus 2 newly-confirmed numbers). Bengaluru
-    # Roads/Streetlights was re-attempted via 3 more genuinely different domains and confirmed
-    # exhausted -- see data/rag_knowledge_base/sources/candidate_urls.md's "Round 6" section for
-    # the full log. Confirmed by actually running `scripts/build_rag_embeddings.py` against the
-    # real embedding model (intfloat/multilingual-e5-small) and reading the resulting ChromaDB
-    # collection size directly -- not counted by hand.
-    assert store.size == 758
+    # 809, not the earlier 758 -- round 7 had two parts. Part 1 was a pure re-categorization audit
+    # (no new fetching): several already-verified general-purpose channels (Gaya, Gurugram,
+    # Warangal, Mysuru, plus Indore's Garbage category) were filed under WASTE_SANITATION only
+    # (one category per record), so they never surfaced for Roads/Water/Streetlights queries even
+    # though their own descriptions already said they were category-agnostic -- each source was
+    # re-fetched to confirm nothing category-specific was missed, then 13 new correctly-categorized
+    # records were added citing the same already-verified sources. Part 2 closed 3 of 4 targeted
+    # gaps with 4 new records: Kolkata Roads (KMC's Common Complaint e-Form), Chennai Water/
+    # Drainage (CMWSSB's own Citizen's Charter -- a rich, detailed SLA table across 13 service
+    # types, comparable to Jaipur's charter), and Thiruvananthapuram Roads+Waste (Smart
+    # Trivandrum's live complaint-tracking dashboard). NDMC Streetlights was confirmed as a
+    # genuine source limitation (all 41 SLA-table rows checked, no streetlight line item exists)
+    # rather than a research gap -- see data/rag_knowledge_base/sources/candidate_urls.md's
+    # "Round 7" section for the full log. Confirmed by actually running
+    # `scripts/build_rag_embeddings.py` against the real embedding model
+    # (intfloat/multilingual-e5-small) and reading the resulting ChromaDB collection size directly
+    # -- not counted by hand.
+    assert store.size == 809
 
 
 def test_chroma_persist_dir_is_configurable_not_hardcoded():
