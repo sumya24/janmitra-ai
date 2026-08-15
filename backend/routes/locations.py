@@ -23,6 +23,18 @@ from backend.models import District, Locality, State, ULB, Ward
 
 router = APIRouter(prefix="/locations", tags=["locations"])
 
+# States we actually have data for, on either side -- the 6 seeded here (District/ULB/Ward rows,
+# via scripts/seed_multi_ward_data*.py) plus the wider set the RAG knowledge base already covers
+# (data/rag_knowledge_base/knowledge_records/verified/ on the
+# research/rag-knowledge-base-data-foundation branch, not yet merged into this one). Listing a
+# state here just means GET /states offers it; a state with no seeded District rows still falls
+# back to free-text city/ward/area exactly as before. Add a code below once that state has real
+# data on either side -- never invent a state's presence here ahead of the data.
+_COVERED_STATE_CODES = {
+    "AP", "AS", "BR", "DL", "GJ", "HR", "KA", "KL", "MP",
+    "MH", "OD", "PB", "RJ", "TN", "TG", "UP", "WB",
+}
+
 
 class LocationOption(BaseModel):
     """One selectable node at any level of the hierarchy -- deliberately the same shape at every
@@ -37,7 +49,12 @@ class LocationOption(BaseModel):
 
 @router.get("/states", response_model=list[LocationOption])
 def list_states(db: Session = Depends(get_db)) -> list[State]:
-    return db.query(State).order_by(State.name).all()
+    return (
+        db.query(State)
+        .filter(State.code.in_(_COVERED_STATE_CODES))
+        .order_by(State.name)
+        .all()
+    )
 
 
 @router.get("/states/{state_id}/cities", response_model=list[LocationOption])
