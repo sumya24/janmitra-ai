@@ -6,6 +6,7 @@ import { api, ApiError, type ComplaintReport } from "../lib/api";
 import ComplaintReportView from "./ComplaintReportView";
 import DownloadReportButton from "./DownloadReportButton";
 import ShareReportButton from "./ShareReportButton";
+import { useModalA11y } from "../lib/useModalA11y";
 
 /** "View Report" -- only ever rendered by a caller that already knows the complaint is
  * RESOLVED; the backend independently re-enforces this (404 if it isn't, surfaced here as a
@@ -30,11 +31,13 @@ export default function ReportModal({ complaintId, onClose }: { complaintId: num
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, complaintId]);
 
+  const modalRef = useModalA11y(onClose);
+
   return (
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal" style={{ maxWidth: 520 }}>
+      <div ref={modalRef} className="modal" style={{ maxWidth: 520 }} role="dialog" aria-modal="true" aria-labelledby="jm-modal-title" tabIndex={-1}>
         <div className="modal-head">
-          <h3 className="display">{t(lang, "worker.viewReport")}</h3>
+          <h3 className="display" id="jm-modal-title">{t(lang, "worker.viewReport")}</h3>
           <button className="x" aria-label={t(lang, "common.close")} onClick={onClose}>
             ✕
           </button>

@@ -139,7 +139,11 @@ test("full complaint lifecycle: reject reassigns to the next worker, accept unlo
   await expect(page.getByText("There is a broken streetlight here.").first()).toBeVisible();
   await expect(page.getByText("Awaiting your response")).toBeVisible();
 
-  await page.getByRole("button", { name: "Accept" }).click();
+  // exact: true -- the worker queue's own "Accepted" filter tab (see WorkerDashboard.tsx) is a
+  // substring match for plain "Accept" too, since that filter's label was disambiguated from the
+  // separate "In progress" filter (both used to read "In progress"/"In Progress" -- now
+  // "Accepted"/"In Progress", see i18n.ts's worker.filterAccepted).
+  await page.getByRole("button", { name: "Accept", exact: true }).click();
   // "In progress" is ambiguous by plain text: it's both the status label and, pre-existing and
   // unrelated to StatusBadge, the "In progress" filter tab's own button text. Scope to the
   // status pill specifically, same as the "resolved" check below.
@@ -192,7 +196,10 @@ test("full complaint lifecycle: reject reassigns to the next worker, accept unlo
   await expect(page.getByRole("button", { name: "View Report" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Download Report" })).toBeVisible();
 
-  await page.getByRole("button", { name: "5" }).click();
+  // role: "radio" -- the 5 star-rating controls are a "pick exactly one of five" group, which is
+  // what they're now semantically marked up as (role="radiogroup"/"radio", see
+  // FeedbackForm.tsx and useModalA11y.ts's sibling accessibility pass) instead of plain buttons.
+  await page.getByRole("radio", { name: "5" }).click();
   await page.getByPlaceholder("Optional comment").fill("Fixed fast, thank you!");
   await page.getByRole("button", { name: "Submit feedback" }).click();
   // "Thanks for your feedback!" now renders twice at once: the toast (exact) and the on-page

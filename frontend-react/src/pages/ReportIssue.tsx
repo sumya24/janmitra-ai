@@ -141,7 +141,7 @@ export default function ReportIssue() {
     return (
       <div>
         <TopBar />
-        <div className="page">
+        <div className="page" id="main-content">
           <div className="surface-card wizard-panel enter" style={{ textAlign: "center", padding: "40px 24px" }}>
             <div className="success-icon" style={{ margin: "0 auto 16px", width: 56, height: 56, borderRadius: "50%", background: "var(--status-resolved-bg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
@@ -170,7 +170,7 @@ export default function ReportIssue() {
   return (
     <div>
       <TopBar />
-      <div className="page">
+      <div className="page" id="main-content">
         <div className="page-head">
           <div>
             <h1 className="page-title display">{t(lang, "wizard.title")}</h1>

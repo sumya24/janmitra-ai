@@ -3,6 +3,7 @@ import { useAuth } from "../lib/auth";
 import { useUiLang } from "../lib/uiLang";
 import { t } from "../lib/i18n";
 import { api, ApiError, type Complaint } from "../lib/api";
+import { useModalA11y } from "../lib/useModalA11y";
 
 /** Mandatory rejection-reason modal -- the worker cannot reject a complaint without one
  * (client-side blocks an empty/whitespace-only reason; the backend independently re-validates
@@ -45,11 +46,13 @@ export default function RejectComplaintModal({
     }
   }
 
+  const modalRef = useModalA11y(onClose);
+
   return (
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && !saving && onClose()}>
-      <div className="modal">
+      <div ref={modalRef} className="modal" role="dialog" aria-modal="true" aria-labelledby="jm-modal-title" tabIndex={-1}>
         <div className="modal-head">
-          <h3 className="display">{t(lang, "worker.reject.title")}</h3>
+          <h3 className="display" id="jm-modal-title">{t(lang, "worker.reject.title")}</h3>
           <button className="x" aria-label={t(lang, "common.close")} onClick={onClose} disabled={saving}>
             ✕
           </button>

@@ -3,6 +3,7 @@ import { useAuth } from "../lib/auth";
 import { useUiLang } from "../lib/uiLang";
 import { SUPPORTED_LANGUAGES, t, type LangCode } from "../lib/i18n";
 import { api, ApiError } from "../lib/api";
+import { useModalA11y } from "../lib/useModalA11y";
 
 export default function SettingsModal({ onClose, onLogout }: { onClose: () => void; onLogout: () => void }) {
   const { user, token, updateUser } = useAuth();
@@ -28,11 +29,13 @@ export default function SettingsModal({ onClose, onLogout }: { onClose: () => vo
     }
   }
 
+  const modalRef = useModalA11y(onClose);
+
   return (
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal">
+      <div ref={modalRef} className="modal" role="dialog" aria-modal="true" aria-labelledby="jm-modal-title" tabIndex={-1}>
         <div className="modal-head">
-          <h3 className="display">{t(lang, "settings.title")}</h3>
+          <h3 className="display" id="jm-modal-title">{t(lang, "settings.title")}</h3>
           <button className="x" aria-label={t(lang, "common.close")} onClick={onClose}>
             ✕
           </button>
