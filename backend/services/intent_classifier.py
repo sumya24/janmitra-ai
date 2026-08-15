@@ -61,6 +61,20 @@ class QuestionIntent(str, Enum):
     # tail logic for how this is decided, and orchestration/nodes.py's clarification_flow_node
     # ("intent_ambiguous" reason) for how the caller asks instead of assuming.
     TYPE_A_MAYBE = "TYPE_A_MAYBE"
+    # PRODUCTION ARCHITECTURE UPGRADE: a real, closed-vocabulary greeting/small-talk opener
+    # ("Hello", "Hi", "Good morning", "My name is Sumit") -- previously fell through to UNCLEAR
+    # (safe -- never a false complaint/location claim, verified live before this change -- but a
+    # genuine request/response MISMATCH: a citizen saying hello got the same generic "I didn't
+    # understand that, I can help with garbage/water/roads/streetlights..." reply as any other
+    # unrecognized message). Greetings are a small, genuinely enumerable vocabulary -- unlike
+    # general-knowledge/trivia/math questions (deliberately NOT given their own intent tier here;
+    # see classify()'s own docstring for why an ever-growing keyword list for "every possible
+    # off-topic topic" would be the opposite of generalizing, and UNCLEAR's own honest fallback
+    # already handles that whole open-ended class correctly and safely) -- so a dedicated,
+    # narrow, word-boundary-matched (see `_matches_word_boundary`) keyword tier is the same kind
+    # of legitimate, closed-set intent this file already uses for CAPABILITIES, not a "keyword
+    # hack" special-casing one specific sentence.
+    GREETING = "GREETING"
 
 
 @dataclass
@@ -222,6 +236,40 @@ _SERVICE_INFO_KEYWORDS: dict[str, list[str]] = {
            "কীভাবে অগ্রাধিকার ঠিক করা হয়", "সংগ্রহ বাদ পড়লে", "বাদ পড়লে কী করব",
            "মেরামত করতে কত সময় লাগে", "কত সময় লাগে"],
 }
+
+# --- GREETING: small talk / conversational opener, not a civic question at all. Split the same
+# way _CATEGORY_KEYWORDS/_CONFIRMATION_EXACT_WORDS already split short bare words from longer
+# phrases: `_GREETING_SHORT_WORDS` are matched with a WORD-BOUNDARY regex (`_matches_word_
+# boundary` below), not the file's usual plain substring `_any_match` -- "hi"/"hey" are short
+# enough that plain substring matching would false-positive inside unrelated words ("history",
+# "higher", "chirp"); a 2-3 letter greeting word is exactly the case this file's own established
+# "specific multi-word phrases, not single generic words" convention (see _CAPABILITIES_KEYWORDS'
+# own comment) exists to guard against, so this uses regex word boundaries instead of just
+# lengthening every entry into an artificial phrase. `_GREETING_PHRASES` are long enough (4+
+# characters, usually multi-word) to stay with the file's normal substring convention. ---
+_GREETING_SHORT_WORDS: dict[str, list[str]] = {
+    "en": ["hi", "hii", "hey", "hiya", "yo"],
+}
+_GREETING_PHRASES: dict[str, list[str]] = {
+    "en": ["hello", "good morning", "good afternoon", "good evening", "good night",
+           "greetings", "howdy", "my name is", "i am ", "this is "],
+    "hi": ["नमस्ते", "नमस्कार", "हैलो", "हाय", "गुड मॉर्निंग"],
+    "mr": ["नमस्कार", "हॅलो"],
+    "or": ["ନମସ୍କାର", "ହେଲୋ"],
+    "gu": ["નમસ્તે", "હેલો"],
+    "bn": ["নমস্কার", "হ্যালো"],
+}
+
+
+def _matches_word_boundary(text: str, keyword_lists: dict[str, list[str]]) -> list[str]:
+    lowered = text.lower()
+    matches = []
+    for kws in keyword_lists.values():
+        for kw in kws:
+            if re.search(rf"\b{re.escape(kw.lower())}\b", lowered):
+                matches.append(kw)
+    return matches
+
 
 # --- CAPABILITIES: "what can this app do?" -- a real, in-domain, answerable question about
 # Sarthi's own scope. Deliberately specific multi-word phrases, not bare "help" or "services"
@@ -395,8 +443,21 @@ _CATEGORY_KEYWORDS: dict[ServiceCategory, dict[str, list[str]]] = {
     },
     ServiceCategory.STREETLIGHTS: {
         "en": ["streetlight", "street light", "street lamp", "lamp post"],
-        "hi": ["स्ट्रीट लाइट", "बत्ती"], "mr": ["स्ट्रीट लाइट", "दिवा", "दिव्या"], "or": ["ଆଲୋକ"],
-        "gu": ["સ્ટ્રીટ લાઈટ", "બત્તી"], "bn": ["স্ট্রিট লাইট", "বাতি"],
+        # CONVERSATION & REQUEST/RESPONSE ALIGNMENT AUDIT: each non-English transliteration of
+        # "street light" below previously only had the SPACED two-word form -- a real, measured
+        # gap caught by this audit's own live testing: "मोहाली में स्ट्रीटलाइट खराब है।" (written
+        # as one compound word, at least as natural a way to type an English loanword as with a
+        # space) matched no category at all, only the generic "is broken" state keyword, so the
+        # citizen was asked "what issue would you like to report?" despite having already named
+        # one. Same fix, same reasoning, applied consistently to every language whose existing
+        # entry was the spaced form (hi/mr share Devanagari; gu/bn have their own scripts) --
+        # Odia's "ଆଲୋକ" is a native word, not a transliteration, so it has no such compound-word
+        # gap and needed no change.
+        "hi": ["स्ट्रीट लाइट", "स्ट्रीटलाइट", "बत्ती"],
+        "mr": ["स्ट्रीट लाइट", "स्ट्रीटलाइट", "दिवा", "दिव्या"],
+        "or": ["ଆଲୋକ"],
+        "gu": ["સ્ટ્રીટ લાઈટ", "સ્ટ્રીટલાઈટ", "બત્તી"],
+        "bn": ["স্ট্রিট লাইট", "স্ট্রিটলাইট", "বাতি"],
     },
 }
 
@@ -543,7 +604,13 @@ _CONFIRMATION_PHRASES: dict[str, list[str]] = {
     "bn": ["হ্যাঁ, জমা দিন", "এটা জমা দিন", "জমা দিন"],
 }
 _CANCELLATION_EXACT_WORDS: dict[str, set[str]] = {
-    "en": {"no", "nope", "cancel"},
+    # CONVERSATION & REQUEST/RESPONSE ALIGNMENT AUDIT: "stop" added -- a real, evidenced gap found
+    # by this audit's own adversarial confirmation-safety testing (a bare "Stop" reply to a
+    # pending confirmation prompt was previously unrecognized, safely re-asking rather than
+    # cancelling -- not unsafe, but a genuine request/response mismatch for an extremely common,
+    # natural way to say "don't do that"). Same bare-word pattern already used for "no"/"nope"/
+    # "cancel", not a new mechanism.
+    "en": {"no", "nope", "cancel", "stop"},
     "hi": {"nahi", "नहीं", "ना"},
     "mr": {"नाही"},
     "or": {"ନା"},
@@ -615,6 +682,21 @@ def is_explicit_confirmation(text: str) -> bool:
     return False
 
 
+# PRODUCTION ARCHITECTURE UPGRADE: unlike _CANCELLATION_PHRASES (matched only when the ENTIRE
+# normalized message equals one of those phrases exactly -- see is_explicit_cancellation's own
+# `normalized in phrases` check), these are matched as a SUBSTRING anywhere in the message, so a
+# real preamble ("Actually, forget the complaint.") still cancels -- caught by this phase's own
+# adversarial test matrix ("Actually forget the complaint." -> cancel), which the exact-match-only
+# check missed even though "never mind" alone was already in _CANCELLATION_PHRASES. Deliberately
+# specific multi-word phrases ("forget the complaint"/"forget it"), never a bare "forget" --
+# "forget" alone is common in unrelated genuine messages ("I forget my complaint number"). Safe to
+# be a little more permissive here than the equivalent confirmation-side check
+# (`is_explicit_confirmation`'s lookahead window): the failure mode of an over-eager
+# CANCELLATION is one extra "please describe the issue again" round-trip, never an unwanted
+# complaint being created -- the safe direction to fail in.
+_CANCELLATION_SUBSTRING_PHRASES = ("forget the complaint", "forget it", "forget about it")
+
+
 def is_explicit_cancellation(text: str) -> bool:
     """Deterministic counterpart to `is_explicit_confirmation` -- see that function's docstring."""
     normalized = _normalize_for_confirmation(text)
@@ -626,8 +708,17 @@ def is_explicit_cancellation(text: str) -> bool:
     for phrases in _CANCELLATION_PHRASES.values():
         if normalized in phrases:
             return True
+    if any(phrase in normalized for phrase in _CANCELLATION_SUBSTRING_PHRASES):
+        return True
     first_word = normalized.split(" ", 1)[0].strip(",")
-    no_words = {w for words in _CANCELLATION_EXACT_WORDS.values() for w in words if w != "cancel"}
+    # CONVERSATION & REQUEST/RESPONSE ALIGNMENT AUDIT: "cancel" used to be excluded here (the
+    # bare word alone was already caught by the exact-match check above, but "cancel" + trailing
+    # words -- "cancel that complaint", "cancel this complaint" -- fell through, live-tested and
+    # found as a real gap). "no"/"nahi"/etc. already get this same first-word-plus-trailing-words
+    # treatment; there was no principled reason for "cancel" alone to be treated differently, so
+    # this closes the asymmetry rather than adding another phrase to a list -- generalizes to any
+    # "cancel ..." reply, not just the specific wording tested.
+    no_words = {w for words in _CANCELLATION_EXACT_WORDS.values() for w in words}
     return first_word in no_words
 
 
@@ -789,6 +880,21 @@ def classify(question: str) -> ClassificationResult:
             service_category=category,
             out_of_scope_service=None,
             matched_keywords=weak_matched_keywords,
+            requests_new_connection=requests_new_connection,
+        )
+
+    # PRODUCTION ARCHITECTURE UPGRADE: checked here, not earlier -- only reached once every
+    # complaint/service-info signal above has already failed to match (see the `category or
+    # meta_matches` block just above), so a message that opens with a greeting but ALSO reports a
+    # real problem ("Hi, my streetlight is broken") is never swallowed into GREETING -- the
+    # state-match branch above already returned TYPE_A_COMPLAINT for it first.
+    greeting_matches = _matches_word_boundary(text, _GREETING_SHORT_WORDS) or _any_match(text, _GREETING_PHRASES)
+    if greeting_matches:
+        return ClassificationResult(
+            intent=QuestionIntent.GREETING,
+            service_category=None,
+            out_of_scope_service=None,
+            matched_keywords=greeting_matches,
             requests_new_connection=requests_new_connection,
         )
 
