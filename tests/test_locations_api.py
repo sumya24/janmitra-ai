@@ -5,18 +5,26 @@ there) rather than duplicating seed logic.
 """
 
 from backend.models import District, State
+from backend.routes.locations import _COVERED_STATE_CODES
 from tests.test_location_system import _seed_full_hierarchy
 
 
-def test_list_states_returns_seeded_states(client, db_session):
+def test_list_states_only_returns_states_we_have_data_for(client, db_session):
+    """GET /locations/states is restricted to backend.routes.locations._COVERED_STATE_CODES --
+    a seeded state with a code outside that set (like the shared fixture's "Test State"/TS)
+    must not show up, even though it's a perfectly real row with real districts under it."""
     db = db_session()
-    _seed_full_hierarchy(db)
+    chain = _seed_full_hierarchy(db)
+    assert chain["state"].code not in _COVERED_STATE_CODES
+    db.add(State(name="Covered Test State", code="MH", country_code="IN", is_union_territory=False))
+    db.commit()
     db.close()
 
     response = client.get("/locations/states")
     assert response.status_code == 200
     names = [s["name"] for s in response.json()]
-    assert "Test State" in names
+    assert "Covered Test State" in names
+    assert "Test State" not in names
 
 
 def test_list_states_is_unauthenticated(client, db_session):
