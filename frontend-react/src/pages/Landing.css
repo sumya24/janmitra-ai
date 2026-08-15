@@ -31,6 +31,16 @@
 }
 .navactions .lang-badge:hover { border-color: var(--ink-3); color: var(--ink); }
 
+/* Below ~480px the brand word + language pill + theme toggle + Log in/Sign up no longer fit on
+   one row -- without this, the flex row didn't wrap, so "JanSarthi AI" (the only text allowed to
+   shrink-wrap) broke mid-word instead. Let the whole nav wrap onto two rows -- brand alone on
+   row 1, actions as one block on row 2 -- rather than truncating or hiding any control. */
+@media (max-width: 480px) {
+  .landingnav-inner { flex-wrap: wrap; row-gap: 10px; padding: 14px 16px; }
+  .landing-brand-word { white-space: nowrap; font-size: 18px; }
+  .navactions { flex-wrap: wrap; gap: 8px; }
+}
+
 .hero-band { position: relative; overflow: hidden; }
 /* A slow, quiet gradient-mesh wash behind the hero -- three soft brand-colored blobs (navy,
    green, blue) that drift very gradually. Purely decorative and non-interactive

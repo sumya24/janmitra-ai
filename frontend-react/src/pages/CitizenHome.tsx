@@ -14,7 +14,7 @@ export default function CitizenHome() {
   return (
     <div>
       <TopBar />
-      <div className="page">
+      <div className="page" id="main-content">
         <section className="home-hero enter">
           <h1 className="display">{t(lang, "home.hero.title")}</h1>
           <p>{t(lang, "home.hero.subtitle")}</p>

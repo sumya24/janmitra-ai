@@ -216,6 +216,28 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
 .table-row-hover { transition: background-color var(--dur-fast) var(--ease); }
 .table-row-hover:hover { background-color: var(--paper); }
 
+/* Admin tables (AdminWorkers/AdminDashboard/AdminWorkerDetail/AdminAiMonitoring) already scroll
+   correctly within their own container on narrow screens -- .surface-card + overflow-x: auto,
+   never the whole page -- but had no visual hint that a table was scrollable at all, so a column
+   like the delete icon sitting just past the edge (e.g. at tablet width) was easy to miss
+   entirely. Classic JS-free "scroll shadow" technique (two solid-to-transparent gradients that
+   scroll WITH the content masking two shadow gradients that stay fixed to the viewport) -- the
+   shadow only appears on whichever edge still has unscrolled content, and disappears on its own
+   once fully scrolled that way, using existing --surface/--ink tokens so it adapts to the theme
+   automatically. No JS, no scroll-position listener. */
+.table-scroll {
+  background-color: var(--surface);
+  background-image:
+    linear-gradient(to right, var(--surface) 30%, rgba(255, 255, 255, 0)),
+    linear-gradient(to left, var(--surface) 30%, rgba(255, 255, 255, 0)),
+    linear-gradient(to right, color-mix(in srgb, var(--ink) 18%, transparent), rgba(255, 255, 255, 0)),
+    linear-gradient(to left, color-mix(in srgb, var(--ink) 18%, transparent), rgba(255, 255, 255, 0));
+  background-position: left, right, left, right;
+  background-repeat: no-repeat;
+  background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+  background-attachment: local, local, scroll, scroll;
+}
+
 /* ============ Skeleton loading ============ */
 @keyframes skeleton-sweep { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 .skeleton {
@@ -237,6 +259,19 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
 }
+
+/* Skip-to-content link (TopBar.tsx) -- same "hidden until focused" technique as .sr-only, but
+   this one needs to become visible on focus (a keyboard user needs to see it to know it's
+   there), so it can't just reuse .sr-only itself. Sits above everything (including the topbar
+   at its own z-index) since it must be reachable by the very first Tab press on any
+   authenticated page. */
+.skip-link {
+  position: fixed; top: -100px; left: 12px; z-index: 300;
+  background: var(--accent); color: var(--accent-ink); font-weight: 700; font-size: 13px;
+  padding: 10px 16px; border-radius: 8px; box-shadow: var(--shadow-lg); text-decoration: none;
+  transition: top var(--dur-fast) var(--ease-out);
+}
+.skip-link:focus { top: 12px; }
 
 /* Headings use the same Inter family as body text (no decorative display face, per brand
    direction) at a heavier weight -- hierarchy comes from size/weight/spacing, not a second
