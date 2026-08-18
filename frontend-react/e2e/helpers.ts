@@ -19,10 +19,12 @@ export function uniquePhone(): string {
  *
  * Locates by element id (#signup-home-state/city/ward), not label text -- several callers sign
  * up in non-English UI languages, and ids stay the same across all 6 while the label text is
- * translated. State is always a real `<select>` (36 states are always seeded); City and Ward
- * each independently render as either a `<select>` (real seeded data for that branch) or a plain
- * `<input>` (free-text fallback -- true for 30 of the 36 states' cities today) depending on what
- * this test run's database actually has, never assume one shape. Area is left untouched: it's
+ * translated. State is always a real `<select>` (options are whatever states
+ * backend/routes/locations.py's _COVERED_STATE_CODES currently covers, plus an always-present
+ * "Other" -- index 1 is always a real state, never "Other", since it's appended last); City and
+ * Ward each independently render as either a `<select>` (real seeded data for that branch) or a
+ * plain `<input>` (free-text fallback -- true for most of those states' cities today) depending
+ * on what this test run's database actually has, never assume one shape. Area is left untouched: it's
  * optional, and no spec's actual test logic depends on the citizen's own signup-time ward text
  * matching anything else (workers are assigned separately by admin; a citizen's own complaints
  * are filed with their own explicit ward picker in the complaint wizard) -- any valid, non-empty

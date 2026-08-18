@@ -192,6 +192,36 @@ _CITY_ALIASES: dict[str, str] = {
     "ওয়ারাঙ্গল": "Warangal",
 }
 
+
+def known_aliases_for_city(canonical_city: str) -> list[str]:
+    """BUG FIX (live Hindi validation): the reverse of what `_CITY_ALIASES` itself encodes --
+    every alias string, in every language this file has one for, that maps TO `canonical_city`.
+
+    Exists to bridge two independently-maintained naming conventions for the same real place:
+    this file's RAG gazetteer uses each city's full official name (e.g. "Sahibzada Ajit Singh
+    Nagar (Mohali)"), while `backend/services/location_resolver.py`'s worker-ward matching
+    (`find_worker_ward_text`) only ever sees whatever informal string a worker was actually
+    registered with (e.g. plain "Mohali") -- and does its own exact/substring matching with no
+    alias awareness of its own (see that function's own docstring: "never guesses beyond
+    substring city-name matching"). A citizen typing "मोहाली" resolves correctly to the
+    canonical gazetteer name via `_CITY_ALIASES` above, but that canonical name then fails to
+    match a worker registered as "Mohali" -- live-reproduced, not hypothetical: a real Hindi
+    complaint for a real, staffed city was incorrectly told no workers were available there.
+
+    Not Mohali-specific: several gazetteer entries have a canonical name that differs from their
+    common Latin-script alias (Delhi -> "New Delhi", Bangalore -> "Bengaluru", Mysore ->
+    "Mysuru", Trivandrum -> "Thiruvananthapuram", ...) -- any of these could hit the identical
+    gap if a worker were ever registered under the informal name (as this project's own seed
+    data and tests already do for Mohali). Returned aliases include the plain-Latin form (e.g.
+    "mohali") whenever one exists in `_CITY_ALIASES`, since that is what an informally-registered
+    worker ward is expected to look like in this codebase's own established convention -- see
+    orchestration/nodes.py's `_resolve_worker_ward_text` for the caller that uses this."""
+    needle = canonical_city.strip().lower()
+    if not needle:
+        return []
+    return [alias for alias, canonical in _CITY_ALIASES.items() if canonical.lower() == needle]
+
+
 # Same alias idiom as _CITY_ALIASES above, for states -- `find_state` previously had NO alias
 # layer at all, only a direct lowered-substring match against the gazetteer's own (Latin-script)
 # state names, so it shared the exact same "no non-Latin-script support" gap city matching had.
@@ -307,6 +337,19 @@ class RagGazetteer:
         for city in self.cities:
             if _bounded_search(city.lower(), lowered):
                 return city
+            # LOCATION NORMALIZATION FIX (live Hindi validation): the check above only ever finds
+            # a match when the SHORTER, already-known city/alias name appears somewhere inside the
+            # (typically longer) query text -- it never handles the reverse, where the query IS
+            # the shorter, official-name-minus-qualifier form of a longer canonical entry, e.g. a
+            # citizen typing just "Sahibzada Ajit Singh Nagar" (the official name) rather than the
+            # full gazetteer entry "Sahibzada Ajit Singh Nagar (Mohali)" (official name + common-
+            # name qualifier in parentheses). General for any gazetteer city with an "Official
+            # Name (Common Name)" shape -- not specific to Mohali, the only entry with this shape
+            # today; a future one would be covered automatically, no new keyword/city needed.
+            if "(" in city:
+                official_prefix = city.split("(", 1)[0].strip().lower()
+                if official_prefix and _bounded_search(official_prefix, lowered):
+                    return city
         return None
 
     def find_state(self, text: str) -> str | None:

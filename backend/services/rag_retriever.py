@@ -114,3 +114,34 @@ class RagRetriever:
         above_threshold.sort(key=sort_key, reverse=True)
 
         return RetrievalOutcome(results=above_threshold[: self._top_k])
+
+
+def chunk_context_label(chunk: ScoredChunk) -> str:
+    """RAG QUALITY-GATE FIX: `AnswerGenerationService.generate()`'s prompt was built from a
+    chunk's raw `content` text ALONE -- dropping the `sub_service`/`verification_status` metadata
+    already sitting right next to it on the same `ScoredChunk`. Live-reproduced root cause of the
+    Bhubaneswar pothole case: category+location filtering is correct (ROADS_POTHOLES is this KB's
+    general "roads" bucket, and Odisha's two state-wide road records are genuinely, correctly
+    retrieved as ROADS_POTHOLES/Odisha evidence -- see this fix's own writeup) -- but within that
+    category, a query asking to REPORT a pothole and a record about getting PERMISSION to cut a
+    road for utility work are different sub-services, and content-only context gives the LLM no
+    way to see that distinction. It answered anyway, inventing a "pothole" framing and a
+    Bhubaneswar-specific claim the source never states. Labeling each excerpt with `sub_service`
+    (already authored on every KnowledgeRecord in this KB, see backend/schemas/rag_knowledge.py's
+    Chunk model -- no new data, no new keyword list) lets the SAME model, given the SAME prompt
+    (see prompts/ask_janmitra_answer_prompt.txt's existing "using only the context above... if
+    insufficient, say so plainly" instruction) recognize the topic mismatch itself and decline
+    honestly -- verified directly: without this label the model fabricated a pothole-reporting
+    procedure from a road-cutting-permission record; with it, the same call answered "I don't have
+    official information on this." Also finally delivers on the prompt's own pre-existing (but
+    previously unfulfilled) claim that "each excerpt is labeled VERIFIED or SYNTHETIC" -- that
+    label was promised in the prompt template but never actually included in the context string
+    until now.
+
+    Deliberately kept SEPARATE from a chunk's plain `content` (see `AnswerGenerationService.
+    generate()`'s `context_labels` param) rather than baked into one combined string: the
+    no-LLM-configured/LLM-call-failed fallback path echoes a chunk's raw content verbatim to the
+    citizen (see `_fallback_answer`) -- it must never leak this internal `[VERIFIED | Topic: ...]`
+    bracket straight into a citizen-facing answer."""
+    md = chunk.metadata
+    return f"{md.get('verification_status', 'UNKNOWN')} | Topic: {md.get('sub_service', 'General')}"

@@ -88,6 +88,16 @@ class GraphState(TypedDict, total=False):
     complaint_id: int | None
     complaint_data: dict[str, Any] | None
     worker_assignment: dict[str, Any] | None
+    # P0 SAFETY FIX: explicit complaint-workflow state, set by complaint_flow_node so it's visible
+    # in logs/tracing/tests rather than only implicit in `routed_to`/`follow_up_*`. One of "NONE"
+    # (no complaint-shaped signal this turn), "DRAFT" (category and/or location still missing),
+    # "AWAITING_CONFIRMATION" (category+location resolved, but the citizen has not yet explicitly
+    # confirmed -- create_complaint() has NOT run), "CONFIRMED" (explicit confirmation received
+    # this turn, complaint created), or "CANCELLED" (explicit cancellation received). This state
+    # is *derived* fresh each request from `conversation_history` (see complaint_flow_node's own
+    # docstring) -- there is still no server-side session/checkpointer; this field only makes that
+    # per-request derivation visible, it is not itself persisted between requests.
+    complaint_workflow_state: str
 
     # --- status flow results ---
     # (status text is written straight to response_text -- no dedicated field needed beyond that)
@@ -99,5 +109,21 @@ class GraphState(TypedDict, total=False):
     follow_up_question: str | None
     follow_up_options: list[str]
     routed_to: str  # "RAG" | "COMPLAINT_CREATED" | "COMPLAINT_STATUS_API" | "NONE_OUT_OF_SCOPE" |
-                     # "NONE_CLARIFICATION_NEEDED"
+                     # "NONE_CLARIFICATION_NEEDED" | "NONE_GREETING" | "NONE_CAPABILITIES" | ...
     error: str | None
+
+    # --- final response grounding (response_generation_node -- see that function's own docstring
+    # for why this stays that node's name/id despite now also serving as GROUNDING #2) ---
+    # PRODUCTION ARCHITECTURE UPGRADE: whether every deterministic final-response-grounding check
+    # passed on the FIRST pass through that node. `grounding_checks_failed` names which ones
+    # didn't (e.g. "unsafe_completion_claim", "complaint_id_without_created_routing") -- empty
+    # when `grounding_passed` is True. Purely observational: by the time this field is set, the
+    # response has ALREADY been corrected in place (see that node's own "replan via deterministic
+    # recomputation" comment) -- nothing downstream branches on this field, it exists so LangSmith
+    # traces/tests can see that a correction happened and why, not to gate further routing.
+    grounding_passed: bool
+    grounding_checks_failed: list[str]
+    # How many bounded REPLAN attempts this node actually ran (0 = passed on the first check, no
+    # correction needed). See response_generation_node's own `_MAX_GROUNDING_REPLANS` docstring
+    # for why 1 is always sufficient, and enforced as a real bound rather than assumed.
+    grounding_replan_count: int

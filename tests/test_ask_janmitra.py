@@ -78,7 +78,7 @@ def _real_ask_janmitra_service(**overrides) -> AskJanMitraService:
     calls -- see test_complaints_api.py's `_agent` mock)."""
     store, provider = _get_shared_chroma_deps()
     fake_answers = Mock()
-    fake_answers.generate = lambda q, chunks, lang: (f"ANSWER: {chunks[0]}", False)
+    fake_answers.generate = lambda q, chunks, lang, context_labels=None: (f"ANSWER: {chunks[0]}", False)
     kwargs = {
         "vector_store": store,
         "embedding_provider": provider,
@@ -104,26 +104,47 @@ def _ask(client, token, question, **kwargs):
 def test_type_a_complaint_creates_and_assigns_complaint(client, monkeypatch, db_session, make_citizen, make_worker):
     """Deliberate behavior change this phase (see backend/services/orchestration/nodes.py's
     module docstring, confirmed with the user before implementing): a TYPE_A complaint-shaped
-    message with enough information (category + location) now files a REAL complaint via the
+    message with enough information (category + location) files a REAL complaint via the
     LangGraph complaint_flow, using the existing ComplaintAgent/assign_next_worker services --
     it no longer just answers with RAG sources. Uses a worker seeded into the same ward Mohali's
-    text resolves to, so this also exercises the worker-assignment workflow end-to-end."""
+    text resolves to, so this also exercises the worker-assignment workflow end-to-end.
+
+    P0 SAFETY FIX (production-safety audit): category + location resolving is no longer enough
+    to create a complaint on the SAME turn -- the first call must get a confirmation prompt with
+    complaint_id still null, and only an explicit, deterministic confirmation reply on a SECOND
+    call (with that prompt as the last conversation_history turn) actually creates it. See
+    backend/services/orchestration/nodes.py's complaint_flow_node/_build_confirmation_prompt."""
     _install_real_service(monkeypatch)
     make_worker(phone="9100099001", ward="Mohali")
     token, _ = make_citizen(phone="9100000001")
-    resp = _ask(client, token, "Street light not working in Mohali.", location_text="Mohali")
-    assert resp.status_code == 200
-    body = resp.json()
-    assert body["intent"] == "TYPE_A_COMPLAINT"
-    assert body["routed_to"] == "COMPLAINT_CREATED"
-    assert body["service_category"] == "STREETLIGHTS"
-    assert body["complaint_id"] is not None
-    assert body["sources"] == []  # complaint creation, not a RAG answer
+
+    turn1 = _ask(client, token, "Street light not working in Mohali.", location_text="Mohali")
+    assert turn1.status_code == 200
+    body1 = turn1.json()
+    assert body1["intent"] == "TYPE_A_COMPLAINT"
+    assert body1["routed_to"] == "NONE_AWAITING_CONFIRMATION"
+    assert body1["service_category"] == "STREETLIGHTS"
+    assert body1.get("complaint_id") is None
+    assert db_session().query(Complaint).count() == 0
+
+    history = [
+        ConversationTurn(role="user", content="Street light not working in Mohali.").model_dump(),
+        ConversationTurn(role="assistant", content=body1["answer"]).model_dump(),
+    ]
+    turn2 = _ask(client, token, "Yes, submit it.", conversation_history=history)
+    assert turn2.status_code == 200
+    body2 = turn2.json()
+    assert body2["intent"] == "TYPE_A_COMPLAINT"
+    assert body2["routed_to"] == "COMPLAINT_CREATED"
+    assert body2["service_category"] == "STREETLIGHTS"
+    assert body2["complaint_id"] is not None
+    assert body2["sources"] == []  # complaint creation, not a RAG answer
 
     db = db_session()
-    complaint = db.query(Complaint).filter(Complaint.id == body["complaint_id"]).first()
+    complaint = db.query(Complaint).filter(Complaint.id == body2["complaint_id"]).first()
     assert complaint is not None
     assert complaint.ward == "Mohali"
+    assert complaint.original_text == "Street light not working in Mohali."  # not "Yes, submit it."
     assert complaint.status == "assigned"  # the seeded worker was eligible
     assert complaint.assigned_worker_id is not None
     db.close()
@@ -262,10 +283,21 @@ def test_gps_location_resolves_via_location_resolver(client, monkeypatch, make_c
     assert body["location"]["city"] == "Sahibzada Ajit Singh Nagar (Mohali)"
     assert body["location"]["source"] == "gps"
     # TYPE_A ("...is not working") + category (streetlight) + location (via GPS) all resolved ->
-    # complaint_flow files a real complaint (see the confirmed behavior change, module-level
-    # docstring above) rather than answering via RAG.
-    assert body["routed_to"] == "COMPLAINT_CREATED"
-    assert body["complaint_id"] is not None
+    # complaint_flow is ready to file a real complaint (see the confirmed behavior change,
+    # module-level docstring above) rather than answering via RAG -- but P0 SAFETY FIX (see
+    # test_type_a_complaint_creates_and_assigns_complaint's own docstring) means it asks for
+    # explicit confirmation first rather than creating immediately.
+    assert body["routed_to"] == "NONE_AWAITING_CONFIRMATION"
+    assert body.get("complaint_id") is None
+
+    history = [
+        ConversationTurn(role="user", content="Street light near me is not working.").model_dump(),
+        ConversationTurn(role="assistant", content=body["answer"]).model_dump(),
+    ]
+    confirm_resp = _ask(client, token, "Yes, submit it.", conversation_history=history, latitude=30.7, longitude=76.7)
+    confirm_body = confirm_resp.json()
+    assert confirm_body["routed_to"] == "COMPLAINT_CREATED"
+    assert confirm_body["complaint_id"] is not None
 
 
 def test_gps_failure_does_not_break_ask_janmitra(client, monkeypatch, make_citizen):
@@ -554,14 +586,29 @@ def test_type_a_without_location_does_not_create_a_complaint_yet(client, monkeyp
 
 
 def test_type_a_with_full_info_creates_exactly_one_complaint(client, monkeypatch, db_session, make_citizen, make_worker):
+    """P0 SAFETY FIX: full info alone (category + location) no longer creates on the first call --
+    see test_type_a_complaint_creates_and_assigns_complaint's docstring. This test's own point
+    (exactly one complaint, never a duplicate) is now verified across the two-call confirmation
+    flow instead of a single call."""
     _install_real_service(monkeypatch)
     make_worker(phone="9100099028", ward="Mohali")
     token, _ = make_citizen(phone="9100000028")
     resp = _ask(client, token, "Street light not working in Mohali.", location_text="Mohali")
     assert resp.status_code == 200
     body = resp.json()
-    assert body["routed_to"] == "COMPLAINT_CREATED"
-    assert body["complaint_id"] is not None
+    assert body["routed_to"] == "NONE_AWAITING_CONFIRMATION"
+    assert body.get("complaint_id") is None
+    assert db_session().query(Complaint).count() == 0
+
+    history = [
+        ConversationTurn(role="user", content="Street light not working in Mohali.").model_dump(),
+        ConversationTurn(role="assistant", content=body["answer"]).model_dump(),
+    ]
+    confirm_resp = _ask(client, token, "Yes, submit it.", conversation_history=history)
+    assert confirm_resp.status_code == 200
+    confirm_body = confirm_resp.json()
+    assert confirm_body["routed_to"] == "COMPLAINT_CREATED"
+    assert confirm_body["complaint_id"] is not None
 
     db = db_session()
     assert db.query(Complaint).count() == 1

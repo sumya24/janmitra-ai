@@ -8,6 +8,7 @@ phase's own worked examples.
 from __future__ import annotations
 
 from backend.models import Complaint
+from backend.schemas.ask_janmitra import ConversationTurn
 from tests.test_ask_janmitra import _ask, _install_real_service
 
 
@@ -24,6 +25,10 @@ def test_scenario_1_water_connection_documents_goes_to_rag_flow(client, monkeypa
 
 # 2. "Streetlight near my home is broken." -> Complaint flow
 def test_scenario_2_streetlight_broken_goes_to_complaint_flow(client, monkeypatch, db_session, make_citizen, make_worker):
+    """P0 SAFETY FIX (production-safety audit): category + location resolving together no longer
+    creates a complaint on the same call -- see test_ask_janmitra.py's
+    test_type_a_complaint_creates_and_assigns_complaint for the full rationale. This test now
+    verifies the two-call confirmation flow reaches the same end state."""
     _install_real_service(monkeypatch)
     make_worker(phone="9100099041", ward="Mohali")
     token, _ = make_citizen(phone="9100000041")
@@ -31,11 +36,22 @@ def test_scenario_2_streetlight_broken_goes_to_complaint_flow(client, monkeypatc
     assert resp.status_code == 200
     body = resp.json()
     assert body["intent"] == "TYPE_A_COMPLAINT"
-    assert body["routed_to"] == "COMPLAINT_CREATED"
-    assert body["complaint_id"] is not None
+    assert body["routed_to"] == "NONE_AWAITING_CONFIRMATION"
+    assert body.get("complaint_id") is None
+    assert db_session().query(Complaint).count() == 0
+
+    history = [
+        ConversationTurn(role="user", content="Streetlight near my home is broken.").model_dump(),
+        ConversationTurn(role="assistant", content=body["answer"]).model_dump(),
+    ]
+    confirm_resp = _ask(client, token, "Yes, submit it.", conversation_history=history)
+    assert confirm_resp.status_code == 200
+    confirm_body = confirm_resp.json()
+    assert confirm_body["routed_to"] == "COMPLAINT_CREATED"
+    assert confirm_body["complaint_id"] is not None
 
     db = db_session()
-    assert db.query(Complaint).filter(Complaint.id == body["complaint_id"]).first() is not None
+    assert db.query(Complaint).filter(Complaint.id == confirm_body["complaint_id"]).first() is not None
     db.close()
 
 

@@ -19,14 +19,23 @@ export interface HomeLocationValue {
  * real seeded worker wards already use, so a citizen who picks a real Pune/Kanpur/etc. ward ends
  * up with a string that matches real workers, not an approximation.
  *
- * Real data only: only 6 of India's 36 states have seeded cities/wards/areas today, so any step
- * whose parent has no children falls back to free text rather than inventing options -- and once
- * ANY level is free text, every level below it is free text too (there's no structured id left
- * to query children from), never disabled.
+ * Real data only: the State dropdown itself only lists states we actually have data for on
+ * either side (backend/routes/locations.py's _COVERED_STATE_CODES); everything below that is
+ * real data too, so any step whose parent has no children falls back to free text rather than
+ * inventing options -- and once ANY level is free text, every level below it is free text too
+ * (there's no structured id left to query children from), never disabled.
+ *
+ * A citizen whose state isn't in the list picks "Other / not listed" instead, which behaves like
+ * every other free-text fallback here: city/ward/area unlock immediately as text fields (no
+ * fetch to wait on, since there's no state id to query children from). Unlike a real state pick,
+ * home_state_id has nowhere to point in this case (it's a strict FK, see models.py), so it's left
+ * undefined and the typed state name rides along in the `ward` string instead -- see
+ * composeWard() -- rather than being silently dropped.
  *
  * All 4 rows are always mounted (never conditionally added/removed) -- a step that isn't
  * reachable yet is shown disabled/greyed out rather than hidden, so the box's height never grows
  * as the citizen picks each level (a second real, reported layout-shift bug this also fixes). */
+const OTHER_STATE = "other";
 export default function HomeLocationPicker({
   lang, onChange, hasError,
 }: {
@@ -34,6 +43,9 @@ export default function HomeLocationPicker({
 }) {
   const [states, setStates] = useState<LocationOption[]>([]);
   const [stateId, setStateId] = useState<number | "">("");
+  const [statesLoaded, setStatesLoaded] = useState(false);
+  const [stateOther, setStateOther] = useState(false);
+  const [stateText, setStateText] = useState("");
 
   const [cities, setCities] = useState<LocationOption[]>([]);
   const [cityId, setCityId] = useState<number | "">("");
@@ -51,7 +63,7 @@ export default function HomeLocationPicker({
   const [localitiesLoaded, setLocalitiesLoaded] = useState(false);
 
   useEffect(() => {
-    api.listStates().then(setStates).catch(() => setStates([]));
+    api.listStates().then((s) => { setStates(s); setStatesLoaded(true); }).catch(() => setStatesLoaded(true));
   }, []);
 
   const cityName = cityId !== "" ? cities.find((c) => c.id === cityId)?.name ?? "" : cityText.trim();
@@ -64,7 +76,11 @@ export default function HomeLocationPicker({
   function composeWard(): string {
     if (!wardName) return "";
     const withLocality = localityName ? `${wardName} — ${localityName}` : wardName;
-    return cityName ? `${withLocality}, ${cityName}` : withLocality;
+    const withCity = cityName ? `${withLocality}, ${cityName}` : withLocality;
+    // Only the free-text "Other" state has nowhere else to be recorded (home_state_id can't
+    // point at it); a real state pick is already implied by its city, exactly as before.
+    const stateName = stateOther ? stateText.trim() : "";
+    return stateName ? `${withCity}, ${stateName}` : withCity;
   }
 
   useEffect(() => {
@@ -76,7 +92,7 @@ export default function HomeLocationPicker({
       home_locality_id: localityId === "" ? undefined : localityId,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateId, cityId, cityText, wardId, wardText, localityId, localityText]);
+  }, [stateId, stateOther, stateText, cityId, cityText, wardId, wardText, localityId, localityText]);
 
   function resetBelowState() {
     setCityId(""); setCityText(""); setCities([]); setCitiesLoaded(false);
@@ -94,8 +110,17 @@ export default function HomeLocationPicker({
   }
 
   function handleStateChange(raw: string) {
+    if (raw === OTHER_STATE) {
+      setStateId("");
+      setStateOther(true);
+      setStateText("");
+      resetBelowState();
+      return;
+    }
     const id = raw === "" ? "" : Number(raw);
     setStateId(id);
+    setStateOther(false);
+    setStateText("");
     resetBelowState();
     if (id !== "") {
       api.listCitiesForState(id).then((c) => { setCities(c); setCitiesLoaded(true); }).catch(() => setCitiesLoaded(true));
@@ -137,7 +162,9 @@ export default function HomeLocationPicker({
   const cityResolved = cityId !== "" || cityText.trim() !== "";
   const wardResolved = wardId !== "" || wardText.trim() !== "";
 
-  const cityReady = stateId !== "" && citiesLoaded;
+  // "Other" state has no id to fetch cities for -- city becomes free text immediately, same as
+  // how a resolved-but-childless city/ward unlocks the level below it.
+  const cityReady = stateOther || (stateId !== "" && citiesLoaded);
   // Ward becomes usable once the city is resolved -- via a real dropdown pick (then wait for its
   // wards to load) or via free text (no fetch needed, no gate to wait on).
   const wardReady = cityId !== "" ? wardsLoaded : cityResolved;
@@ -150,12 +177,32 @@ export default function HomeLocationPicker({
 
       <div className="field home-location-row">
         <label htmlFor="signup-home-state">{t(lang, "signup.homeLocation.state")}</label>
-        <select id="signup-home-state" value={stateId} onChange={(e) => handleStateChange(e.target.value)}>
-          <option value="">{t(lang, "signup.homeLocation.statePlaceholder")}</option>
-          {states.map((s) => (
-            <option key={s.id} value={s.id}>{s.name}</option>
-          ))}
-        </select>
+        {!statesLoaded ? (
+          <select id="signup-home-state" value="" disabled>
+            <option value="">{t(lang, "signup.homeLocation.statePlaceholder")}</option>
+          </select>
+        ) : (
+          <select
+            id="signup-home-state"
+            value={stateOther ? OTHER_STATE : stateId}
+            onChange={(e) => handleStateChange(e.target.value)}
+          >
+            <option value="">{t(lang, "signup.homeLocation.statePlaceholder")}</option>
+            {states.map((s) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+            <option value={OTHER_STATE}>{t(lang, "signup.homeLocation.stateOther")}</option>
+          </select>
+        )}
+        {stateOther && (
+          <input
+            id="signup-home-state-text"
+            type="text"
+            value={stateText}
+            onChange={(e) => setStateText(e.target.value)}
+            placeholder={t(lang, "signup.homeLocation.stateTextPlaceholder")}
+          />
+        )}
       </div>
 
       <div className="field home-location-row">

@@ -85,9 +85,19 @@ def test_run_graph_starts_and_ends_one_root_span_per_request(monkeypatch):
     assert kwargs["inputs"]["language"] == "en"
     assert kwargs["tags"] == ["ask_janmitra"]
 
-    assert len(end_calls) == 1
-    run, end_kwargs = end_calls[0]
-    assert run == "FAKE_ROOT"
+    # PRODUCTION ARCHITECTURE UPGRADE: response_generation_node now also creates its own
+    # "final_response_grounding" child span (see that function's own docstring) -- under this
+    # test's faked `start_root_run` (returns the plain string "FAKE_ROOT", not a real _RunTree),
+    # `tracing.start_child_run` safely fails to create a real child of it and returns None (see
+    # that function's own try/except), so this adds one MORE `end_run(None, ...)` call alongside
+    # the root run's own -- `end_run`'s mock here records every call unconditionally, regardless
+    # of `run`, so this test now needs to find the ROOT run's own end call specifically rather
+    # than assume it's the only one. Does not weaken this test's own intent (verifying the root
+    # run starts/ends exactly once with the right outputs) -- only what "exactly once" is checked
+    # against.
+    root_end_calls = [(run, kw) for run, kw in end_calls if run == "FAKE_ROOT"]
+    assert len(root_end_calls) == 1
+    run, end_kwargs = root_end_calls[0]
     assert end_kwargs["outputs"]["routed_to"] == final_state["routed_to"] == "NONE_OUT_OF_SCOPE"
     assert "total_ms" in end_kwargs["outputs"]
 
@@ -220,11 +230,28 @@ def test_node_exception_ends_root_span_with_error_then_reraises(monkeypatch):
 
     compiled = build_graph()
     deps = _minimal_deps(complaint_agent=_RaisingComplaintAgent())
+    # P0 SAFETY FIX (production-safety audit): create_complaint() is only ever reached after an
+    # explicit confirmation reply to Sarthi's OWN confirmation prompt (see complaint_flow_node's
+    # docstring) -- a single fresh message with no prior confirmation prompt in
+    # conversation_history now stops at that prompt instead of calling create_complaint() at all.
+    # This test's own point (a node exception still ends the root span before re-raising) needs
+    # create_complaint() to actually run, so the state here simulates the SECOND turn of that
+    # exchange directly, rather than needing two separate run_graph() calls.
     initial_state = {
-        "user_message": "Street light not working in Mohali.",
+        "user_message": "Yes, submit it.",
         "original_language": "en",
         "input_type": "text",
-        "conversation_history": [],
+        "conversation_history": [
+            {"role": "user", "content": "Street light not working in Mohali."},
+            {
+                "role": "assistant",
+                "content": (
+                    'Your complaint would be about Streetlights in "Mohali": '
+                    '"Street light not working in Mohali.". Would you like me to submit this '
+                    'complaint? Reply "yes, submit it" to confirm, or "no" to cancel.'
+                ),
+            },
+        ],
     }
 
     with pytest.raises(RuntimeError, match="simulated complaint-agent crash"):
@@ -261,11 +288,24 @@ def test_complaint_creation_span_records_error_without_crashing_the_graph(monkey
 
     compiled = build_graph()
     deps = _minimal_deps(complaint_agent=_RaisingComplaintAgent())
+    # P0 SAFETY FIX (production-safety audit): see test_node_exception_ends_root_span_with_error_
+    # then_reraises's own comment -- create_complaint() only runs after an explicit confirmation
+    # reply, so this simulates the second turn of that exchange directly.
     initial_state = {
-        "user_message": "Street light not working in Mohali.",
+        "user_message": "Yes, submit it.",
         "original_language": "en",
         "input_type": "text",
-        "conversation_history": [],
+        "conversation_history": [
+            {"role": "user", "content": "Street light not working in Mohali."},
+            {
+                "role": "assistant",
+                "content": (
+                    'Your complaint would be about Streetlights in "Mohali": '
+                    '"Street light not working in Mohali.". Would you like me to submit this '
+                    'complaint? Reply "yes, submit it" to confirm, or "no" to cancel.'
+                ),
+            },
+        ],
     }
 
     final_state = run_graph(compiled, deps, _minimal_ctx(), initial_state)  # must not raise
