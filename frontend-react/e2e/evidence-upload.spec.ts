@@ -183,3 +183,74 @@ test("real multi-file evidence upload, end to end: select -> upload -> storage -
   // always enough for that first paint under load.
   await expect(page.locator(".evidence-thumb")).toHaveCount(10, { timeout: 15000 });
 });
+
+test("a file that isn't really an image is rejected with a clear error, not a silent success or a crash", async ({ page }) => {
+  test.setTimeout(90000); // real backend round-trip -- see the 60s assertion below for why
+  // Self-contained (its own ward + worker, not the main test's WARD) -- must not depend on the
+  // main test above having already run first to create that ward's worker.
+  const localWard = `Invalid Upload Test Ward ${Date.now()}`;
+
+  await login(page, ADMIN_PHONE, ADMIN_PASSWORD);
+  await expect(page).toHaveURL(/\/admin$/);
+  await page.locator("a.btn-ghost", { hasText: "Manage Workers" }).click();
+  await expect(page).toHaveURL(/\/admin\/workers$/);
+  await page.getByRole("button", { name: "+ Add worker" }).click();
+  await page.getByLabel("Full name").fill("Invalid Upload Test Worker");
+  await page.getByLabel("Phone number").fill(uniquePhone());
+  await page.getByLabel("Temporary password").fill("workerpass123");
+  await page.getByLabel("Assign to ward").fill(localWard);
+  await page.getByRole("button", { name: "English", exact: true }).click();
+  await page.getByRole("button", { name: "Add worker", exact: true }).click();
+  await expect(page.getByText("Invalid Upload Test Worker").first()).toBeVisible();
+  await logout(page);
+
+  // Real backend content validation (see backend/services/evidence_service.py) can't be checked
+  // client-side -- it requires actually decoding the bytes, which only the backend does. So this
+  // is a genuine server round-trip: the file previews client-side exactly like a real photo would
+  // (nothing about it looks wrong until submission), and the rejection only surfaces once the
+  // real backend inspects the actual content.
+  const notReallyAnImage = Buffer.from("This is a plain text file, not an image, just renamed to look like one.");
+
+  await page.goto("/signup");
+  await page.getByLabel("Full name").fill("Invalid Upload Tester");
+  await page.getByLabel("Phone number").fill(uniquePhone());
+  await page.getByLabel("Password").fill("citizenpass123");
+  await fillHomeLocationPicker(page);
+  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(page).toHaveURL(/\/citizen$/);
+
+  await page.locator("a.btn-primary", { hasText: "Report an Issue" }).click();
+  await expect(page).toHaveURL(/\/citizen\/report$/);
+  await page.getByRole("button", { name: "Select location" }).click();
+  // #wizard-ward renders as either a <select> (a manageable real ward list) or a free-text
+  // <input> fallback, depending on how many real wards exist in this run's database -- same
+  // defensive shape check as helpers.ts's fillHomeLocationPicker, never assume one or the other.
+  const wardField = page.locator("#wizard-ward");
+  if ((await wardField.evaluate((el) => el.tagName)) === "SELECT") {
+    await wardField.selectOption(localWard);
+  } else {
+    await wardField.fill(localWard);
+  }
+  await page.getByRole("button", { name: "Next" }).click();
+  await page.getByPlaceholder(/Garbage not collected/).fill("Text file disguised as a photo.");
+  await page.getByRole("button", { name: "Next" }).click();
+
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "totally-a-photo.jpg", mimeType: "image/jpeg", buffer: notReallyAnImage,
+  });
+  // The client-side preview has no way to know yet -- it renders exactly like a real photo would.
+  await expect(page.locator(".multi-photo-thumb")).toHaveCount(1);
+
+  await page.getByRole("button", { name: "Next" }).click();
+  await expect(page.getByText(/Development preview/)).toBeVisible({ timeout: 3000 });
+  await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Submit complaint" }).click();
+
+  // The real backend rejects it -- a clear error, never a silent "success" and never a crash.
+  // 60s, not 15s: evidence validation runs AFTER complaint creation's own real Sarvam translate/
+  // summarize call already completes (ComplaintEvidence.complaint_id needs a real complaint id
+  // first) -- same real-network-latency budget the "successfully submitted" assertions elsewhere
+  // in this file already need, not a fast-fail.
+  await expect(page.locator(".banner-error")).toBeVisible({ timeout: 60000 });
+  await expect(page.getByText("Complaint submitted successfully.")).toHaveCount(0);
+});

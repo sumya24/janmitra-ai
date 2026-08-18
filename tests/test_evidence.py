@@ -15,9 +15,8 @@ import backend.routes.complaints as complaints_module
 from backend.config import settings
 from backend.models import Complaint, ComplaintEvidence, User
 from backend.services.auth_service import hash_password
-
-_JPEG_BYTES = b"\xff\xd8\xff" + b"fake jpeg content for testing" * 10
-_PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"fake png content for testing" * 10
+from tests.image_fixtures import VALID_JPEG_BYTES as _JPEG_BYTES
+from tests.image_fixtures import VALID_PNG_BYTES as _PNG_BYTES
 
 
 def _fake_agent_create_complaint(db, citizen_id, language_code, text, audio_chunks, photo_path):
@@ -323,28 +322,47 @@ def test_report_includes_evidence_from_every_stage_once_resolved(client, monkeyp
     assert pdf.content[:4] == b"%PDF"
 
 
-def test_report_generation_survives_a_corrupt_evidence_image(client, monkeypatch, make_citizen, make_worker):
+def test_report_generation_survives_a_corrupt_evidence_image(client, monkeypatch, make_citizen, make_worker, db_session):
     """Regression test for a real bug found during development: a genuinely undecodable image
-    file (not just fake-but-header-valid bytes -- a real PNG with a truncated/corrupt data
-    chunk, the same failure mode PIL raised in practice) used to crash report generation
-    entirely (500 on both the JSON view and the PDF download) instead of being skipped. One bad
-    file must never block a citizen or worker from getting their report at all -- see
-    complaint_report_service.py's _evidence_thumbnails() docstring."""
+    file used to crash report generation entirely (500 on both the JSON view and the PDF
+    download) instead of being skipped -- see complaint_report_service.py's
+    _evidence_thumbnails() docstring. One bad file must never block a citizen or worker from
+    getting their report at all.
+
+    The upload API itself can no longer put a corrupt file on disk (see evidence_service.py's
+    real content validation, added after this regression test was first written -- a corrupt
+    upload is now rejected at 400 before ever reaching disk, see the dedicated rejection tests
+    below). This test now simulates the state directly instead: a real ComplaintEvidence row
+    pointing at a corrupt file already on disk, the same state that existed from data written
+    before this hardening, or that could exist via any other path that touches disk directly.
+    The thing actually being protected against -- report generation crashing on a bad file
+    that's already there -- is still real and still worth guarding, independent of how such a
+    file could come to exist."""
     monkeypatch.setattr(complaints_module, "_agent", Mock(create_complaint=_fake_agent_create_complaint))
     worker_token, worker = make_worker(phone="9000000002", ward="Ward 14")
     citizen_token, citizen = make_citizen(phone="9000000001")
 
-    # A well-formed PNG signature + IHDR chunk, followed by garbage where valid IDAT data
-    # should be -- passes the upload's content-type/size validation (same as production, which
-    # never deep-inspects pixel data at upload time either) but genuinely fails to decode.
-    corrupt_png = b"\x89PNG\r\n\x1a\n" + bytes.fromhex("0000000d49484452") + b"\x00" * 200
-
     created = client.post(
         "/complaints", headers={"Authorization": f"Bearer {citizen_token}"},
         data={"language": "en", "text": "Complaint with a corrupt photo", "ward": "Ward 14"},
-        files=[("photos", ("corrupt.png", corrupt_png, "image/png")), ("photos", ("good.jpg", _JPEG_BYTES, "image/jpeg"))],
+        files=[("photos", ("good.jpg", _JPEG_BYTES, "image/jpeg"))],
     )
     complaint_id = created.json()["id"]
+
+    # A well-formed PNG signature + IHDR chunk declaration, followed by garbage where real chunk
+    # data should be -- looks right, isn't (see tests/image_fixtures.py's CORRUPTED_PNG_BYTES,
+    # same bytes). Written directly to disk + DB, bypassing the (now-hardened) upload API.
+    corrupt_png = b"\x89PNG\r\n\x1a\n" + bytes.fromhex("0000000d49484452") + b"\x00" * 200
+    corrupt_filename = "corrupt-test-fixture.png"
+    (Path(settings.UPLOAD_FOLDER) / corrupt_filename).write_bytes(corrupt_png)
+    db = db_session()
+    db.add(ComplaintEvidence(
+        complaint_id=complaint_id, update_id=None, uploaded_by=int(citizen["id"]),
+        uploader_role="citizen", file_name="corrupt.png", file_path=corrupt_filename,
+        file_type="image/png", file_size=len(corrupt_png), stage="CITIZEN_COMPLAINT",
+    ))
+    db.commit()
+    db.close()
 
     client.post(f"/complaints/{complaint_id}/accept", headers={"Authorization": f"Bearer {worker_token}"})
     client.post(
@@ -362,6 +380,9 @@ def test_report_generation_survives_a_corrupt_evidence_image(client, monkeypatch
     report = client.get(f"/complaints/{complaint_id}/report", headers={"Authorization": f"Bearer {worker_token}"})
     assert report.status_code == 200
     assert len(report.json()["citizen_evidence"]) == 2  # both files are still listed as metadata
+
+    download = client.get(f"/complaints/{complaint_id}/report/download", headers={"Authorization": f"Bearer {worker_token}"})
+    assert download.status_code == 200
 
     pdf = client.get(f"/complaints/{complaint_id}/report/download", headers={"Authorization": f"Bearer {worker_token}"})
     assert pdf.status_code == 200
