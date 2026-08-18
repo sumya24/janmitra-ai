@@ -27,8 +27,8 @@ from backend.models import Complaint, ComplaintEvidence
 from backend.services.ask_janmitra_service import AskJanMitraService
 from backend.services.embedding_provider import SentenceTransformerEmbeddingProvider
 from backend.services.vector_store import ChromaVectorStore
+from tests.image_fixtures import VALID_JPEG_BYTES as _JPEG_BYTES
 
-_JPEG_BYTES = b"\xff\xd8\xff" + b"fake jpeg content for testing" * 10
 _FAKE_CAPTION = "A large pothole in the middle of a paved road."
 
 _shared_store: ChromaVectorStore | None = None

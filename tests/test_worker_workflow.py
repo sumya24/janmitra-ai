@@ -13,6 +13,7 @@ there) -- this file is the rest of this phase's spec §33 test list.
 """
 
 from backend.models import Complaint, ComplaintStatusHistory, ComplaintUpdate, Notification, User
+from tests.image_fixtures import VALID_JPEG_BYTES
 from backend.services.auth_service import hash_password
 
 
@@ -246,7 +247,7 @@ def test_resolve_with_evidence_photo_is_optional_but_supported(client, make_work
     response = client.post(
         f"/complaints/{complaint_id}/resolve", headers={"Authorization": f"Bearer {token}"},
         data={"completion_status": "Repaired, see photo."},
-        files=[("photos", ("evidence.jpg", b"\xff\xd8\xff fake jpeg bytes", "image/jpeg"))],
+        files=[("photos", ("evidence.jpg", VALID_JPEG_BYTES, "image/jpeg"))],
     )
     assert response.status_code == 200
 

@@ -29,9 +29,9 @@ from backend.services.ask_janmitra_service import AskJanMitraService
 from backend.services.embedding_provider import SentenceTransformerEmbeddingProvider
 from backend.services.vector_store import ChromaVectorStore
 from backend.services.vision_service import VisionServiceError
+from tests.image_fixtures import VALID_JPEG_BYTES as _JPEG_BYTES
+from tests.image_fixtures import VALID_PNG_BYTES as _PNG_BYTES
 
-_JPEG_BYTES = b"\xff\xd8\xff" + b"fake jpeg content for testing" * 10
-_PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"fake png content for testing" * 10
 _FAKE_CAPTION = "A large pothole in the middle of a paved road."
 
 _shared_store: ChromaVectorStore | None = None

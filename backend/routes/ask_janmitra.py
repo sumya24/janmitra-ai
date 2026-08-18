@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from backend.config import settings
 from backend.database import get_db
-from backend.deps import get_current_user
+from backend.deps import get_current_user, require_ai_rate_limit
 from backend.models import User
 from backend.schemas.ask_janmitra import AskJanMitraRequest, AskJanMitraResponse, AskVoiceResponse, ConversationTurn
 from backend.services.ask_janmitra_service import AskJanMitraService
@@ -30,7 +30,7 @@ _service = AskJanMitraService()
 _GENERIC_UNAVAILABLE_DETAIL = "Ask Sarthi is temporarily unavailable. Please try again, or use the complaint form directly."
 
 
-@router.post("", response_model=AskJanMitraResponse)
+@router.post("", response_model=AskJanMitraResponse, dependencies=[Depends(require_ai_rate_limit)])
 def ask_janmitra(
     request: AskJanMitraRequest,
     db: Session = Depends(get_db),
@@ -38,6 +38,10 @@ def ask_janmitra(
 ) -> AskJanMitraResponse:
     """Ask a civic-service question (complaint-shaped or information-shaped) or check a
     complaint's status. See backend/services/ask_janmitra_service.py for the full routing logic.
+
+    Rate-limited per authenticated user, shared with the /image and /voice variants below (see
+    backend/deps.py's require_ai_rate_limit) -- protects the real, paid Sarvam/LLM calls this
+    triggers from abuse.
     """
     if request.language not in settings.SUPPORTED_LANGUAGES:
         raise HTTPException(status_code=400, detail=f"Unsupported language: {request.language}")
@@ -63,7 +67,7 @@ def _parse_conversation_history(raw: str) -> list[ConversationTurn]:
         raise HTTPException(status_code=400, detail="Invalid conversation_history.") from exc
 
 
-@router.post("/image", response_model=AskJanMitraResponse)
+@router.post("/image", response_model=AskJanMitraResponse, dependencies=[Depends(require_ai_rate_limit)])
 def ask_janmitra_with_image(
     question: str = Form(""),
     language: str = Form("en"),
@@ -106,7 +110,7 @@ def ask_janmitra_with_image(
         raise HTTPException(status_code=503, detail=_GENERIC_UNAVAILABLE_DETAIL) from exc
 
 
-@router.post("/voice", response_model=AskVoiceResponse)
+@router.post("/voice", response_model=AskVoiceResponse, dependencies=[Depends(require_ai_rate_limit)])
 def ask_janmitra_voice(
     language: str = Form("en"),
     latitude: float | None = Form(None),

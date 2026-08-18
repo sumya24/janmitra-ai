@@ -1,0 +1,70 @@
+# Rate limiting
+
+Two layers, both built on the same small hand-rolled limiter (`backend/services/rate_limiter.py`
+-- stdlib-only, in-process sliding window, see its own docstring for the full reasoning):
+
+1. **General baseline** (`backend/middleware.py`'s `GeneralRateLimitMiddleware`) -- applied
+   automatically to every route except `/health`. A safety net against scripted abuse/scraping
+   across the whole API.
+2. **Stricter, purpose-specific limits** on the two P0 endpoint groups, layered ON TOP of the
+   general one (`backend/deps.py`'s `require_login_rate_limit`/`require_ai_rate_limit`, attached
+   directly to those routes) -- a request to either still also passes through the general limiter
+   above; it just also has its own tighter budget.
+
+## Protected routes
+
+| Routes | Limit | Window | Identifier |
+|---|---|---|---|
+| Every route except `/health` | 60 | 60s | authenticated user id, else client IP (general baseline) |
+| `POST /auth/login` | 5 | 60s | client IP |
+| `POST /ask-janmitra`, `/ask-janmitra/image`, `/ask-janmitra/voice` | 10 (shared across all 3) | 60s | authenticated user id |
+
+`/health` is the only exemption -- must stay reachable for monitoring/deploy healthchecks
+regardless of load elsewhere.
+
+## Configuration
+
+`GENERAL_RATE_LIMIT`, `GENERAL_RATE_LIMIT_WINDOW_SECONDS`, `LOGIN_RATE_LIMIT`,
+`LOGIN_RATE_LIMIT_WINDOW_SECONDS`, `AI_RATE_LIMIT`, `AI_RATE_LIMIT_WINDOW_SECONDS` (see
+`.env.example`). Defaults (60/60s, 5/60s, 10/60s) are sized against this app's real measured
+usage -- a location-clarification round-trip alone is 2 Ask Sarthi calls, a busy dashboard page
+load is a handful of API calls -- with real headroom for a normal demo.
+
+## Identifier
+
+- **General baseline**: authenticated user id when a valid token is present (decoded directly,
+  no DB lookup, to keep the middleware cheap on every request), client IP otherwise -- e.g. for
+  `/auth/signup`, which has no user yet.
+- **Login** (pre-auth): client IP. Only trusts `X-Forwarded-For` when `TRUST_PROXY_HEADERS=true`
+  -- off by default (local dev has no reverse proxy, so the raw TCP peer is the real client);
+  `docker-compose.prod.yml` sets it true, because that deployment's backend container publishes
+  no port of its own, so every request genuinely passed through Caddy first and can't spoof the
+  header by reaching the backend directly.
+- **Ask Sarthi** (authenticated): the real user id from the already-verified JWT, not a header.
+
+## 429 response
+
+Same plain `{"detail": "..."}` shape every other error in this API already uses (FastAPI's
+default `HTTPException` handling -- no custom handler needed), plus a `Retry-After` header in
+seconds.
+
+## Running Playwright locally
+
+`frontend-react/e2e/`'s specs drive one real backend from one machine, so every login they make
+shares the same client IP -- a handful of spec files that each log in 2-4 times can add up faster
+than a real human demo ever would within 60s. This is the limiter correctly treating "many logins
+from one IP in a short window" as suspicious, which is exactly its job -- not a bug. For a full
+local e2e run, start the backend with higher limits for that process only (standard test/CI
+practice; production's `.env` is untouched):
+
+```
+GENERAL_RATE_LIMIT=1000 LOGIN_RATE_LIMIT=1000 AI_RATE_LIMIT=1000 uvicorn backend.main:app --port 8000
+```
+
+## Deployment limitation
+
+In-process memory, not a shared/distributed store. Correct for the current deployment (a single
+`uvicorn` process, no `--workers`/multi-process setup -- see `docker-compose.prod.yml`). If this
+ever moves to multiple backend processes/replicas, each would count independently and the
+*effective* limit would multiply by the process count -- would need a shared store (e.g. Redis) at
+that point, deliberately not added now for a single-process deployment.

@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 
 from backend.config import settings
 from backend.database import get_db
-from backend.deps import get_current_user
+from backend.deps import get_current_user, require_login_rate_limit
 from backend.models import District, Locality, State, ULB, User, Ward
 from backend.services.auth_service import create_access_token, hash_password, verify_password
 
@@ -197,9 +197,13 @@ def signup(body: SignupRequest, db: Session = Depends(get_db)) -> AuthResponse:
     return AuthResponse(access_token=token, user=UserResponse.model_validate(user))
 
 
-@router.post("/login", response_model=AuthResponse)
+@router.post("/login", response_model=AuthResponse, dependencies=[Depends(require_login_rate_limit)])
 def login(body: LoginRequest, db: Session = Depends(get_db)) -> AuthResponse:
-    """Log in with a phone number and password, for any role."""
+    """Log in with a phone number and password, for any role.
+
+    Rate-limited per client IP (see backend/deps.py's require_login_rate_limit) -- counts every
+    attempt, successful or not, before any credential check runs.
+    """
     user = db.query(User).filter(User.phone == body.phone.strip()).first()
     if user is None or not verify_password(body.password, user.password_hash):
         # Deliberately identical error for "no such phone" and "wrong password" —
