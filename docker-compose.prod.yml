@@ -19,6 +19,11 @@ services:
       # photos live on the persistent backend_state volume, surviving redeploys.
       DATABASE_URL: sqlite:////app/state/db/janmitra.db
       UPLOAD_FOLDER: /app/state/uploads
+      # Safe to trust X-Forwarded-For here specifically because this container publishes no port
+      # of its own (see below) -- every request genuinely passed through caddy first, so nobody
+      # can reach this backend directly to spoof the header. See config.py's TRUST_PROXY_HEADERS
+      # docstring and backend/deps.py's require_login_rate_limit.
+      TRUST_PROXY_HEADERS: "true"
     volumes:
       - backend_state:/app/state
     command: sh -c "mkdir -p /app/state/db /app/state/uploads && exec uvicorn backend.main:app --host 0.0.0.0 --port 8000"

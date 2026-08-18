@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 from backend.config import settings
 from backend.database import init_db
+from backend.middleware import GeneralRateLimitMiddleware
 from backend.routes import admin, ask_janmitra, auth, complaints, locations, notifications
 
 logging.basicConfig(
@@ -45,6 +46,11 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title="JanSarthi AI", version="0.1.0", lifespan=lifespan)
+# Registered BEFORE CORSMiddleware below so CORS ends up OUTERMOST (Starlette wraps middleware in
+# reverse registration order -- the last one added runs first on the way in) -- see
+# GeneralRateLimitMiddleware's own docstring for why that order matters (preflight handling, and
+# CORS headers on this middleware's own 429 responses).
+app.add_middleware(GeneralRateLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,

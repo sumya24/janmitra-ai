@@ -157,6 +157,43 @@ class Settings:
     JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "")
     JWT_EXPIRE_MINUTES: int = int(os.getenv("JWT_EXPIRE_MINUTES", "1440"))  # 24h
 
+    # Rate limiting (see backend/services/rate_limiter.py, backend/deps.py's
+    # require_login_rate_limit/require_ai_rate_limit) -- a small, in-process, stdlib-only sliding
+    # window, matching this codebase's existing preference for hand-rolled-over-new-dependency
+    # (see auth_service.py's own docstring on why JWT is hand-rolled here). Protects POST
+    # /auth/login (brute-force) and the three POST /ask-janmitra* endpoints (expensive Sarvam/LLM/
+    # vision calls) -- see docs/RATE_LIMITING.md for the full design and its single-process
+    # limitation.
+    #
+    # LOGIN: keyed per client IP, generous enough that no real login flow ever trips it (one
+    # attempt, or a couple of role-switching demo logins in the same minute) while still capping a
+    # brute-force script at a small, fixed number of guesses per minute.
+    LOGIN_RATE_LIMIT: int = int(os.getenv("LOGIN_RATE_LIMIT", "5"))
+    LOGIN_RATE_LIMIT_WINDOW_SECONDS: int = int(os.getenv("LOGIN_RATE_LIMIT_WINDOW_SECONDS", "60"))
+    # AI: keyed per authenticated user id, sized against the real measured shape of a normal Ask
+    # Sarthi turn (a location clarification round-trip alone is 2 calls; a complaint-confirmation
+    # round-trip is another 2) -- 10/min gives a normal demo conversation (several exchanges) 3-4x
+    # headroom while still catching a rapid-fire abuse script hammering the paid Sarvam API.
+    AI_RATE_LIMIT: int = int(os.getenv("AI_RATE_LIMIT", "10"))
+    AI_RATE_LIMIT_WINDOW_SECONDS: int = int(os.getenv("AI_RATE_LIMIT_WINDOW_SECONDS", "60"))
+    # General baseline, applied to every route except /health by backend/middleware.py's
+    # GeneralRateLimitMiddleware -- a safety net against scripted abuse/scraping across the whole
+    # API, on top of (not instead of) LOGIN_RATE_LIMIT/AI_RATE_LIMIT's own stricter limits.
+    # Generous: a real user clicking through the app (loading a dashboard, filing a complaint,
+    # paging through workers) never comes close, verified live -- see docs/RATE_LIMITING.md.
+    GENERAL_RATE_LIMIT: int = int(os.getenv("GENERAL_RATE_LIMIT", "60"))
+    GENERAL_RATE_LIMIT_WINDOW_SECONDS: int = int(os.getenv("GENERAL_RATE_LIMIT_WINDOW_SECONDS", "60"))
+    # Whether to trust the reverse proxy's X-Forwarded-For for the login rate limiter's per-IP
+    # key, instead of the raw TCP peer address. Safe to enable ONLY when every request is
+    # guaranteed to have passed through a reverse proxy that sets this header itself (this
+    # project's production Caddy does, and the backend container publishes no port of its own --
+    # see docker-compose.prod.yml) -- an attacker who can reach the backend directly could
+    # otherwise spoof this header to bypass or misattribute the limit. Off by default (local dev
+    # has no reverse proxy in front, so the raw TCP peer IS the real client); set true only in the
+    # production environment that actually has Caddy in front (see docker-compose.prod.yml, which
+    # sets this).
+    TRUST_PROXY_HEADERS: bool = os.getenv("TRUST_PROXY_HEADERS", "false").strip().lower() == "true"
+
     # LangSmith observability (see backend/services/observability/tracing.py and
     # docs/ask_janmitra_langsmith_observability.md) -- a pure observability layer around the
     # existing LangGraph/RAG pipeline; OFF by default, and the app must behave identically
