@@ -54,6 +54,7 @@ from langsmith.schemas import Example, Run
 from backend.config import settings
 from backend.schemas.rag_knowledge import ServiceCategory
 from backend.services.intent_classifier import classify
+from backend.services.rag_retriever import chunk_context_label
 
 DATASET_NAME = "janmitra-ask-janmitra-rag-eval"
 _LANGUAGE_NAMES = {"en": "English", "hi": "Hindi", "mr": "Marathi", "or": "Odia", "gu": "Gujarati", "bn": "Bengali"}
@@ -145,7 +146,8 @@ def make_target(retriever, answer_service):
             return {"insufficient_knowledge": True, "answer": None, "context_chunks": []}
 
         context_chunks = [r.metadata["content"] for r in outcome.results]
-        answer_text, _was_llm = answer_service.generate(query, context_chunks, language_name)
+        context_labels = [chunk_context_label(r) for r in outcome.results]
+        answer_text, _was_llm = answer_service.generate(query, context_chunks, language_name, context_labels)
         return {"insufficient_knowledge": False, "answer": answer_text, "context_chunks": context_chunks}
 
     return target

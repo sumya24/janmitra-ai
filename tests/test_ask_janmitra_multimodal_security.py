@@ -17,6 +17,7 @@ and the existing complaint/evidence system:
   authenticated citizen, never a client-supplied value.
 """
 
+import json
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -65,7 +66,7 @@ class _FakeComplaintAgent:
 def _install_real_service(monkeypatch):
     store, provider = _get_shared_chroma_deps()
     fake_answers = Mock()
-    fake_answers.generate = Mock(side_effect=lambda q, chunks, lang: (q, False))
+    fake_answers.generate = Mock(side_effect=lambda q, chunks, lang, context_labels=None: (q, False))
     fake_sarvam = Mock()
     fake_sarvam.transcribe = Mock(return_value="Street light near my home is not working.")
     fake_sarvam.synthesize_speech = Mock(return_value="ZmFrZQ==")
@@ -81,6 +82,7 @@ def _install_real_service(monkeypatch):
         vision_service=fake_vision,
     )
     monkeypatch.setattr(ask_janmitra_module, "_service", service)
+    return fake_sarvam
 
 
 def _ask_image(client, token, question, **kwargs):
@@ -182,9 +184,19 @@ def test_image_complaint_is_stamped_with_the_authenticated_citizens_own_id(clien
     token, citizen = make_citizen(phone="9000000306")
 
     response = _ask_image(client, token, "Street light near my home is not working.", location_text="Mohali")
-
     assert response.status_code == 200, response.text
-    complaint_id = response.json()["complaint_id"]
+    body = response.json()
+    # P0 SAFETY FIX (production-safety audit): confirmation required before creation -- see
+    # tests/test_ask_janmitra.py's test_type_a_complaint_creates_and_assigns_complaint.
+    assert body.get("complaint_id") is None
+
+    history = json.dumps([
+        {"role": "user", "content": "Street light near my home is not working."},
+        {"role": "assistant", "content": body["answer"]},
+    ])
+    confirm = _ask_image(client, token, "Yes, submit it.", conversation_history=history)
+    assert confirm.status_code == 200, confirm.text
+    complaint_id = confirm.json()["complaint_id"]
     assert complaint_id is not None
 
     db = db_session()
@@ -201,14 +213,27 @@ def test_image_complaint_is_stamped_with_the_authenticated_citizens_own_id(clien
 
 
 def test_voice_complaint_is_stamped_with_the_authenticated_citizens_own_id(client, monkeypatch, db_session, make_citizen, make_worker):
-    _install_real_service(monkeypatch)
+    fake_sarvam = _install_real_service(monkeypatch)
     make_worker(phone="9000099307", ward="Mohali")
     token, citizen = make_citizen(phone="9000000307")
 
     response = _ask_voice_with_image(client, token, location_text="Mohali")
-
     assert response.status_code == 200, response.text
-    complaint_id = response.json()["complaint_id"]
+    body = response.json()
+    # P0 SAFETY FIX (production-safety audit): confirmation required before creation -- see
+    # tests/test_ask_janmitra.py's test_type_a_complaint_creates_and_assigns_complaint. The fixed
+    # `transcribe` mock always returns the same phrase, so the confirmation reply is sent via a
+    # second transcript override rather than real distinguishable audio.
+    assert body.get("complaint_id") is None
+
+    fake_sarvam.transcribe = Mock(return_value="Yes, submit it.")
+    history = json.dumps([
+        {"role": "user", "content": "Street light near my home is not working."},
+        {"role": "assistant", "content": body["answer"]},
+    ])
+    confirm = _ask_voice_with_image(client, token, conversation_history=history)
+    assert confirm.status_code == 200, confirm.text
+    complaint_id = confirm.json()["complaint_id"]
     assert complaint_id is not None
 
     db = db_session()
@@ -235,9 +260,18 @@ def test_image_endpoint_has_no_client_suppliable_citizen_id_field(client, monkey
         client, token, "Street light near my home is not working.",
         location_text="Mohali", citizen_id=str(victim["id"]),
     )
-
     assert response.status_code == 200, response.text
-    complaint_id = response.json()["complaint_id"]
+    body = response.json()
+    # P0 SAFETY FIX (production-safety audit): confirmation required before creation.
+    assert body.get("complaint_id") is None
+
+    history = json.dumps([
+        {"role": "user", "content": "Street light near my home is not working."},
+        {"role": "assistant", "content": body["answer"]},
+    ])
+    confirm = _ask_image(client, token, "Yes, submit it.", conversation_history=history, citizen_id=str(victim["id"]))
+    assert confirm.status_code == 200, confirm.text
+    complaint_id = confirm.json()["complaint_id"]
     db = db_session()
     complaint = db.query(Complaint).filter(Complaint.id == complaint_id).one()
     assert complaint.citizen_id == str(real_citizen["id"])

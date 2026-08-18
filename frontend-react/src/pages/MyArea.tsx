@@ -70,7 +70,7 @@ export default function MyArea() {
   return (
     <div>
       <TopBar />
-      <div className="page">
+      <div className="page" id="main-content">
         <div className="page-head">
           <div>
             <h1 className="page-title display">{t(lang, "area.title")}</h1>

@@ -29,7 +29,88 @@
 /* All of listening/thinking/speaking's actual animation lives on Mascot itself now (see
    AskJanMitraWidget.css's .mascot-listening/.mascot-thinking/.mascot-speaking) -- this wrapper
    just gives the character a little breathing room from the panel edges. */
-.voice-overlay-mascot { margin-top: 6px; }
+.voice-overlay-mascot { margin-top: 6px; position: relative; z-index: 1; }
+
+/* Animated "living" glow behind the mascot -- the ChatGPT-voice-mode-style orb effect, built
+   from the same blurred-radial-gradient + --ai-from/--ai-to language already used for the
+   landing hero's halo (see Landing.css's .hero-visual-halo) and the Ask Sarthi FAB's listening
+   glow (AskJanMitraWidget.css's .mascot-listening), rather than inventing a new visual
+   language. Deliberately kept AROUND the mascot, not replacing it -- the character stays the
+   face of the product; the glow is just a more alive-feeling backdrop for it.
+   Two rotating off-center gradient spots (::before/::after, counter-rotating) create the
+   shifting-highlight look a sphere gets from light moving across it -- rotating a box whose own
+   background-gradient position is off-center sweeps that highlight in a circle around the box's
+   center, no JS/canvas needed. A third, centered, non-rotating layer on .voice-orb-glow itself
+   is the soft ambient bloom underneath. All three share one breathe/spin pace controlled by CSS
+   custom properties so each voice phase below only needs to override a handful of values,
+   not duplicate the whole effect five times. */
+.voice-orb {
+  position: relative;
+  width: 168px; height: 168px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 4px auto -14px;
+  --orb-breathe-dur: 4.5s; --orb-spin-dur: 8s; --orb-opacity-max: 0.8; --orb-scale-max: 1.1;
+}
+.voice-orb-glow, .voice-orb-glow::before, .voice-orb-glow::after {
+  content: ""; position: absolute; border-radius: 50%; pointer-events: none;
+}
+.voice-orb-glow {
+  inset: 8%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--ai-to) 42%, transparent), transparent 72%);
+  filter: blur(20px);
+  animation: voice-orb-breathe var(--orb-breathe-dur) ease-in-out infinite;
+  will-change: transform, opacity;
+}
+.voice-orb-glow::before {
+  inset: 20%;
+  background: radial-gradient(circle at 36% 30%, color-mix(in srgb, var(--ai-from) 75%, white) 0%, transparent 62%);
+  filter: blur(11px);
+  animation: voice-orb-spin var(--orb-spin-dur) linear infinite;
+}
+.voice-orb-glow::after {
+  inset: 26%;
+  background: radial-gradient(circle at 66% 70%, color-mix(in srgb, var(--ai-to) 65%, white) 0%, transparent 60%);
+  filter: blur(11px);
+  animation: voice-orb-spin var(--orb-spin-dur) linear infinite reverse;
+}
+@keyframes voice-orb-breathe {
+  0%, 100% { transform: scale(1); opacity: calc(var(--orb-opacity-max) * 0.55); }
+  50% { transform: scale(var(--orb-scale-max)); opacity: var(--orb-opacity-max); }
+}
+@keyframes voice-orb-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* Idle: the quiet "ready, waiting for you to tap the mic" state -- slow and low-key, same
+   restraint as Mascot.tsx's own idle breathe, so it reads as calmly present rather than
+   attention-grabbing before the citizen has done anything. */
+.voice-orb-idle { --orb-breathe-dur: 4.5s; --orb-spin-dur: 9s; --orb-opacity-max: 0.7; --orb-scale-max: 1.06; }
+
+/* Listening: visibly more awake -- faster breathe and spin, higher peak opacity -- the glow
+   itself becomes the "I can hear you" cue, on top of the mic button's own recording state. */
+.voice-orb-listening { --orb-breathe-dur: 1.8s; --orb-spin-dur: 4s; --orb-opacity-max: 0.95; --orb-scale-max: 1.16; }
+
+/* Processing: a steady, faster swirl with a calmer breathe -- reads as "working on it" rather
+   than "reacting to you" (no external input to react to while a request is in flight). */
+.voice-orb-processing { --orb-breathe-dur: 3s; --orb-spin-dur: 2.2s; --orb-opacity-max: 0.85; --orb-scale-max: 1.05; }
+
+/* Speaking: the fastest breathe of any phase -- roughly speech-cadence, same reasoning as
+   Mascot.tsx's own .mascot-speaking-pulse (0.9s, faster than idle's 4.5s) so it reads as
+   "actively talking," not just "on." */
+.voice-orb-speaking { --orb-breathe-dur: 1s; --orb-spin-dur: 3.2s; --orb-opacity-max: 1; --orb-scale-max: 1.14; }
+
+/* Error: deliberately the odd one out -- swaps the ai-from/ai-to gradient colors (scoped to
+   this element's own subtree only, not a global override) for --status-critical, and slows
+   everything down to a near-static dim glow rather than an energetic pulse, so a failure reads
+   as "something's off" rather than continuing to look lively. */
+.voice-orb-error {
+  --ai-from: var(--status-critical); --ai-to: var(--status-critical);
+  --orb-breathe-dur: 5s; --orb-spin-dur: 24s; --orb-opacity-max: 0.35; --orb-scale-max: 1.02;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .voice-orb-glow, .voice-orb-glow::before, .voice-orb-glow::after { animation: none; }
+  .voice-orb-glow { opacity: 0.6; }
+  .voice-orb-glow::before, .voice-orb-glow::after { opacity: 0.5; }
+}
 
 .voice-overlay-state {
   font-weight: 700; font-size: 15px; color: var(--ink);

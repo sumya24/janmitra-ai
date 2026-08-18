@@ -4,6 +4,7 @@ import { useUiLang } from "../lib/uiLang";
 import { t } from "../lib/i18n";
 import { api, ApiError, type ComplaintUpdateEntry } from "../lib/api";
 import MultiPhotoUpload from "./MultiPhotoUpload";
+import { useModalA11y } from "../lib/useModalA11y";
 
 /** OPTIONAL progress-update modal, shown only while a complaint is IN_PROGRESS. Calling this at
  * all is optional (zero, one, or many updates) -- but any update that IS submitted must have
@@ -46,11 +47,13 @@ export default function ProgressUpdateModal({
     }
   }
 
+  const modalRef = useModalA11y(onClose);
+
   return (
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && !saving && onClose()}>
-      <div className="modal">
+      <div ref={modalRef} className="modal" role="dialog" aria-modal="true" aria-labelledby="jm-modal-title" tabIndex={-1}>
         <div className="modal-head">
-          <h3 className="display">{t(lang, "worker.update.title")}</h3>
+          <h3 className="display" id="jm-modal-title">{t(lang, "worker.update.title")}</h3>
           <button className="x" aria-label={t(lang, "common.close")} onClick={onClose} disabled={saving}>
             ✕
           </button>

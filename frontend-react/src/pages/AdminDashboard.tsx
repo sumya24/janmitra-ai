@@ -215,7 +215,7 @@ export default function AdminDashboard() {
   return (
     <div>
       <TopBar />
-      <div className="page-admin">
+      <div className="page-admin" id="main-content">
         <div className="page-head">
           <div>
             <h1 className="page-title display">{t(lang, "admin.title")}</h1>
@@ -287,7 +287,14 @@ export default function AdminDashboard() {
                     {t(lang, "admin.deleteSelected")} ({selectedIds.size})
                   </button>
                 )}
-                <div className="field" style={{ margin: 0, width: 380, maxWidth: "100%", flexShrink: 0 }}>
+                {/* Was width: 380 with flexShrink: 0 -- an unshrinkable 380px child forces its
+                    flex-item parent (this div, sized to its content since it has no width of its
+                    own) to that same minimum width, which is wider than a 390px mobile viewport
+                    once the page's own side padding is added, causing a real (if small, ~18px)
+                    page-level horizontal scroll. width: 100% capped by maxWidth lets it shrink
+                    like a normal flex item on narrow screens while still capping at 380px on
+                    wide ones -- same visual target width on desktop, just able to shrink now. */}
+                <div className="field" style={{ margin: 0, width: "100%", maxWidth: 380 }}>
                   <input
                     type="text"
                     aria-label={t(lang, "admin.searchComplaintsAndWorkers")}
@@ -308,7 +315,7 @@ export default function AdminDashboard() {
             ) : filteredComplaints.length === 0 ? (
               <p style={{ color: "var(--ink-2)" }}>{t(lang, "admin.noComplaintsFiltered")}</p>
             ) : (
-              <div className="surface-card" style={{ overflowX: "auto", marginBottom: 34 }}>
+              <div className="surface-card table-scroll" style={{ overflowX: "auto", marginBottom: 34 }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 760 }}>
                   <thead>
                     <tr>
