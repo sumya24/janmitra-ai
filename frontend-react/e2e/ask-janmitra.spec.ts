@@ -123,7 +123,18 @@ test("Ask Sarthi: a question with no location asks for clarification instead of 
   // here the way there used to be.
   await page.getByRole("button", { name: "Ask Sarthi" }).click();
 
-  await page.getByPlaceholder(/Ask about a civic service/i).fill("Street light is not working.");
+  // TYPE_B (service-information) phrasing, not the "...is not working" complaint-shaped form
+  // used by the test above -- a complaint-shaped question here would route to complaint_flow,
+  // which resolves a real complaint location straight from the citizen's own registered ward
+  // text (see nodes.py's _resolve_location) independently of the RAG gazetteer this test is
+  // actually probing, and would file a real complaint (confirmation prompt) instead of ever
+  // reaching the generic location-clarification path this test asserts on. Verified live against
+  // the real backend before this change: this exact phrasing, for this exact Pune-registered
+  // account, reliably returns routed_to="NONE_CLARIFICATION_NEEDED" with the three follow-up
+  // options asserted below -- confirming the citizen's own ward genuinely does not resolve via
+  // the RAG gazetteer (Pune is not one of its 30 covered cities), so this test's "nothing
+  // resolves, including the account" premise still holds with this phrasing.
+  await page.getByPlaceholder(/Ask about a civic service/i).fill("Who do I contact about street lights?");
   // exact: true -- Playwright's accessible-name matching is substring by default, and "Ask"
   // would otherwise also match the floating widget's own "Ask Sarthi" button, which stays
   // rendered (not hidden) while its panel is open.
@@ -166,17 +177,17 @@ test("Ask Sarthi: the floating widget shows the mascot, and voice input toggles 
   await expect(micButton).toHaveAttribute("aria-pressed", "false");
 
   await micButton.click();
-  // Real recording state, not a fake indicator -- the button flips to "pressed" and the
-  // composer's own persistent mascot indicator (ask-chat-composer-mascot -- always visible,
-  // unlike the empty-state mascot which disappears once a conversation starts) genuinely
-  // switches to its listening expression at the same time (see AskJanMitra.tsx's mascotState
-  // derivation, driven by useSpeechToText's actual status).
+  // Real recording state, not a fake indicator -- the button itself flips to "pressed", driven
+  // by useSpeechToText's actual status (see AskJanMitra.tsx's mascotState derivation). The
+  // composer's own persistent mascot indicator this used to also assert on (ask-chat-composer-
+  // mascot) was intentionally removed from the composer row per explicit product direction --
+  // only the welcome-screen mascot and per-message avatars remain, neither of which reflects a
+  // live per-keystroke recording state -- so the mic button's own aria-pressed toggle is now the
+  // sole, still-real signal this test verifies.
   await expect(micButton).toHaveAttribute("aria-pressed", "true");
-  await expect(page.locator(".ask-chat-composer-mascot img.mascot-listening")).toBeVisible();
 
   await micButton.click();
   await expect(micButton).toHaveAttribute("aria-pressed", "false");
-  await expect(page.locator(".ask-chat-composer-mascot img.mascot-listening")).toHaveCount(0);
 });
 
 test("Ask Sarthi: an out-of-scope service question says so honestly, with no fabricated source", async ({ page }) => {
