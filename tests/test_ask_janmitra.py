@@ -363,10 +363,15 @@ def test_verified_citation_preserved(client, monkeypatch, make_citizen):
 
 def test_synthetic_disclosure(client, monkeypatch, make_citizen):
     """TYPE_B phrasing (see this module's docstring: TYPE_A now creates a complaint instead of
-    answering via RAG)."""
+    answering via RAG). Uses Vijayawada, not Nagpur -- Nagpur's ROADS_POTHOLES category gained a
+    real VERIFIED record (MH_NMC_PUBLIC_WORKS_ROADS_CONTACTS) once the RAG knowledge base's
+    Maharashtra coverage was filled in, so it now legitimately returns MIXED, not pure SYNTHETIC.
+    Vijayawada's ROADS_POTHOLES category is a confirmed, explicitly-logged dead end (see that
+    knowledge base's own research log: "Vijayawada stays dead") -- still purely synthetic, so
+    this keeps testing what it's meant to: honest disclosure when only synthetic data exists."""
     _install_real_service(monkeypatch)
     token, _ = make_citizen(phone="9100000017")
-    resp = _ask(client, token, "Who do I contact about road potholes in Nagpur?")
+    resp = _ask(client, token, "Who do I contact about road potholes in Vijayawada?")
     body = resp.json()
     assert len(body["sources"]) > 0
     source = body["sources"][0]
