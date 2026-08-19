@@ -24,7 +24,8 @@ test("language gate -> landing -> signup validation -> citizen dashboard -> grac
   const phone = uniquePhone();
   await page.getByLabel("पूर्ण नाव").fill("Priya Deshmukh");
   await page.getByLabel("फोन नंबर").fill(phone);
-  await page.getByLabel("पासवर्ड").fill("secret123");
+  await page.getByLabel("पासवर्ड", { exact: true }).fill("secret123");
+  await page.locator("#signup-confirm-password").fill("secret123");
   await fillHomeLocationPicker(page);
   await page.getByRole("button", { name: "खाते तयार करा" }).click();
 

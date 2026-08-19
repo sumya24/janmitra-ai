@@ -603,3 +603,42 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
     )
+
+
+class RefreshToken(Base):
+    """A single refresh token issued at signup/login, or by a prior rotation.
+
+    Deliberately an opaque random string (see services/auth_service.py's create_refresh_token),
+    not a JWT like the access token -- a refresh token's whole job is to be revocable server-side
+    on demand (logout, rotation, reuse detection), which only works if it's a real row this table
+    can mark revoked. Only `token_hash` (a SHA-256 digest) is ever stored -- the plaintext token
+    is returned to the client exactly once, at issuance, and never persisted anywhere, matching
+    how User.password_hash never stores a plaintext password either.
+
+    Attributes:
+        id: Primary key.
+        user_id: The account this token was issued to.
+        token_hash: SHA-256 hex digest of the plaintext token, unique+indexed -- looked up
+            directly on every POST /auth/refresh, never compared against a stored plaintext.
+        created_at: When this token was issued.
+        expires_at: Hard expiry (see settings.REFRESH_TOKEN_EXPIRE_DAYS) -- checked independently
+            of revoked_at below; an expired-but-never-revoked token is still rejected.
+        revoked_at: Set the moment this token is used to rotate (a fresh token is issued and this
+            one is marked spent) or on explicit logout. Null means still active. A refresh
+            request presenting an already-revoked token is treated as reuse of a rotated-away
+            token -- a real signal of theft/replay -- and revokes every other active token for
+            this user_id too, not just this row (see auth_service.rotate_refresh_token).
+        replaced_by_id: The token that superseded this one via rotation, if any -- an audit trail
+            of the rotation chain, not itself required for the revocation logic above (which
+            revokes by user_id, not by walking this chain).
+    """
+
+    __tablename__ = "refresh_tokens"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=_utcnow)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    replaced_by_id: Mapped[int | None] = mapped_column(ForeignKey("refresh_tokens.id"), nullable=True)

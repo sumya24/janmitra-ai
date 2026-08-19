@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from backend.database import Base, get_db
-from backend.deps import _ai_limiter, _login_limiter
+from backend.deps import _ai_limiter, _login_limiter, _signup_limiter
 from backend.main import app
 from backend.middleware import _general_limiter
 
@@ -19,12 +19,13 @@ def _reset_rate_limiters():
     unrelated requests (every /auth/login call; every OTHER request too, now that
     GeneralRateLimitMiddleware covers every route) would all share ONE bucket per limiter and
     quickly exceed it, breaking tests that have nothing to do with rate limiting. Resetting all
-    three limiters before every test keeps each test's rate-limit state isolated, same as
+    four limiters before every test keeps each test's rate-limit state isolated, same as
     db_session already isolates each test's database -- this doesn't weaken the rate limiters
     themselves (see tests/test_rate_limiting.py, which deliberately exceeds the real limits within
     a single test to verify the real 429 behavior), it only stops accumulation *across* unrelated
     tests."""
     _login_limiter.reset()
+    _signup_limiter.reset()
     _ai_limiter.reset()
     _general_limiter.reset()
 

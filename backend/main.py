@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 from backend.config import settings
 from backend.database import init_db
-from backend.middleware import GeneralRateLimitMiddleware
+from backend.middleware import GeneralRateLimitMiddleware, SecurityHeadersMiddleware
 from backend.routes import admin, ask_janmitra, auth, complaints, locations, notifications
 
 logging.basicConfig(
@@ -18,6 +18,25 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+
+def _check_production_secrets() -> None:
+    """Fails startup loudly instead of the previous silent behavior: without this check,
+    auth_service.py falls back to a random per-process JWT_SECRET_KEY if none is configured
+    (fine for local dev -- sessions just don't survive a restart -- but a real security gap in
+    a real deployment, since every session becomes invalid on every restart and, if two
+    processes ever ran the fallback independently, each would sign with a different secret).
+    Only enforced when ENVIRONMENT=production (see config.py's own docstring on that setting) --
+    local dev and CI, which never set it, are unaffected. Extracted as its own function
+    (rather than inlined in lifespan() below) specifically so it can be unit-tested directly
+    without booting the full app.
+    """
+    if settings.ENVIRONMENT == "production" and not settings.JWT_SECRET_KEY:
+        raise RuntimeError(
+            "JWT_SECRET_KEY must be set when ENVIRONMENT=production -- refusing to start with a "
+            "randomly-generated, per-process secret in a real deployment. Set JWT_SECRET_KEY in "
+            "the production .env (see docs/DEPLOYMENT_GCP.md)."
+        )
 
 
 @asynccontextmanager
@@ -33,6 +52,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     locally), the app still starts -- ask_janmitra_service.py's embedding provider is lazy by
     design and will retry the load on the first real request, matching the pre-warm-up behavior.
     """
+    _check_production_secrets()
     init_db()
     try:
         from backend.routes.ask_janmitra import _service
@@ -51,6 +71,7 @@ app = FastAPI(title="JanSarthi AI", version="0.1.0", lifespan=lifespan)
 # GeneralRateLimitMiddleware's own docstring for why that order matters (preflight handling, and
 # CORS headers on this middleware's own 429 responses).
 app.add_middleware(GeneralRateLimitMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,

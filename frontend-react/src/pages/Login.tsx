@@ -32,8 +32,8 @@ export default function Login() {
 
     setSubmitting(true);
     try {
-      const { access_token, user } = await api.login({ phone: phone.trim(), password });
-      setSession(access_token, user);
+      const { access_token, refresh_token, user } = await api.login({ phone: phone.trim(), password });
+      setSession(access_token, refresh_token, user);
       navigate(user.role === "citizen" ? "/citizen" : user.role === "worker" ? "/worker" : "/admin");
     } catch (err) {
       setFormError(err instanceof ApiError ? err.message : t(lang, "common.somethingWrong"));

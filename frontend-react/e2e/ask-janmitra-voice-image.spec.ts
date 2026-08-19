@@ -32,7 +32,8 @@ async function signUpAndReachCitizenHome(page: import("@playwright/test").Page) 
   const phone = uniquePhone();
   await page.getByLabel("Full name").fill("Ask Sarthi Voice+Image Tester");
   await page.getByLabel("Phone number").fill(phone);
-  await page.getByLabel("Password").fill("secret123");
+  await page.getByLabel("Password", { exact: true }).fill("secret123");
+  await page.locator("#signup-confirm-password").fill("secret123");
   await fillHomeLocationPicker(page);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/citizen$/);

@@ -8,7 +8,8 @@ test("login with wrong password shows an error and does not navigate away", asyn
   await page.goto("/signup");
   await page.getByLabel("Full name").fill("Test User");
   await page.getByLabel("Phone number").fill(phone);
-  await page.getByLabel("Password").fill("correct-password");
+  await page.getByLabel("Password", { exact: true }).fill("correct-password1");
+  await page.locator("#signup-confirm-password").fill("correct-password1");
   await fillHomeLocationPicker(page);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/citizen$/);

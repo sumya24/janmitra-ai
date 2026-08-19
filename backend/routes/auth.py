@@ -12,18 +12,34 @@ import re
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.config import settings
 from backend.database import get_db
-from backend.deps import get_current_user, require_login_rate_limit
+from backend.deps import get_current_user, require_login_rate_limit, require_signup_rate_limit
 from backend.models import District, Locality, State, ULB, User, Ward
-from backend.services.auth_service import create_access_token, hash_password, verify_password
+from backend.services.auth_service import (
+    create_access_token,
+    create_refresh_token,
+    hash_password,
+    revoke_all_refresh_tokens,
+    revoke_refresh_token,
+    rotate_refresh_token,
+    verify_password,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-MIN_PASSWORD_LENGTH = 6
+# 8+ chars with at least one letter and one digit -- NIST-style "length over complexity-theater"
+# (no forced symbol/uppercase rules, which frustrate users without proportionate benefit), but a
+# real step up from the previous bare 6-char-minimum. Only enforced at signup and change-password
+# (see _validate_password_strength below) -- never at login, so no pre-existing account created
+# under the old, looser rule is ever locked out of its own login.
+MIN_PASSWORD_LENGTH = 8
+_PASSWORD_HAS_LETTER = re.compile(r"[A-Za-z]")
+_PASSWORD_HAS_DIGIT = re.compile(r"\d")
 
 # Standard Indian mobile number: 10 digits, first digit 6-9 -- matches every phone number already
 # used across this codebase's tests/seed data (all 10 digits, all start with 9), and this is the
@@ -73,6 +89,28 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class RefreshRequest(BaseModel):
+    """Request body for POST /auth/refresh."""
+
+    refresh_token: str
+
+
+class LogoutRequest(BaseModel):
+    """Request body for POST /auth/logout. No auth dependency on that route -- the refresh
+    token itself is already sufficient proof of ownership to revoke just itself, and requiring a
+    still-valid access token too would make logout needlessly fail for the realistic case of a
+    citizen returning to a stale tab whose access token already expired."""
+
+    refresh_token: str
+
+
+class ChangePasswordRequest(BaseModel):
+    """Request body for POST /auth/change-password."""
+
+    current_password: str
+    new_password: str
+
+
 class MeUpdateRequest(BaseModel):
     """Request body for updating the current user's own profile."""
 
@@ -94,15 +132,25 @@ class UserResponse(BaseModel):
 
 
 class AuthResponse(BaseModel):
-    """Response returned by both sign-up and login."""
+    """Response returned by sign-up, login, and refresh."""
 
     access_token: str
+    refresh_token: str
     user: UserResponse
 
 
 def _validate_language(language: str) -> None:
     if language not in settings.SUPPORTED_LANGUAGES:
         raise HTTPException(status_code=400, detail=f"Unsupported language: {language}")
+
+
+def _validate_password_strength(password: str) -> None:
+    if len(password) < MIN_PASSWORD_LENGTH:
+        raise HTTPException(
+            status_code=400, detail=f"Password must be at least {MIN_PASSWORD_LENGTH} characters."
+        )
+    if not _PASSWORD_HAS_LETTER.search(password) or not _PASSWORD_HAS_DIGIT.search(password):
+        raise HTTPException(status_code=400, detail="Password must include at least one letter and one number.")
 
 
 def _resolve_home_location(db: Session, body: SignupRequest) -> dict[str, int | None]:
@@ -153,9 +201,13 @@ def _resolve_home_location(db: Session, body: SignupRequest) -> dict[str, int | 
     }
 
 
-@router.post("/signup", response_model=AuthResponse)
+@router.post("/signup", response_model=AuthResponse, dependencies=[Depends(require_signup_rate_limit)])
 def signup(body: SignupRequest, db: Session = Depends(get_db)) -> AuthResponse:
-    """Register a new citizen account and log them in immediately."""
+    """Register a new citizen account and log them in immediately.
+
+    Rate-limited per client IP (see backend/deps.py's require_signup_rate_limit) -- its own
+    dedicated, stricter-than-general limit against mass fake-account creation.
+    """
     full_name = body.full_name.strip()
     phone = body.phone.strip()
     ward = body.ward.strip()
@@ -168,10 +220,7 @@ def signup(body: SignupRequest, db: Session = Depends(get_db)) -> AuthResponse:
         raise HTTPException(status_code=400, detail="Enter a valid 10-digit mobile number.")
     if not ward:
         raise HTTPException(status_code=400, detail="Area / ward is required.")
-    if len(body.password) < MIN_PASSWORD_LENGTH:
-        raise HTTPException(
-            status_code=400, detail=f"Password must be at least {MIN_PASSWORD_LENGTH} characters."
-        )
+    _validate_password_strength(body.password)
     _validate_language(body.preferred_language)
 
     if db.query(User).filter(User.phone == phone).first() is not None:
@@ -189,12 +238,22 @@ def signup(body: SignupRequest, db: Session = Depends(get_db)) -> AuthResponse:
         **home_location,
     )
     db.add(user)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # Second line of defense against the phone-uniqueness pre-check above racing a
+        # concurrent signup for the same number -- the pre-check alone has a real TOCTOU gap
+        # between the query and this insert; the database's own unique constraint on
+        # User.phone is the actual source of truth, this just turns its violation into the
+        # same honest 409 instead of a raw 500.
+        db.rollback()
+        raise HTTPException(status_code=409, detail="An account with this phone number already exists.")
     db.refresh(user)
     logger.info("New citizen account created (user_id=%s)", user.id)
 
-    token = create_access_token(user)
-    return AuthResponse(access_token=token, user=UserResponse.model_validate(user))
+    access_token = create_access_token(user)
+    refresh_token = create_refresh_token(user, db)
+    return AuthResponse(access_token=access_token, refresh_token=refresh_token, user=UserResponse.model_validate(user))
 
 
 @router.post("/login", response_model=AuthResponse, dependencies=[Depends(require_login_rate_limit)])
@@ -211,8 +270,56 @@ def login(body: LoginRequest, db: Session = Depends(get_db)) -> AuthResponse:
         raise HTTPException(status_code=401, detail="Incorrect phone number or password.")
 
     logger.info("User logged in (user_id=%s, role=%s)", user.id, user.role)
-    token = create_access_token(user)
-    return AuthResponse(access_token=token, user=UserResponse.model_validate(user))
+    access_token = create_access_token(user)
+    refresh_token = create_refresh_token(user, db)
+    return AuthResponse(access_token=access_token, refresh_token=refresh_token, user=UserResponse.model_validate(user))
+
+
+@router.post("/refresh", response_model=AuthResponse)
+def refresh(body: RefreshRequest, db: Session = Depends(get_db)) -> AuthResponse:
+    """Redeem a refresh token for a new short-lived access token, rotating the refresh token in
+    the process (see services/auth_service.py's rotate_refresh_token for the rotation/reuse-
+    detection design). Deliberately not rate-limited the way /login is -- a legitimate client
+    calls this automatically, silently, potentially several times per session (see the frontend's
+    401-triggered silent-refresh), which is a fundamentally different traffic shape from a
+    human/script guessing credentials.
+    """
+    result = rotate_refresh_token(db, body.refresh_token)
+    if result is None:
+        raise HTTPException(status_code=401, detail="Invalid or expired refresh token. Please log in again.")
+    user, access_token, refresh_token = result
+    return AuthResponse(access_token=access_token, refresh_token=refresh_token, user=UserResponse.model_validate(user))
+
+
+@router.post("/logout", status_code=204)
+def logout(body: LogoutRequest, db: Session = Depends(get_db)) -> None:
+    """Real, server-side logout -- revokes the refresh token so it can never be redeemed again,
+    unlike the old client-side-only "clear localStorage" logout (under which a captured token
+    stayed valid until its natural expiry regardless). See LogoutRequest's own docstring for why
+    this route has no auth dependency of its own."""
+    revoke_refresh_token(db, body.refresh_token)
+
+
+@router.post("/change-password", status_code=204)
+def change_password(
+    body: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
+    """Self-service password change -- previously there was no way for a citizen to change their
+    own password at all (only an admin-mediated reset existed, for worker accounts). Revokes
+    every one of the account's other active refresh tokens on success, the same "assume the old
+    credential may be compromised" posture a password change implies -- every other
+    logged-in device/tab gets signed out and must log in again with the new password.
+    """
+    if not verify_password(body.current_password, current_user.password_hash):
+        raise HTTPException(status_code=401, detail="Current password is incorrect.")
+    _validate_password_strength(body.new_password)
+
+    current_user.password_hash = hash_password(body.new_password)
+    db.commit()
+    revoke_all_refresh_tokens(db, current_user.id)
+    logger.info("Password changed (user_id=%s) -- all other sessions revoked.", current_user.id)
 
 
 @router.get("/me", response_model=UserResponse)

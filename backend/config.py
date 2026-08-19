@@ -153,9 +153,24 @@ class Settings:
     HARDCODED_CITIZEN_ID: str = "citizen_001"
     HARDCODED_WORKER_ID: str = "worker_001"
 
-    # Auth (JWT, HS256, implemented with the stdlib only — see services/auth_service.py)
+    # General-purpose deployment flag ("development" | "production") -- distinct from
+    # SENTRY_ENVIRONMENT below, which only labels Sentry events and shouldn't be repurposed as a
+    # real app-behavior switch. Currently gates exactly one thing: main.py's startup refusal to
+    # run with a blank JWT_SECRET_KEY (see below) -- local dev stays convenience-first, a real
+    # deployment gets a hard failure instead of a silent security gap.
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
+
+    # Auth (JWT, HS256, implemented with the stdlib only — see services/auth_service.py). Access
+    # tokens are short-lived by design now that a refresh token exists to silently renew them
+    # (see REFRESH_TOKEN_EXPIRE_DAYS below) -- 24h was only ever that long because it used to be
+    # the ENTIRE session lifetime with nothing to renew it.
     JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "")
-    JWT_EXPIRE_MINUTES: int = int(os.getenv("JWT_EXPIRE_MINUTES", "1440"))  # 24h
+    JWT_EXPIRE_MINUTES: int = int(os.getenv("JWT_EXPIRE_MINUTES", "30"))
+    # Refresh tokens are opaque random strings stored (hashed) in the refresh_tokens table, not
+    # JWTs -- see models.RefreshToken's own docstring for why. Long-lived by design (a citizen
+    # shouldn't have to re-login every 30 minutes); rotated on every use and revoked as a whole
+    # family on detected reuse, which is what makes a month-long lifetime an acceptable tradeoff.
+    REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "30"))
 
     # Rate limiting (see backend/services/rate_limiter.py, backend/deps.py's
     # require_login_rate_limit/require_ai_rate_limit) -- a small, in-process, stdlib-only sliding
@@ -170,6 +185,17 @@ class Settings:
     # brute-force script at a small, fixed number of guesses per minute.
     LOGIN_RATE_LIMIT: int = int(os.getenv("LOGIN_RATE_LIMIT", "5"))
     LOGIN_RATE_LIMIT_WINDOW_SECONDS: int = int(os.getenv("LOGIN_RATE_LIMIT_WINDOW_SECONDS", "60"))
+    # SIGNUP: keyed per client IP, its own dedicated limiter rather than relying on the loose
+    # GENERAL_RATE_LIMIT baseline below -- account creation is rarer and more consequential to
+    # abuse (mass fake-account creation) than a single request, so it gets a stricter PER-HOUR
+    # window rather than login's per-minute one. 50, not something as tight as login's 5 -- this
+    # needs to stay well clear of legitimate shared-IP bursts (a school/office network, or a NAT'd
+    # mobile carrier -- both common for this app's actual India-wide audience) while still capping
+    # a true bulk-fake-account script. Measured directly against this project's own e2e suite,
+    # which performs ~17 real signups from one IP in a single full run (before any Playwright
+    # retry) -- confirms 5 was genuinely too tight, not just theoretically conservative.
+    SIGNUP_RATE_LIMIT: int = int(os.getenv("SIGNUP_RATE_LIMIT", "50"))
+    SIGNUP_RATE_LIMIT_WINDOW_SECONDS: int = int(os.getenv("SIGNUP_RATE_LIMIT_WINDOW_SECONDS", "3600"))
     # AI: keyed per authenticated user id, sized against the real measured shape of a normal Ask
     # Sarthi turn (a location clarification round-trip alone is 2 calls; a complaint-confirmation
     # round-trip is another 2) -- 10/min gives a normal demo conversation (several exchanges) 3-4x

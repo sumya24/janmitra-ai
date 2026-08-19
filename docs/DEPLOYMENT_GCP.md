@@ -212,7 +212,11 @@ sudo chmod 600 /home/deploybot/.ssh/authorized_keys
 sudo -u deploybot git clone https://github.com/<your-username>/janmitra-ai.git /home/deploybot/janmitra-ai
 sudo -u deploybot cp /home/deploybot/janmitra-ai/.env.example /home/deploybot/janmitra-ai/.env
 sudo -u deploybot nano /home/deploybot/janmitra-ai/.env
-# fill in SARVAM_API_KEY, and set JWT_SECRET_KEY to a fixed value: openssl rand -hex 32
+# fill in SARVAM_API_KEY, set JWT_SECRET_KEY to a fixed value (openssl rand -hex 32), and set
+# ENVIRONMENT=production -- required together: the backend now refuses to start with
+# ENVIRONMENT=production and a blank JWT_SECRET_KEY (see backend/main.py's
+# _check_production_secrets()), rather than silently falling back to a random per-process key.
+# Setting JWT_SECRET_KEY alone without ENVIRONMENT=production does NOT enable this check.
 ```
 
 (If you already have a working `.env` filled in under your own account's clone, it's simpler to
