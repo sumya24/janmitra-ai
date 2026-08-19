@@ -238,6 +238,64 @@ def test_mismatch_unsupported_location_never_claims_registered_even_when_categor
     db.close()
 
 
+def test_mismatch_how_do_i_report_water_leakage_gets_a_real_answer_not_generic_capabilities(
+    client, monkeypatch, make_citizen,
+):
+    """LIVE PRODUCT FINDING: "How do I report a water leakage?" -- one of this app's own 4
+    featured starter questions on the Ask Sarthi screen -- got the generic "what can you do" menu
+    instead of an actual answer about water leaks, because ANY "how do I report X" phrasing was
+    unconditionally classified as CAPABILITIES, discarding the category it names even when a real
+    one (here, WATER_DRAINAGE, from the word "water") was right there. Must now route through RAG
+    with the real category, not the generic capabilities menu -- see intent_classifier.py's
+    classify()'s own updated comment for the full root-cause explanation."""
+    _install_real_service(monkeypatch)
+    token, _ = make_citizen(phone="9500000009")
+
+    resp = _ask(client, token, "How do I report a water leakage?")
+    body = resp.json()
+    assert body["intent"] == "TYPE_B_SERVICE_INFO"
+    assert body["service_category"] == "WATER_DRAINAGE"
+    assert body["routed_to"] != "NONE_CAPABILITIES"
+    # The exact generic menu text must not be what the citizen sees for this specific question.
+    assert "what would you like help with" not in body["answer"].lower()
+
+
+@pytest.mark.parametrize("question,expected_category", [
+    ("How do I report a water leakage?", "WATER_DRAINAGE"),
+    ("How do I report a pothole?", "ROADS_POTHOLES"),
+    ("How can I report a broken streetlight?", "STREETLIGHTS"),
+    ("How do I file a garbage complaint?", "WASTE_SANITATION"),
+])
+def test_how_to_report_phrasing_with_a_named_category_is_service_info_not_capabilities(question, expected_category):
+    """Direct classifier-level regression, generalized beyond the one reported phrase -- any "how
+    do I report/file X" question naming a real category must keep that category and become
+    TYPE_B_SERVICE_INFO, not silently discard it into CAPABILITIES."""
+    from backend.services.intent_classifier import classify
+    result = classify(question)
+    assert result.intent == "TYPE_B_SERVICE_INFO"
+    assert result.service_category.value == expected_category
+
+
+def test_how_to_file_a_complaint_with_no_category_named_still_stays_capabilities():
+    """Control: a genuinely generic "how do I file a complaint?" with no service named at all has
+    no more specific RAG content to route to -- CAPABILITIES' honest "just describe your issue and
+    location" answer remains correct for this case, unlike the category-named cases above."""
+    from backend.services.intent_classifier import classify
+    result = classify("How do I file a complaint?")
+    assert result.intent == "CAPABILITIES"
+    assert result.service_category is None
+
+
+def test_how_to_report_a_genuine_active_complaint_is_unaffected_by_this_fix(client, monkeypatch, db_session, make_citizen):
+    """Guards against over-correcting: a real, active-problem complaint (not a "how do I" process
+    question) must still classify as TYPE_A_COMPLAINT, even though it names the same category as
+    the how-to-report cases above."""
+    from backend.services.intent_classifier import classify
+    result = classify("There is a big pothole near my house in Bhubaneswar.")
+    assert result.intent == "TYPE_A_COMPLAINT"
+    assert result.service_category.value == "ROADS_POTHOLES"
+
+
 # ============================================================================
 # 4. Context switch mid-complaint -- memory must never override an explicit new request
 # ============================================================================
@@ -661,8 +719,13 @@ def test_context_switch_fresh_complaint_with_its_own_category_is_used_not_the_st
 def test_context_switch_time_and_capabilities_and_howto_unaffected_by_this_fix(
     client, monkeypatch, make_citizen, make_worker,
 ):
-    """Regression guard: the 3 context switches that already worked correctly before this fix
-    must still work identically."""
+    """Regression guard: these context switches, mid a pending complaint confirmation, must never
+    accidentally confirm/cancel/create a complaint -- the SAFETY property this test is for, not
+    the exact intent label. "How do I report garbage?" is deliberately no longer CAPABILITIES
+    here (see the later "how do I report a water leakage?" fix, tests/test_ask_janmitra_agent_
+    architecture.py's own mismatch section): it now correctly names WASTE_SANITATION and becomes
+    TYPE_B_SERVICE_INFO instead of the old generic menu -- updating this expectation is itself
+    part of that fix, not a regression."""
     _install_real_service(monkeypatch)
     token, _ = make_citizen(phone="9700000105")
     history = _draft_streetlight_awaiting_confirmation(client, token, make_worker, phone="9700099105")
@@ -670,7 +733,7 @@ def test_context_switch_time_and_capabilities_and_howto_unaffected_by_this_fix(
     for msg, expected_intent in [
         ("What is the current time?", "UNCLEAR"),
         ("What can you help me with?", "CAPABILITIES"),
-        ("How do I report garbage?", "CAPABILITIES"),
+        ("How do I report garbage?", "TYPE_B_SERVICE_INFO"),
     ]:
         reply = _ask(client, token, msg, conversation_history=history)
         body = reply.json()
