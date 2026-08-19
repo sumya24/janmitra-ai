@@ -14,8 +14,10 @@ response -- callers (routes/auth.py) turn this into a clear 503.
 
 import logging
 import smtplib
+from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from pathlib import Path
 from typing import Literal
 
 from backend.config import settings
@@ -24,14 +26,87 @@ logger = logging.getLogger(__name__)
 
 _SMTP_TIMEOUT_SECONDS = 10
 
+# A small (96x96) resized copy of frontend-react/public/brand/logo-mark.png -- kept as its own
+# copy rather than reading the frontend's public/ dir directly, so this backend module doesn't
+# implicitly depend on the frontend's directory layout. Sent as a CID-referenced inline
+# attachment (see _build_message below), not a data: URI -- Gmail and other major clients
+# unreliably render base64 data: URIs in received HTML mail, but universally support CID inline
+# images, which is the standard way transactional email embeds a logo.
+_LOGO_PATH = Path(__file__).resolve().parent.parent / "assets" / "email_logo_mark.png"
+_LOGO_CID = "jansarthi-logo-mark"
+
 _SUBJECTS: dict[str, str] = {
     "verify_email": "Your JanSarthi AI email verification code",
     "reset_password": "Your JanSarthi AI password reset code",
 }
-_BODY_INTROS: dict[str, str] = {
-    "verify_email": "Use this code to verify your email address:",
-    "reset_password": "Use this code to reset your password:",
+_HEADINGS: dict[str, str] = {
+    "verify_email": "Verify your email address",
+    "reset_password": "Reset your password",
 }
+_BODY_INTROS: dict[str, str] = {
+    "verify_email": "Enter this code in JanSarthi AI to verify your email address.",
+    "reset_password": "Enter this code in JanSarthi AI to reset your password.",
+}
+_FOOTER_NOTES: dict[str, str] = {
+    "verify_email": "If you didn't request to add this email to a JanSarthi AI account, you can safely ignore this message.",
+    "reset_password": "If you didn't request a password reset, you can safely ignore this message — your password won't change unless the code above is used.",
+}
+
+# Wordmark colors, matching frontend-react/src/components/AuthFormBrand.tsx's real "Jan"/
+# "Sarthi"/"AI" coloring exactly (navy/green/blue, its own light-theme --accent-fg/--primary/
+# --service-water) -- kept in sync by eye, not programmatically, since an email client can't read
+# the app's CSS custom properties. The email always uses the light-theme values: unlike the app,
+# there's no dark-mode concept for an inbox.
+_BRAND_JAN = "#0F2D6B"
+_BRAND_SARTHI = "#16A34A"
+_BRAND_AI = "#0284C7"
+
+
+def _render_html(heading: str, intro: str, code: str, footer_note: str) -> str:
+    """Builds the OTP email body as an inline-styled HTML table -- table-based layout and inline
+    styles (not classes/external CSS) because that's what actually renders consistently across
+    real email clients (Gmail, Outlook, Apple Mail), unlike a plain web page. The header mirrors
+    AuthFormBrand.tsx's logo-mark + colored "JanSarthi AI" wordmark exactly."""
+    return f"""\
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F1F5F9;padding:32px 16px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
+  <tr>
+    <td align="center">
+      <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;background-color:#FFFFFF;border-radius:12px;overflow:hidden;border:1px solid #E2E8F0;">
+        <tr>
+          <td style="padding:24px 32px;border-bottom:1px solid #E2E8F0;">
+            <table role="presentation" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="padding-right:10px;"><img src="cid:{_LOGO_CID}" width="32" height="32" alt="" style="display:block;" /></td>
+                <td style="font-size:20px;font-weight:700;letter-spacing:-0.01em;white-space:nowrap;">
+                  <span style="color:{_BRAND_JAN};">Jan</span><span style="color:{_BRAND_SARTHI};">Sarthi</span> <span style="color:{_BRAND_AI};">AI</span>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px;">
+            <h1 style="margin:0 0 12px;color:#0F172A;font-size:20px;font-weight:700;">{heading}</h1>
+            <p style="margin:0 0 24px;color:#334155;font-size:14px;line-height:1.6;">{intro}</p>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F1F5F9;border-radius:8px;margin-bottom:24px;">
+              <tr>
+                <td align="center" style="padding:20px;">
+                  <span style="font-family:'Courier New',monospace;font-size:32px;font-weight:700;letter-spacing:8px;color:{_BRAND_SARTHI};">{code}</span>
+                </td>
+              </tr>
+            </table>
+            <p style="margin:0 0 24px;color:#64748B;font-size:13px;line-height:1.6;">
+              This code expires in {settings.OTP_EXPIRE_MINUTES} minutes and can only be used once.
+            </p>
+            <hr style="border:none;border-top:1px solid #E2E8F0;margin:0 0 20px;" />
+            <p style="margin:0;color:#94A3B8;font-size:12px;line-height:1.6;">{footer_note}</p>
+          </td>
+        </tr>
+      </table>
+      <p style="color:#94A3B8;font-size:11px;margin-top:16px;">Municipal grievance redressal, in every language.</p>
+    </td>
+  </tr>
+</table>"""
 
 
 class EmailServiceError(Exception):
@@ -60,20 +135,35 @@ def send_otp_email(to_email: str, code: str, purpose: Literal["verify_email", "r
         )
 
     intro = _BODY_INTROS[purpose]
-    html_body = (
-        f"<p>{intro}</p>"
-        f"<p style='font-size:28px;font-weight:bold;letter-spacing:4px'>{code}</p>"
-        f"<p>This code expires in {settings.OTP_EXPIRE_MINUTES} minutes. "
-        "If you didn't request this, you can safely ignore this email.</p>"
+    footer_note = _FOOTER_NOTES[purpose]
+    html_body = _render_html(_HEADINGS[purpose], intro, code, footer_note)
+    text_body = (
+        f"JanSarthi AI\n\n{_HEADINGS[purpose]}\n\n{intro}\n\nCode: {code}\n\n"
+        f"This code expires in {settings.OTP_EXPIRE_MINUTES} minutes and can only be used once.\n\n{footer_note}"
     )
-    text_body = f"{intro} {code}\n\nThis code expires in {settings.OTP_EXPIRE_MINUTES} minutes."
 
-    message = MIMEMultipart("alternative")
+    # "related" (not "alternative") at the top level -- it wraps an "alternative" part (the
+    # plain-text/HTML choice) plus the inline logo image, which the HTML part references via
+    # cid:. "alternative" alone has nowhere to hang a same-message inline attachment.
+    message = MIMEMultipart("related")
     message["Subject"] = _SUBJECTS[purpose]
     message["From"] = f"{settings.EMAIL_FROM_NAME} <{settings.EMAIL_FROM_ADDRESS}>"
     message["To"] = to_email
-    message.attach(MIMEText(text_body, "plain"))
-    message.attach(MIMEText(html_body, "html"))
+
+    alternative = MIMEMultipart("alternative")
+    alternative.attach(MIMEText(text_body, "plain"))
+    alternative.attach(MIMEText(html_body, "html"))
+    message.attach(alternative)
+
+    try:
+        logo_bytes = _LOGO_PATH.read_bytes()
+    except OSError:
+        logo_bytes = None
+    if logo_bytes is not None:
+        logo_image = MIMEImage(logo_bytes)
+        logo_image.add_header("Content-ID", f"<{_LOGO_CID}>")
+        logo_image.add_header("Content-Disposition", "inline", filename="jansarthi-logo-mark.png")
+        message.attach(logo_image)
 
     try:
         # SMTP_SSL for port 465 (implicit TLS from the first byte); plain SMTP + STARTTLS for
