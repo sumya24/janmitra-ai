@@ -797,13 +797,34 @@ def classify(question: str) -> ClassificationResult:
     # never uses that interrogative construction ("Street light not working near my house" has no
     # "how do i ..." in it at all, so this branch is never even reached for it); a state keyword
     # co-occurring with an explicit how-to-file phrase is far more often "leak" used as a bare
-    # topic noun than a real active-problem report.  Checked before service_info/category so a
-    # bare category mention (e.g. "पानी") inside the how-to question can't force TYPE_A_COMPLAINT
-    # via the `complaint_matches or category` fallback further below -- exactly the mechanism that
-    # produced the real, reported bug this closes. CAPABILITIES already gives an accurate, honest
-    # answer to this ("just describe your issue and location, and I'll create the complaint for
-    # you") without a RAG lookup that has no "how to use this app" content to find.
+    # topic noun than a real active-problem report.
+    #
+    # LIVE PRODUCT FINDING: unconditionally discarding `category` here (as this branch used to)
+    # was itself a real, reported request/response mismatch -- "How do I report a water leakage?"
+    # (one of this app's own 4 featured starter questions) named a real, known service
+    # (WATER_DRAINAGE, matched via the bare word "water") that this app genuinely has retrievable
+    # information/complaint-filing support for, but got the generic "what can you do" menu instead
+    # of an answer about water leaks specifically -- exactly the "RAG lookup that has no content to
+    # find" assumption below, which is only true when NO category is named at all. Generalizes to
+    # any "how do I report/file X" phrasing that also names a real category (pothole, garbage,
+    # streetlight, ...), not just this one reported phrase: TYPE_B_SERVICE_INFO (an informational,
+    # "how is this process handled" question, matching how a category+"what is the procedure for
+    # X" question is already classified elsewhere in this function) rather than TYPE_A_COMPLAINT,
+    # so the "leak"-as-bare-topic-noun false positive this whole branch exists to prevent still
+    # never fires. Checked before service_info/state/meta so this can't fall through to those and
+    # re-trigger that exact original bug. Only when no category is named at all -- a genuinely
+    # generic "How do I file a complaint?" -- does CAPABILITIES's accurate, honest "just describe
+    # your issue and location" answer remain the right one, since there truly is no more specific
+    # RAG content to find for that case.
     if how_to_file_matches:
+        if category is not None:
+            return ClassificationResult(
+                intent=QuestionIntent.TYPE_B_SERVICE_INFO,
+                service_category=category,
+                out_of_scope_service=None,
+                matched_keywords=how_to_file_matches + category_matches,
+                requests_new_connection=requests_new_connection,
+            )
         return ClassificationResult(
             intent=QuestionIntent.CAPABILITIES,
             service_category=None,
