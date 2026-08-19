@@ -16,6 +16,7 @@ from starlette.responses import JSONResponse
 
 from backend.config import settings
 from backend.deps import client_ip
+from backend.services import metrics as sentry_metrics
 from backend.services.auth_service import InvalidTokenError, decode_access_token
 from backend.services.rate_limiter import RateLimiter
 
@@ -62,6 +63,7 @@ class GeneralRateLimitMiddleware(BaseHTTPMiddleware):
             identifier, settings.GENERAL_RATE_LIMIT, settings.GENERAL_RATE_LIMIT_WINDOW_SECONDS
         )
         if not allowed:
+            sentry_metrics.count("rate_limit.exceeded", 1, attributes={"limiter": "general"})
             return JSONResponse(
                 status_code=429,
                 content={"detail": "Too many requests. Please try again later."},
