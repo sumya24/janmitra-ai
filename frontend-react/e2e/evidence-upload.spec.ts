@@ -74,7 +74,8 @@ test("real multi-file evidence upload, end to end: select -> upload -> storage -
   await page.goto("/signup");
   await page.getByLabel("Full name").fill("Evidence Test Citizen");
   await page.getByLabel("Phone number").fill(citizenPhone);
-  await page.getByLabel("Password").fill("citizenpass123");
+  await page.getByLabel("Password", { exact: true }).fill("citizenpass123");
+  await page.locator("#signup-confirm-password").fill("citizenpass123");
   await fillHomeLocationPicker(page);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/citizen$/);
@@ -214,7 +215,8 @@ test("a file that isn't really an image is rejected with a clear error, not a si
   await page.goto("/signup");
   await page.getByLabel("Full name").fill("Invalid Upload Tester");
   await page.getByLabel("Phone number").fill(uniquePhone());
-  await page.getByLabel("Password").fill("citizenpass123");
+  await page.getByLabel("Password", { exact: true }).fill("citizenpass123");
+  await page.locator("#signup-confirm-password").fill("citizenpass123");
   await fillHomeLocationPicker(page);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/citizen$/);

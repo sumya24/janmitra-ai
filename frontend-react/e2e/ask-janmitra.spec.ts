@@ -21,7 +21,8 @@ async function signUpAndReachCitizenHome(page: import("@playwright/test").Page) 
   const phone = uniquePhone();
   await page.getByLabel("Full name").fill("Ask Sarthi Tester");
   await page.getByLabel("Phone number").fill(phone);
-  await page.getByLabel("Password").fill("secret123");
+  await page.getByLabel("Password", { exact: true }).fill("secret123");
+  await page.locator("#signup-confirm-password").fill("secret123");
   await fillHomeLocationPicker(page);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/citizen$/);
@@ -105,7 +106,8 @@ test("Ask Sarthi: a question with no location asks for clarification instead of 
   const phone = uniquePhone();
   await page.getByLabel("Full name").fill("Ask Sarthi Tester");
   await page.getByLabel("Phone number").fill(phone);
-  await page.getByLabel("Password").fill("secret123");
+  await page.getByLabel("Password", { exact: true }).fill("secret123");
+  await page.locator("#signup-confirm-password").fill("secret123");
   const stateField = page.locator("#signup-home-state");
   await expect.poll(() => stateField.locator("option").count()).toBeGreaterThan(1);
   await stateField.selectOption({ label: "Maharashtra" });

@@ -18,12 +18,18 @@ export default function Signup() {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   // The State/City/Ward/Area picker below IS the "Area / ward" field -- see
   // HomeLocationPicker.tsx's own docstring for why this used to be two separate sections.
   const [homeLocation, setHomeLocation] = useState<HomeLocationValue>({ ward: "" });
   const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Client-side echo of backend/routes/auth.py's _validate_password_strength -- the server stays
+  // the source of truth (this is only for immediate feedback), but a citizen shouldn't have to
+  // submit the form to discover their password is too weak when the rule is this simple.
+  const passwordTooWeak = password.length > 0 && (password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password));
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -34,13 +40,16 @@ export default function Signup() {
     if (!phone.trim()) errors.phone = true;
     else if (!/^[6-9]\d{9}$/.test(phone.trim())) errors.phone = true;
     if (!password) errors.password = true;
+    else if (passwordTooWeak) errors.password = true;
+    if (!confirmPassword) errors.confirmPassword = true;
+    else if (confirmPassword !== password) errors.confirmPassword = true;
     if (!homeLocation.ward.trim()) errors.ward = true;
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
 
     setSubmitting(true);
     try {
-      const { access_token, user } = await api.signup({
+      const { access_token, refresh_token, user } = await api.signup({
         full_name: fullName.trim(),
         phone: phone.trim(),
         password,
@@ -48,7 +57,7 @@ export default function Signup() {
         ...homeLocation,
         ward: homeLocation.ward.trim(),
       });
-      setSession(access_token, user);
+      setSession(access_token, refresh_token, user);
       navigate("/citizen");
     } catch (err) {
       setFormError(err instanceof ApiError ? err.message : t(lang, "common.somethingWrong"));
@@ -116,11 +125,31 @@ export default function Signup() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 aria-invalid={fieldErrors.password || undefined}
-                aria-describedby={fieldErrors.password ? "signup-password-error" : undefined}
+                aria-describedby={fieldErrors.password ? "signup-password-error" : "signup-password-hint"}
               />
-              {fieldErrors.password && (
+              {fieldErrors.password ? (
                 <div className="field-error" id="signup-password-error">
-                  {t(lang, "common.fieldRequired")}
+                  {t(lang, password ? "auth.field.passwordWeak" : "common.fieldRequired")}
+                </div>
+              ) : (
+                <div className="field-hint" id="signup-password-hint">
+                  {t(lang, "auth.field.passwordHint")}
+                </div>
+              )}
+            </div>
+            <div className={`field ${fieldErrors.confirmPassword ? "has-error" : ""}`}>
+              <label htmlFor="signup-confirm-password">{t(lang, "auth.field.confirmPassword")}</label>
+              <input
+                id="signup-confirm-password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                aria-invalid={fieldErrors.confirmPassword || undefined}
+                aria-describedby={fieldErrors.confirmPassword ? "signup-confirm-password-error" : undefined}
+              />
+              {fieldErrors.confirmPassword && (
+                <div className="field-error" id="signup-confirm-password-error">
+                  {t(lang, confirmPassword ? "auth.field.passwordMismatch" : "common.fieldRequired")}
                 </div>
               )}
             </div>

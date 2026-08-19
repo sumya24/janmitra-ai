@@ -73,6 +73,7 @@ def require_role(*allowed_roles: str):
 # every OTHER route, not a replacement for these two.
 
 _login_limiter = RateLimiter()
+_signup_limiter = RateLimiter()
 _ai_limiter = RateLimiter()
 
 
@@ -113,6 +114,22 @@ def require_login_rate_limit(request: Request) -> None:
         raise HTTPException(
             status_code=429,
             detail="Too many login attempts. Please try again later.",
+            headers={"Retry-After": str(retry_after)},
+        )
+
+
+def require_signup_rate_limit(request: Request) -> None:
+    """Dependency for POST /auth/signup -- keyed per client IP, its own dedicated (and much
+    stricter, per-hour rather than per-minute) limit rather than relying on the loose
+    GENERAL_RATE_LIMIT baseline every other route falls back to -- mass fake-account creation is a
+    real, distinct abuse pattern from a normal signup, which happens once per real person."""
+    allowed, retry_after = _signup_limiter.check(
+        client_ip(request), settings.SIGNUP_RATE_LIMIT, settings.SIGNUP_RATE_LIMIT_WINDOW_SECONDS
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many signup attempts. Please try again later.",
             headers={"Retry-After": str(retry_after)},
         )
 

@@ -70,3 +70,27 @@ class GeneralRateLimitMiddleware(BaseHTTPMiddleware):
                 headers={"Retry-After": str(retry_after)},
             )
         return await call_next(request)
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """A small, deliberately conservative set of standard response headers -- none of these have
+    any per-route tuning risk, unlike a Content-Security-Policy (which needs real per-page allow-
+    listing to avoid breaking the app) or Strict-Transport-Security (a reverse-proxy/Caddy-level
+    concern in this deployment, not this FastAPI app's -- see docker-compose.prod.yml), so both
+    are left out here rather than guessed at.
+
+    - X-Content-Type-Options: nosniff -- stops a browser from ever re-interpreting a response's
+      declared Content-Type (e.g. treating an uploaded "image" as executable script).
+    - X-Frame-Options: DENY -- this app is never meant to be embedded in another site's <iframe>;
+      blocks clickjacking-style attacks that rely on doing so.
+    - Referrer-Policy: strict-origin-when-cross-origin -- a sensible modern default (send the
+      full URL only same-origin, just the origin cross-origin, nothing on a downgrade to http),
+      not this app's own previous behavior (browsers' own unset default is looser).
+    """
+
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        return response

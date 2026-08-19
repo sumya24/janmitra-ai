@@ -395,6 +395,10 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
 }
 .field.has-error input, .field.has-error textarea { border-color: var(--status-critical); }
 .field-error { color: var(--status-critical); font-size: 11.5px; margin-top: 5px; animation: fade-rise var(--dur) var(--ease-out) both; }
+/* Same slot/spacing as .field-error above, neutral ink instead of the critical-red -- e.g. the
+   signup password field's "8+ characters, a letter and a number" requirement shown before any
+   error state, not after one. */
+.field-hint { color: var(--ink-3); font-size: 11.5px; margin-top: 5px; }
 
 /* Native <select> keeps browser chrome by default, which clashes with everything else here —
    flatten it and draw our own chevron so it matches text inputs exactly. */
@@ -420,6 +424,13 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
 
 .banner-error {
   background: var(--status-critical-bg); color: var(--status-critical); border-radius: 8px;
+  padding: 10px 14px; font-size: 13px; margin-bottom: 14px;
+  animation: fade-rise var(--dur-slow) var(--ease-out) both;
+}
+/* Same shape as .banner-error above, resolved-green instead -- e.g. the change-password form's
+   "Password updated" confirmation. */
+.banner-success {
+  background: var(--status-resolved-bg); color: var(--status-resolved); border-radius: 8px;
   padding: 10px 14px; font-size: 13px; margin-bottom: 14px;
   animation: fade-rise var(--dur-slow) var(--ease-out) both;
 }
