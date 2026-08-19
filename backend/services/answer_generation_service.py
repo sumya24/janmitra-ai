@@ -98,6 +98,17 @@ class AnswerGenerationService:
     def _fallback_answer(context_chunks: list[str]) -> str:
         if not context_chunks:
             return "I don't have information on this yet."
-        # Plain, honest fallback -- the retrieved text itself, not a paraphrase, so nothing is
-        # invented even when no LLM is available to phrase it more naturally.
+        # LIVE PRODUCT FINDING: a knowledge record is split into several retrieval chunks by
+        # field family (see scripts/build_rag_knowledge_base.py's chunk_document()) -- one of
+        # which is FAQ-only, deterministically rendered as "Q: <question> A: <answer>" for every
+        # FAQ item on that record. When that FAQ chunk happens to score highest, this fallback
+        # used to echo it verbatim -- reading as a raw "Q: A:" dump that answers a DIFFERENT
+        # question (usually "is this data verified?") than the one the citizen actually asked,
+        # never a proper-looking response. Prefer the first chunk that ISN'T FAQ-shaped -- the
+        # "Q: " prefix is this app's own deterministic chunk format, not a heuristic over
+        # free-form content, so this never misclassifies real prose. Falls back to the FAQ chunk
+        # only when literally nothing else was retrieved -- still better than no answer at all.
+        for chunk in context_chunks:
+            if not chunk.lstrip().startswith("Q: "):
+                return chunk
         return context_chunks[0]
