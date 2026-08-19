@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from backend.config import settings
 from backend.database import get_db
 from backend.models import User
+from backend.services import metrics as sentry_metrics
 from backend.services.auth_service import InvalidTokenError, decode_access_token
 from backend.services.rate_limiter import RateLimiter
 
@@ -110,6 +111,7 @@ def require_login_rate_limit(request: Request) -> None:
         client_ip(request), settings.LOGIN_RATE_LIMIT, settings.LOGIN_RATE_LIMIT_WINDOW_SECONDS
     )
     if not allowed:
+        sentry_metrics.count("rate_limit.exceeded", 1, attributes={"limiter": "login"})
         raise HTTPException(
             status_code=429,
             detail="Too many login attempts. Please try again later.",
@@ -162,6 +164,7 @@ def require_ai_rate_limit(current_user: User = Depends(get_current_user)) -> Non
         f"user:{current_user.id}", settings.AI_RATE_LIMIT, settings.AI_RATE_LIMIT_WINDOW_SECONDS
     )
     if not allowed:
+        sentry_metrics.count("rate_limit.exceeded", 1, attributes={"limiter": "ai"})
         raise HTTPException(
             status_code=429,
             detail="Too many requests to Ask Sarthi. Please wait a moment and try again.",

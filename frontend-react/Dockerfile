@@ -14,6 +14,16 @@ COPY frontend-react/ .
 # split onto a different host.
 ARG VITE_API_URL=
 ENV VITE_API_URL=$VITE_API_URL
+# Same build-time-baking rule as VITE_API_URL above -- see docs/ERROR_MONITORING.md. Left unset
+# here on purpose: src/main.tsx only initializes Sentry when VITE_SENTRY_DSN is actually
+# non-empty, so an unset build-arg means the shipped bundle has no Sentry dependency active at
+# all, matching the backend's own "off unless explicitly configured" default.
+ARG VITE_SENTRY_DSN=
+ARG VITE_SENTRY_ENVIRONMENT=production
+ARG VITE_SENTRY_TRACES_SAMPLE_RATE=0
+ENV VITE_SENTRY_DSN=$VITE_SENTRY_DSN
+ENV VITE_SENTRY_ENVIRONMENT=$VITE_SENTRY_ENVIRONMENT
+ENV VITE_SENTRY_TRACES_SAMPLE_RATE=$VITE_SENTRY_TRACES_SAMPLE_RATE
 RUN npm run build
 
 # --- serve stage: Caddy serves the static build and reverse-proxies /api/* to the backend ---
