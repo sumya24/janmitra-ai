@@ -3,12 +3,12 @@
 import logging
 
 from fastapi import Depends, HTTPException, Request
-from sentry_sdk import metrics as sentry_metrics
 from sqlalchemy.orm import Session
 
 from backend.config import settings
 from backend.database import get_db
 from backend.models import User
+from backend.services import metrics as sentry_metrics
 from backend.services.auth_service import InvalidTokenError, decode_access_token
 from backend.services.rate_limiter import RateLimiter
 

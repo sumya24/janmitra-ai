@@ -13,7 +13,6 @@ import logging
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import ValidationError
-from sentry_sdk import metrics as sentry_metrics
 from sqlalchemy.orm import Session
 
 from backend.config import settings
@@ -21,6 +20,7 @@ from backend.database import get_db
 from backend.deps import get_current_user, require_ai_rate_limit
 from backend.models import User
 from backend.schemas.ask_janmitra import AskJanMitraRequest, AskJanMitraResponse, AskVoiceResponse, ConversationTurn
+from backend.services import metrics as sentry_metrics
 from backend.services.ask_janmitra_service import AskJanMitraService
 
 logger = logging.getLogger(__name__)

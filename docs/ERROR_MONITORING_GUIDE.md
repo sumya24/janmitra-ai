@@ -161,8 +161,10 @@ If you're curious where in the code a number actually gets counted, here's exact
 - `backend/middleware.py` and `backend/deps.py` — right when someone gets blocked by a rate
   limit, one line adds 1 to `rate_limit.exceeded`.
 
-Each of these lines is a single, harmless function call — if Metrics is turned off, that same
-line just quietly does nothing (confirmed directly, not assumed).
+Each of these lines calls a small helper (`backend/services/metrics.py`), not Sentry's own
+counting function directly — that helper is what actually checks whether Metrics is turned on
+before sending anything. (Why not just rely on Sentry's own on/off setting for this? See 4.3
+below — it turned out not to work.)
 
 ### 3.4 The frontend's "crash screen"
 
@@ -209,12 +211,50 @@ Fixed by moving the "turn Sentry on" step so it only happens when the app is gen
 for real use (`uvicorn`, Docker) — never just from loading the code for a test. Confirmed fixed
 by checking that running the tests no longer touches Sentry at all.
 
-### 4.3 Why this matters for you
+### 4.3 The "off switch that didn't switch anything off" bug
 
-These two bugs are a good example of why "I wrote the code" and "the code works" are different
-claims. Both bugs were caught by actually running things (the full test suite, and a real
-end-to-end trigger against your real Sentry account) rather than trusting that the code looked
-right on paper.
+This is the most important one, and it wasn't caught by my own testing — a second, independent
+live-verification pass against your real Sentry account found it.
+
+The Logs and Metrics on/off switches (`SENTRY_ENABLE_LOGS`, `SENTRY_ENABLE_METRICS`) are simple
+settings this app defines. But *turning that setting into Sentry actually obeying it* originally
+relied on handing it straight to Sentry's own software as `enable_logs=`/`enable_metrics=`. It
+turns out the specific version of Sentry's software installed here has quietly stopped listening
+to those two settings — it still accepts them without complaint, but internally it now always
+builds both the Logs and Metrics machinery regardless, and only prints a small warning in the
+background saying "this setting will be removed later." Nothing crashes, nothing looks wrong on
+the surface — which is exactly why it's a dangerous kind of bug: it looks like it's working.
+
+The real, concrete consequence: **Metrics were being sent even with the switch set to off**
+(traced and proven live: switched it off, tripped a real rate limit through the real app, and
+watched a metrics report get sent to your real Sentry project anyway). **Logs weren't being sent
+in either position of the switch** — on or off, zero log messages ever arrived.
+
+The fix required going one level deeper than "pass a setting" for each:
+- **Metrics** — instead of trusting Sentry's own off switch, this app now checks its own setting
+  itself, in one small helper function, before ever calling Sentry's counting function at all.
+  If the switch is off, that helper simply never makes the call — a decision made in *our* code,
+  not handed off to a Sentry setting that turned out not to work.
+- **Logs** — turns out there's a *different*, correct way to turn this on: instead of the simple
+  top-level switch, you have to explicitly build a small configuration object
+  (`LoggingIntegration(capture_sentry_logs=True)`) and hand that object to Sentry directly, only
+  when the switch is on. That's the version that's actually still listened to.
+
+Both fixes were then verified live, the honest way: real DSN, real activity through the real
+app, with Sentry's own internal debug output turned on temporarily so every single "sending
+this to Sentry now" moment was visible in the terminal — not just "the code didn't crash," but
+"I watched the exact message get sent, and watched it correctly *not* get sent when switched
+off." Confirmed working in both directions before removing the temporary debug output and
+calling it done.
+
+### 4.4 Why this matters for you
+
+These three bugs are a good example of why "I wrote the code" and "the code works" are different
+claims — and why even a first round of real testing isn't automatically the last word. The first
+two were caught by running the code (the test suite, a real end-to-end trigger). The third one
+needed something more: someone independently re-verifying the *specific claim* "this switch
+turns things off" against real behavior, not just trusting that a setting named `enable_metrics`
+does what its name says.
 
 ---
 

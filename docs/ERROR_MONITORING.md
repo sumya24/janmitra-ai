@@ -18,14 +18,21 @@ settings are pointed at) fires the moment something actually breaks.
   - **Error monitoring** -- always on once `SENTRY_DSN` is set; this is the core feature.
   - **Logs** (`SENTRY_ENABLE_LOGS`) -- forwards this app's existing `logging.getLogger(...)`
     calls (already used throughout `backend/`) to Sentry's Logs product too. No new logging
-    calls needed anywhere for this to work.
+    calls needed anywhere for this to work. **Not** wired via the top-level `enable_logs=`
+    `sentry_sdk.init()` kwarg -- confirmed directly against the installed SDK
+    (`sentry_sdk/client.py`) that it's a deprecated no-op there (the log pipeline is created
+    unconditionally regardless of that flag). The real gate is an explicitly-constructed
+    `LoggingIntegration(capture_sentry_logs=True)`, added to `integrations=[...]` only when this
+    setting is on (`backend/main.py`).
   - **Application Metrics** (`SENTRY_ENABLE_METRICS`) -- a small set of business counters already
     wired into the code: `complaint.created` (tagged by ward, `routes/complaints.py`),
     `ask_janmitra.request` (tagged by channel: text/image/voice, `routes/ask_janmitra.py`), and
     `rate_limit.exceeded` (tagged by which limiter tripped: general/login/ai, `middleware.py` +
-    `deps.py`). Calling these when the flag is off is a harmless no-op (confirmed directly
-    against the SDK) -- they're always present in the code, this flag just controls whether
-    they're actually sent.
+    `deps.py`). Every call site goes through `backend/services/metrics.py`, not
+    `sentry_sdk.metrics` directly -- same reason as Logs above: the SDK's `enable_metrics=` init()
+    kwarg is also a confirmed no-op (the metrics pipeline is created unconditionally), so
+    `sentry_sdk.metrics.count()` would send regardless of the setting. `services/metrics.py` is a
+    thin wrapper that actually checks `SENTRY_ENABLE_METRICS` before forwarding the call.
   - **Tracing + Profiling** (`SENTRY_TRACES_SAMPLE_RATE`, `SENTRY_PROFILE_SESSION_SAMPLE_RATE`)
     -- performance traces and code-level profiles. Profiling is coupled to tracing
     (`profile_lifecycle="trace"`, fixed): it only ever samples while there's an active trace, so
@@ -70,3 +77,18 @@ enough to diagnose *what broke*, not a copy of what the citizen typed.
 scoped to error alerting, not request profiling. Raise it (e.g. `0.1` for 10% of requests) only
 if performance tracing is specifically wanted later; it's a separate, additional cost on Sentry's
 hosted tiers.
+
+## A known SDK gotcha (and why the code looks the way it does)
+
+A second live-verification pass against the real Sentry backend (not just the unit tests, which
+mock `sentry_sdk.init` and so can't catch an SDK-internal behavior change like this) caught a
+real bug in an earlier version of this integration: `sentry_sdk.init()`'s own `enable_logs=` and
+`enable_metrics=` keyword arguments are **deprecated no-ops** in the installed SDK version --
+each one's underlying pipeline (`log_batcher` / `metrics_batcher`) is constructed
+unconditionally in `Client.__init__`, regardless of the flag's value. Passing them only produces
+a `"...has no effect and will be removed in the next major"` warning. Concretely, this meant
+Metrics used to send **even with `SENTRY_ENABLE_METRICS=false`**, and Logs used to send **in
+neither state** (the pipeline existed but nothing was routing log records into it). Both are
+fixed now, the way described above, and both were re-verified live (real DSN, real activity,
+`debug=True` temporarily on to watch actual envelope delivery, then removed) -- confirmed off
+stays silent and on actually delivers, in both directions, not just "doesn't crash."

@@ -2,6 +2,13 @@
 when SENTRY_DSN is unset (the default), must pass the right config through when it is set, and
 must never raise out of the app's own startup even if Sentry itself fails to initialize -- an
 optional alerting tool must not become a new way for the app to go down.
+
+Logs and Metrics are NOT tested here via a plain `enable_logs=`/`enable_metrics=` kwarg
+assertion -- confirmed directly against the installed SDK (sentry_sdk/client.py) that both are
+deprecated no-ops there, which is exactly the real bug a second live-verification pass against
+the actual Sentry backend caught (the first version of this code trusted those flags and they
+silently didn't work). See the LoggingIntegration-presence assertions below for how Logs is
+actually gated, and tests/test_metrics.py for how Metrics is actually gated.
 """
 
 from __future__ import annotations
@@ -32,6 +39,7 @@ def test_initializes_sentry_when_dsn_set(monkeypatch):
     monkeypatch.setattr(settings, "SENTRY_ENABLE_METRICS", True)
     monkeypatch.setattr(settings, "SENTRY_PROFILE_SESSION_SAMPLE_RATE", 0.5)
     import sentry_sdk
+    from sentry_sdk.integrations.logging import LoggingIntegration
 
     fake_init = Mock()
     monkeypatch.setattr(sentry_sdk, "init", fake_init)
@@ -44,18 +52,41 @@ def test_initializes_sentry_when_dsn_set(monkeypatch):
     assert kwargs["environment"] == "test"
     assert kwargs["traces_sample_rate"] == 0.25
     assert kwargs["send_default_pii"] is False
-    assert kwargs["enable_logs"] is True
-    assert kwargs["enable_metrics"] is True
     assert kwargs["profile_lifecycle"] == "trace"
     assert kwargs["profile_session_sample_rate"] == 0.5
+    # No enable_logs=/enable_metrics= kwargs at all -- confirmed deprecated no-ops in the
+    # installed SDK, see this file's module docstring. Metrics gating lives in
+    # backend/services/metrics.py instead (see tests/test_metrics.py); Logs gating is this
+    # explicitly-constructed integration, asserted below.
+    assert "enable_logs" not in kwargs
+    assert "enable_metrics" not in kwargs
+    logging_integrations = [i for i in kwargs["integrations"] if isinstance(i, LoggingIntegration)]
+    assert len(logging_integrations) == 1
+    assert logging_integrations[0].capture_sentry_logs is True
 
 
-def test_logs_and_metrics_and_profiling_off_by_default(monkeypatch):
-    """Every one of these flags must independently default to off -- turning on error monitoring
-    (just setting SENTRY_DSN) must not silently turn on the others too."""
+def test_logging_integration_omitted_when_logs_disabled(monkeypatch):
+    """SENTRY_ENABLE_LOGS=False (the default) must not add a capture_sentry_logs=True
+    LoggingIntegration -- the SDK auto-enables its own default (capture_sentry_logs=False) one
+    when none is explicitly passed, which is the correct off state."""
     monkeypatch.setattr(settings, "SENTRY_DSN", "https://fake@example.ingest.sentry.io/1")
     monkeypatch.setattr(settings, "SENTRY_ENABLE_LOGS", False)
-    monkeypatch.setattr(settings, "SENTRY_ENABLE_METRICS", False)
+    import sentry_sdk
+    from sentry_sdk.integrations.logging import LoggingIntegration
+
+    fake_init = Mock()
+    monkeypatch.setattr(sentry_sdk, "init", fake_init)
+
+    init_error_monitoring()
+
+    _, kwargs = fake_init.call_args
+    assert not any(isinstance(i, LoggingIntegration) for i in kwargs["integrations"])
+
+
+def test_profiling_off_by_default(monkeypatch):
+    """Must independently default to off -- turning on error monitoring (just setting
+    SENTRY_DSN) must not silently turn on profiling too."""
+    monkeypatch.setattr(settings, "SENTRY_DSN", "https://fake@example.ingest.sentry.io/1")
     monkeypatch.setattr(settings, "SENTRY_PROFILE_SESSION_SAMPLE_RATE", 0.0)
     import sentry_sdk
 
@@ -65,8 +96,6 @@ def test_logs_and_metrics_and_profiling_off_by_default(monkeypatch):
     init_error_monitoring()
 
     _, kwargs = fake_init.call_args
-    assert kwargs["enable_logs"] is False
-    assert kwargs["enable_metrics"] is False
     assert kwargs["profile_session_sample_rate"] == 0.0
 
 

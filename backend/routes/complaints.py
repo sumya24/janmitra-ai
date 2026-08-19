@@ -16,7 +16,6 @@ import logging
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict, Field
-from sentry_sdk import metrics as sentry_metrics
 from sqlalchemy.orm import Session
 
 from backend.config import settings
@@ -25,6 +24,7 @@ from backend.deps import get_current_user, require_role
 from backend.models import ULB, Complaint, ComplaintRejection, ComplaintStatusHistory, District, State, User
 from backend.repositories import complaint_workflow_repository, evidence_repository, notification_repository
 from backend.services import complaint_report_service
+from backend.services import metrics as sentry_metrics
 from backend.services.assignment_service import assign_next_worker
 from backend.services.complaint_agent import ComplaintAgent
 from backend.services.complaint_translation_cache import get_display_text_and_summary
@@ -613,12 +613,13 @@ def create_complaint(
     assign_next_worker(db, complaint)
     db.refresh(complaint)
 
-    # A no-op when Sentry metrics aren't enabled (confirmed directly against the SDK -- see
-    # backend/main.py's SENTRY_ENABLE_METRICS docstring), so this always runs rather than being
-    # gated behind a settings check here too. Tagged by ward, not a service category -- Complaint
-    # has no category field of its own (that only exists on AiRequestLog, a different model, for
-    # Ask Sarthi's own classification); ward is real, already on this model, and a more directly
-    # actionable breakdown for this app anyway ("which ward is generating the most complaints").
+    # A no-op when Sentry metrics aren't enabled -- see backend/services/metrics.py's own
+    # docstring for why that gating lives there (the SDK's own enable_metrics flag is a confirmed
+    # no-op) rather than a settings check here too. Tagged by ward, not a service category --
+    # Complaint has no category field of its own (that only exists on AiRequestLog, a different
+    # model, for Ask Sarthi's own classification); ward is real, already on this model, and a
+    # more directly actionable breakdown for this app anyway ("which ward is generating the most
+    # complaints").
     sentry_metrics.count("complaint.created", 1, attributes={"ward": complaint.ward or "unknown"})
 
     return _to_response(db, complaint, display_language=None)

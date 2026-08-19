@@ -10,13 +10,13 @@ automatically to every request.
 
 from __future__ import annotations
 
-from sentry_sdk import metrics as sentry_metrics
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from backend.config import settings
 from backend.deps import client_ip
+from backend.services import metrics as sentry_metrics
 from backend.services.auth_service import InvalidTokenError, decode_access_token
 from backend.services.rate_limiter import RateLimiter
 

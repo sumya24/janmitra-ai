@@ -34,25 +34,39 @@ def init_error_monitoring() -> None:
     try:
         import sentry_sdk
         from sentry_sdk.integrations.fastapi import FastApiIntegration
+        from sentry_sdk.integrations.logging import LoggingIntegration
         from sentry_sdk.integrations.starlette import StarletteIntegration
+
+        integrations = [StarletteIntegration(), FastApiIntegration()]
+        # NOT the top-level `enable_logs=` init() kwarg -- confirmed directly against the
+        # installed SDK (sentry_sdk/client.py) that it's a deprecated no-op: the log pipeline is
+        # created unconditionally regardless of that flag's value, so it can neither turn logs on
+        # nor off. The real, current gate is this integration's own `capture_sentry_logs` --
+        # explicitly constructed and added ONLY when the setting is on, since the SDK also
+        # auto-enables a default LoggingIntegration(capture_sentry_logs=False) otherwise, and
+        # always adding one with capture_sentry_logs=True would make this setting do nothing too.
+        if settings.SENTRY_ENABLE_LOGS:
+            integrations.append(LoggingIntegration(capture_sentry_logs=True))
 
         sentry_sdk.init(
             dsn=settings.SENTRY_DSN,
             environment=settings.SENTRY_ENVIRONMENT,
             traces_sample_rate=settings.SENTRY_TRACES_SAMPLE_RATE,
-            integrations=[StarletteIntegration(), FastApiIntegration()],
+            integrations=integrations,
             # Request/user data can contain citizen PII (phone numbers, complaint text). False is
             # already the SDK's own default -- set explicitly so a future sentry-sdk version
             # silently changing its own default can't quietly start sending PII unnoticed.
             send_default_pii=False,
-            enable_logs=settings.SENTRY_ENABLE_LOGS,
-            enable_metrics=settings.SENTRY_ENABLE_METRICS,
             # "trace": only ever profiles while a trace is active, so this is inert unless
             # SENTRY_TRACES_SAMPLE_RATE > 0 too -- see SENTRY_PROFILE_SESSION_SAMPLE_RATE's own
             # docstring in config.py. Fixed, not a separate setting -- Sentry's own recommended
             # mode, nothing project-specific to configure about it.
             profile_lifecycle="trace",
             profile_session_sample_rate=settings.SENTRY_PROFILE_SESSION_SAMPLE_RATE,
+            # NOTE: no enable_metrics= here either, for the same reason as enable_logs above --
+            # confirmed deprecated no-op. SENTRY_ENABLE_METRICS is instead enforced in
+            # backend/services/metrics.py, the one place every metrics call site in this codebase
+            # goes through -- see that module's own docstring.
         )
         logger.info(
             "Sentry error monitoring initialized (environment=%s, logs=%s, metrics=%s, "
