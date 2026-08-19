@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 _SMTP_TIMEOUT_SECONDS = 10
 
-# A small (96x96) resized copy of frontend-react/public/brand/logo-mark.png -- kept as its own
+# A small (144x144) resized copy of frontend-react/public/brand/logo-mark.png -- kept as its own
 # copy rather than reading the frontend's public/ dir directly, so this backend module doesn't
 # implicitly depend on the frontend's directory layout. Sent as a CID-referenced inline
 # attachment (see _build_message below), not a data: URI -- Gmail and other major clients
@@ -73,11 +73,11 @@ def _render_html(heading: str, intro: str, code: str, footer_note: str) -> str:
     <td align="center">
       <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;background-color:#FFFFFF;border-radius:12px;overflow:hidden;border:1px solid #E2E8F0;">
         <tr>
-          <td style="padding:24px 32px;border-bottom:1px solid #E2E8F0;">
-            <table role="presentation" cellpadding="0" cellspacing="0">
+          <td align="center" style="padding:24px 32px;border-bottom:1px solid #E2E8F0;">
+            <table role="presentation" cellpadding="0" cellspacing="0" align="center">
               <tr>
-                <td style="padding-right:10px;"><img src="cid:{_LOGO_CID}" width="32" height="32" alt="" style="display:block;" /></td>
-                <td style="font-size:20px;font-weight:700;letter-spacing:-0.01em;white-space:nowrap;">
+                <td style="padding-right:10px;white-space:nowrap;"><img src="cid:{_LOGO_CID}" width="36" height="36" alt="" style="display:block;" /></td>
+                <td style="font-size:22px;font-weight:700;letter-spacing:-0.01em;white-space:nowrap;">
                   <span style="color:{_BRAND_JAN};">Jan</span><span style="color:{_BRAND_SARTHI};">Sarthi</span> <span style="color:{_BRAND_AI};">AI</span>
                 </td>
               </tr>
@@ -162,7 +162,11 @@ def send_otp_email(to_email: str, code: str, purpose: Literal["verify_email", "r
     if logo_bytes is not None:
         logo_image = MIMEImage(logo_bytes)
         logo_image.add_header("Content-ID", f"<{_LOGO_CID}>")
-        logo_image.add_header("Content-Disposition", "inline", filename="jansarthi-logo-mark.png")
+        # No `filename=` here -- Gmail's inbox LIST view still shows a small attachment
+        # indicator for a purely inline CID image either way (confirmed directly), but a named
+        # file makes it worse (a downloadable "jansarthi-logo-mark.png" chip instead of a bare
+        # icon) for no benefit.
+        logo_image.add_header("Content-Disposition", "inline")
         message.attach(logo_image)
 
     try:
