@@ -138,6 +138,38 @@ def test_fallback_answer_never_leaks_the_context_label_to_the_citizen():
     assert "VERIFIED |" not in answer
 
 
+def test_fallback_answer_skips_a_leading_faq_chunk_for_a_proper_looking_response():
+    """LIVE PRODUCT FINDING: a knowledge record's FAQ chunk (deterministically rendered as
+    "Q: <question> A: <answer>" -- see build_rag_knowledge_base.py's chunk_document()) sometimes
+    scores highest and used to be echoed verbatim as the whole "answer" -- reading as an answer to
+    a completely different question ("is this data verified?") than the one the citizen actually
+    asked ("How long does a streetlight repair take?"), never a proper-looking response. The
+    fallback must skip it and use the first substantive chunk instead, when one exists."""
+    svc = AnswerGenerationService.__new__(AnswerGenerationService)
+    svc._client = None
+    context_chunks = [
+        "Q: Is this the official SLA for street light repair in Bengaluru? A: No -- this is a "
+        "synthetic, representative record.",
+        "Representative service description for street light complaints in Bengaluru, Karnataka.",
+        "Required information: Locality / pole number, if known; Phone number of the complainant",
+    ]
+    answer, was_llm = svc.generate("How long does a streetlight repair take?", context_chunks, "English")
+    assert was_llm is False
+    assert answer == context_chunks[1]
+    assert not answer.lstrip().startswith("Q: ")
+
+
+def test_fallback_answer_still_shows_the_faq_chunk_when_nothing_else_was_retrieved():
+    """Control: an FAQ chunk is still better than no answer at all when it's the ONLY thing
+    retrieved -- the skip-FAQ preference must never turn into an empty/missing answer."""
+    svc = AnswerGenerationService.__new__(AnswerGenerationService)
+    svc._client = None
+    context_chunks = ["Q: Is this verified? A: No, this is a synthetic record."]
+    answer, was_llm = svc.generate("Some question", context_chunks, "English")
+    assert was_llm is False
+    assert answer == context_chunks[0]
+
+
 # ============================================================================
 # 3. Retrieval-layer cross-location behavior (real, checked-in Chroma index; no LLM call) --
 # CITY-SPECIFIC / STATE-LEVEL / no-contamination, per the Bhubaneswar bug's own investigation.
