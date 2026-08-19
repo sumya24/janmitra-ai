@@ -20,6 +20,7 @@ from backend.database import get_db
 from backend.deps import get_current_user, require_ai_rate_limit
 from backend.models import User
 from backend.schemas.ask_janmitra import AskJanMitraRequest, AskJanMitraResponse, AskVoiceResponse, ConversationTurn
+from backend.services import metrics as sentry_metrics
 from backend.services.ask_janmitra_service import AskJanMitraService
 
 logger = logging.getLogger(__name__)
@@ -45,6 +46,8 @@ def ask_janmitra(
     """
     if request.language not in settings.SUPPORTED_LANGUAGES:
         raise HTTPException(status_code=400, detail=f"Unsupported language: {request.language}")
+
+    sentry_metrics.count("ask_janmitra.request", 1, attributes={"channel": "text"})
 
     try:
         return _service.ask(db, current_user, request)
@@ -89,6 +92,8 @@ def ask_janmitra_with_image(
         raise HTTPException(status_code=400, detail=f"Unsupported language: {language}")
 
     history = _parse_conversation_history(conversation_history)
+
+    sentry_metrics.count("ask_janmitra.request", 1, attributes={"channel": "image"})
 
     try:
         return _service.ask_with_image(
@@ -137,6 +142,8 @@ def ask_janmitra_voice(
         raise HTTPException(status_code=400, detail="At least one audio segment is required.")
 
     history = _parse_conversation_history(conversation_history)
+
+    sentry_metrics.count("ask_janmitra.request", 1, attributes={"channel": "voice"})
 
     try:
         return _service.ask_voice(
