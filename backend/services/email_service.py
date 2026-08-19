@@ -14,8 +14,10 @@ response -- callers (routes/auth.py) turn this into a clear 503.
 
 import logging
 import smtplib
+from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from pathlib import Path
 from typing import Literal
 
 from backend.config import settings
@@ -24,16 +26,14 @@ logger = logging.getLogger(__name__)
 
 _SMTP_TIMEOUT_SECONDS = 10
 
-# No logo image, by design -- confirmed by direct testing against a real Gmail inbox that every
-# way of embedding one has a fatal problem: a CID inline image (with or without a `filename=` on
-# its Content-Disposition header) always shows an attachment indicator in Gmail's inbox LIST view,
-# reproduced consistently across many separate sends; a base64 data: URI avoids that indicator but
-# Gmail refuses to render the image bytes at all (a blank box); a remote-hosted <img> renders
-# correctly with no indicator but depends on this project's own site staying up, which was
-# explicitly rejected. There is no way to get a real, visible, embedded logo with zero attachment
-# indication and zero external dependency -- those three requirements are mutually exclusive in
-# Gmail. The colored text wordmark below reproduces AuthFormBrand.tsx's "Jan"/"Sarthi"/"AI"
-# coloring without any of those three problems.
+# A small (96x96) resized copy of frontend-react/public/brand/logo-mark.png -- kept as its own
+# copy rather than reading the frontend's public/ dir directly, so this backend module doesn't
+# implicitly depend on the frontend's directory layout. Sent as a CID-referenced inline
+# attachment (see _build_message below), not a data: URI -- Gmail and other major clients
+# unreliably render base64 data: URIs in received HTML mail, but universally support CID inline
+# images, which is the standard way transactional email embeds a logo.
+_LOGO_PATH = Path(__file__).resolve().parent.parent / "assets" / "email_logo_mark.png"
+_LOGO_CID = "jansarthi-logo-mark"
 
 _SUBJECTS: dict[str, str] = {
     "verify_email": "Your JanSarthi AI email verification code",
@@ -66,16 +66,22 @@ def _render_html(heading: str, intro: str, code: str, footer_note: str) -> str:
     """Builds the OTP email body as an inline-styled HTML table -- table-based layout and inline
     styles (not classes/external CSS) because that's what actually renders consistently across
     real email clients (Gmail, Outlook, Apple Mail), unlike a plain web page. The header mirrors
-    AuthFormBrand.tsx's colored "JanSarthi AI" wordmark (see this module's own top-of-file
-    comment on why there's no logo image)."""
+    AuthFormBrand.tsx's logo-mark + colored "JanSarthi AI" wordmark exactly."""
     return f"""\
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F1F5F9;padding:32px 16px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
   <tr>
     <td align="center">
       <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;background-color:#FFFFFF;border-radius:12px;overflow:hidden;border:1px solid #E2E8F0;">
         <tr>
-          <td align="center" style="padding:24px 32px;border-bottom:1px solid #E2E8F0;font-size:22px;font-weight:700;letter-spacing:-0.01em;">
-            <span style="color:{_BRAND_JAN};">Jan</span><span style="color:{_BRAND_SARTHI};">Sarthi</span> <span style="color:{_BRAND_AI};">AI</span>
+          <td align="center" style="padding:24px 32px;border-bottom:1px solid #E2E8F0;">
+            <table role="presentation" cellpadding="0" cellspacing="0" align="center">
+              <tr>
+                <td style="padding-right:18px;white-space:nowrap;"><img src="cid:{_LOGO_CID}" width="100" height="100" alt="" style="display:block;" /></td>
+                <td style="font-size:22px;font-weight:700;letter-spacing:-0.01em;white-space:nowrap;">
+                  <span style="color:{_BRAND_JAN};">Jan</span><span style="color:{_BRAND_SARTHI};">Sarthi</span> <span style="color:{_BRAND_AI};">AI</span>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
         <tr>
@@ -136,12 +142,30 @@ def send_otp_email(to_email: str, code: str, purpose: Literal["verify_email", "r
         f"This code expires in {settings.OTP_EXPIRE_MINUTES} minutes and can only be used once.\n\n{footer_note}"
     )
 
-    message = MIMEMultipart("alternative")
+    # "related" (not "alternative") at the top level -- it wraps an "alternative" part (the
+    # plain-text/HTML choice) plus the inline logo image, which the HTML part references via
+    # cid:. "alternative" alone has nowhere to hang a same-message inline attachment.
+    message = MIMEMultipart("related")
     message["Subject"] = _SUBJECTS[purpose]
     message["From"] = f"{settings.EMAIL_FROM_NAME} <{settings.EMAIL_FROM_ADDRESS}>"
     message["To"] = to_email
-    message.attach(MIMEText(text_body, "plain"))
-    message.attach(MIMEText(html_body, "html"))
+
+    alternative = MIMEMultipart("alternative")
+    alternative.attach(MIMEText(text_body, "plain"))
+    alternative.attach(MIMEText(html_body, "html"))
+    message.attach(alternative)
+
+    try:
+        logo_bytes = _LOGO_PATH.read_bytes()
+    except OSError:
+        logo_bytes = None
+    if logo_bytes is not None:
+        logo_image = MIMEImage(logo_bytes)
+        logo_image.add_header("Content-ID", f"<{_LOGO_CID}>")
+        # No `filename=` here -- avoids Gmail treating this as a downloadable
+        # "jansarthi-logo-mark.png" attachment rather than a purely inline image.
+        logo_image.add_header("Content-Disposition", "inline")
+        message.attach(logo_image)
 
     try:
         # SMTP_SSL for port 465 (implicit TLS from the first byte); plain SMTP + STARTTLS for
