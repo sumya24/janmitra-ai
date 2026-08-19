@@ -86,7 +86,8 @@ test("a citizen cannot create a worker account (no such option exists)", async (
   await page.goto("/signup");
   await page.getByLabel("Full name").fill("Just A Citizen");
   await page.getByLabel("Phone number").fill(phone);
-  await page.getByLabel("Password").fill("secret123");
+  await page.getByLabel("Password", { exact: true }).fill("secret123");
+  await page.locator("#signup-confirm-password").fill("secret123");
   await fillHomeLocationPicker(page);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/citizen$/);

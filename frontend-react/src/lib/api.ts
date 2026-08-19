@@ -14,6 +14,79 @@ export class ApiError extends Error {
   }
 }
 
+// --- Token storage + silent refresh ---------------------------------------------------------
+// api.ts (not auth.tsx) is the single source of truth for WHERE the two tokens live in
+// localStorage -- auth.tsx calls these same helpers rather than keeping its own separate
+// localStorage.setItem calls, since the 401-interceptor below needs to read/write them from a
+// plain module with no React state of its own. auth.tsx registers the two handlers below so it
+// can still keep its own `user`/`token` React state in sync with whatever this module does
+// silently in the background.
+const ACCESS_TOKEN_KEY = "janmitra.token";
+const REFRESH_TOKEN_KEY = "janmitra.refreshToken";
+
+export function getStoredAccessToken(): string | null {
+  return localStorage.getItem(ACCESS_TOKEN_KEY);
+}
+export function getStoredRefreshToken(): string | null {
+  return localStorage.getItem(REFRESH_TOKEN_KEY);
+}
+export function storeSession(accessToken: string, refreshToken: string): void {
+  localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+  localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+}
+export function clearStoredSession(): void {
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
+}
+
+let onSessionRefreshed: ((accessToken: string, refreshToken: string, user: UserProfile) => void) | null = null;
+let onSessionExpired: (() => void) | null = null;
+
+/** auth.tsx calls this once, on mount -- lets a silent refresh triggered by SOME OTHER page's API
+ * call (not just the boot-time /auth/me check) still update the shared AuthContext's `token`/
+ * `user`, instead of only ever touching localStorage underneath React's back. */
+export function setSessionHandlers(handlers: {
+  onSessionRefreshed: (accessToken: string, refreshToken: string, user: UserProfile) => void;
+  onSessionExpired: () => void;
+}): void {
+  onSessionRefreshed = handlers.onSessionRefreshed;
+  onSessionExpired = handlers.onSessionExpired;
+}
+
+// Exactly one refresh attempt in flight at a time, shared by every caller -- refresh tokens
+// rotate on use (see backend/services/auth_service.py's rotate_refresh_token), so two concurrent
+// 401s naively each calling POST /auth/refresh with the SAME stored refresh token would have the
+// second one legitimately fail as "already rotated" (indistinguishable from real reuse/theft to
+// the server). Coalescing into one shared promise means every concurrent 401 waits on the same
+// single refresh instead of racing each other.
+let refreshInFlight: Promise<{ access_token: string; refresh_token: string; user: UserProfile } | null> | null = null;
+
+function silentRefresh(): Promise<{ access_token: string; refresh_token: string; user: UserProfile } | null> {
+  if (refreshInFlight) return refreshInFlight;
+  const refreshToken = getStoredRefreshToken();
+  if (!refreshToken) return Promise.resolve(null);
+
+  refreshInFlight = (async () => {
+    try {
+      // No `token` option passed -- POST /auth/refresh needs no Authorization header, only the
+      // refresh_token itself, which is also exactly why this call can never recursively trigger
+      // this same 401-retry path below (that path only ever fires when `options.token` was set).
+      const result = await request<AuthResponse>("/auth/refresh", { method: "POST", body: { refresh_token: refreshToken } });
+      storeSession(result.access_token, result.refresh_token);
+      onSessionRefreshed?.(result.access_token, result.refresh_token, result.user);
+      return result;
+    } catch {
+      // The refresh token itself is invalid/expired/reused -- there is no session left to save.
+      clearStoredSession();
+      onSessionExpired?.();
+      return null;
+    } finally {
+      refreshInFlight = null;
+    }
+  })();
+  return refreshInFlight;
+}
+
 async function request<T>(
   path: string,
   options: { method?: string; body?: unknown; token?: string | null; formData?: FormData } = {}
@@ -36,6 +109,17 @@ async function request<T>(
     throw new ApiError(0, "Could not reach the server. Check your connection and try again.");
   }
 
+  // Only ever attempted for a call that carried a token in the first place -- login/signup/
+  // refresh itself never pass `options.token`, so a 401 from any of those (wrong credentials, or
+  // a genuinely dead refresh token) falls straight through to the normal error below instead of
+  // looping back into another refresh attempt.
+  if (response.status === 401 && options.token) {
+    const refreshed = await silentRefresh();
+    if (refreshed) {
+      return request<T>(path, { ...options, token: refreshed.access_token });
+    }
+  }
+
   if (!response.ok) {
     let detail = `Request failed (${response.status}).`;
     try {
@@ -55,14 +139,24 @@ async function request<T>(
  * Auth still goes through the same Bearer header as everything else (no separate, weaker
  * authorization path for the download endpoint -- see backend/routes/complaints.py). Filename
  * comes from the server's Content-Disposition header, the same real value the backend derived
- * from the complaint's own display id -- never guessed or reconstructed client-side. */
+ * from the complaint's own display id -- never guessed or reconstructed client-side. Same silent-
+ * refresh-then-retry-once behavior as request() above, for the same reason (a report download
+ * shouldn't fail just because the access token happened to expire mid-session). */
 async function requestBlob(path: string, token: string): Promise<{ blob: Blob; filename: string }> {
-  let response: Response;
-  try {
-    response = await fetch(`${API_URL}${path}`, { headers: { Authorization: `Bearer ${token}` } });
-  } catch {
-    throw new ApiError(0, "Could not reach the server. Check your connection and try again.");
+  async function attempt(withToken: string): Promise<Response> {
+    try {
+      return await fetch(`${API_URL}${path}`, { headers: { Authorization: `Bearer ${withToken}` } });
+    } catch {
+      throw new ApiError(0, "Could not reach the server. Check your connection and try again.");
+    }
   }
+
+  let response = await attempt(token);
+  if (response.status === 401) {
+    const refreshed = await silentRefresh();
+    if (refreshed) response = await attempt(refreshed.access_token);
+  }
+
   if (!response.ok) {
     let detail = `Request failed (${response.status}).`;
     try {
@@ -98,6 +192,7 @@ export interface LocationOption {
 
 export interface AuthResponse {
   access_token: string;
+  refresh_token: string;
   user: UserProfile;
 }
 
@@ -316,6 +411,20 @@ export const api = {
 
   updateMe: (token: string, body: { full_name?: string; preferred_language?: string }) =>
     request<UserProfile>("/auth/me", { method: "PATCH", token, body }),
+
+  // No `token` option on either -- /auth/refresh and /auth/logout both authenticate via the
+  // refresh token in the body, not a Bearer access token (see backend/routes/auth.py's
+  // RefreshRequest/LogoutRequest docstrings for why). Exposed directly here mainly for tests/
+  // manual use; normal silent-refresh-on-401 goes through the internal silentRefresh() above,
+  // not this.
+  refresh: (refreshToken: string) =>
+    request<AuthResponse>("/auth/refresh", { method: "POST", body: { refresh_token: refreshToken } }),
+
+  logout: (refreshToken: string) =>
+    request<void>("/auth/logout", { method: "POST", body: { refresh_token: refreshToken } }),
+
+  changePassword: (token: string, body: { current_password: string; new_password: string }) =>
+    request<void>("/auth/change-password", { method: "POST", token, body }),
 
   listComplaints: (token: string, lang?: string, workerId?: number) => {
     const params = new URLSearchParams();

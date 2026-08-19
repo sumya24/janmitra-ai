@@ -13,11 +13,13 @@ import json
 import logging
 import secrets
 import time
+from datetime import datetime, timedelta, timezone
 
 import bcrypt
+from sqlalchemy.orm import Session
 
 from backend.config import settings
-from backend.models import User
+from backend.models import RefreshToken, User
 
 logger = logging.getLogger(__name__)
 
@@ -133,3 +135,113 @@ def decode_access_token(token: str) -> dict:
         raise InvalidTokenError("Token has expired.")
 
     return payload
+
+
+# --- Refresh tokens ------------------------------------------------------------------------
+# Opaque random strings, not JWTs -- see models.RefreshToken's own docstring for why. Naive-UTC
+# throughout (never `datetime.now(timezone.utc)` directly) rather than timezone-aware: this
+# project's SQLite DateTime columns have no real timezone-aware storage, and this codebase has no
+# prior art anywhere for comparing a stored datetime back against "now" (every existing
+# created_at/updated_at column is only ever written, never read back and compared) -- so rather
+# than depend on how SQLAlchemy/SQLite happen to round-trip an aware value, every refresh-token
+# timestamp here is naive-UTC consistently on both write and comparison, which sidesteps the
+# aware-vs-naive TypeError risk entirely regardless of that round-trip behavior.
+
+
+def _now_utc_naive() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+def _hash_refresh_token(plaintext: str) -> str:
+    return hashlib.sha256(plaintext.encode("utf-8")).hexdigest()
+
+
+def create_refresh_token(user: User, db: Session) -> str:
+    """Issue a brand-new refresh token for a just-logged-in/signed-up user.
+
+    Args:
+        user: The user to issue a refresh token for.
+        db: Active database session (the new row is committed here).
+
+    Returns:
+        The plaintext refresh token -- returned to the client exactly once; only its SHA-256
+        hash is ever persisted.
+    """
+    plaintext = secrets.token_urlsafe(32)
+    db.add(
+        RefreshToken(
+            user_id=user.id,
+            token_hash=_hash_refresh_token(plaintext),
+            expires_at=_now_utc_naive() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+        )
+    )
+    db.commit()
+    return plaintext
+
+
+def rotate_refresh_token(db: Session, plaintext_token: str) -> tuple[User, str, str] | None:
+    """Redeem a refresh token for a new access+refresh token pair, rotating it in the process.
+
+    Args:
+        db: Active database session.
+        plaintext_token: The refresh token presented by the client.
+
+    Returns:
+        (user, new_access_token, new_refresh_token) on success, or None if the token is unknown,
+        expired, or was already used (in which case every other active refresh token for that
+        user is also revoked -- see this module's docstring section and
+        models.RefreshToken.revoked_at's own docstring for why reuse is treated as compromise).
+    """
+    row = db.query(RefreshToken).filter(RefreshToken.token_hash == _hash_refresh_token(plaintext_token)).first()
+    if row is None:
+        return None
+
+    now = _now_utc_naive()
+
+    if row.revoked_at is not None:
+        revoke_all_refresh_tokens(db, row.user_id)
+        logger.warning("Refresh token reuse detected (user_id=%s) -- all active sessions revoked.", row.user_id)
+        return None
+
+    if row.expires_at <= now:
+        return None
+
+    user = db.query(User).filter(User.id == row.user_id).first()
+    if user is None:
+        return None
+
+    new_plaintext = secrets.token_urlsafe(32)
+    new_row = RefreshToken(
+        user_id=user.id,
+        token_hash=_hash_refresh_token(new_plaintext),
+        expires_at=now + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+    )
+    db.add(new_row)
+    db.flush()  # populate new_row.id before linking replaced_by_id below
+
+    row.revoked_at = now
+    row.replaced_by_id = new_row.id
+    db.commit()
+
+    return user, create_access_token(user), new_plaintext
+
+
+def revoke_refresh_token(db: Session, plaintext_token: str) -> None:
+    """Real, server-side logout: marks one refresh token revoked so it can never be redeemed
+    again, regardless of its natural expiry. A no-op (not an error) if the token is already
+    unknown/revoked -- logout should never fail just because the session was already gone."""
+    row = db.query(RefreshToken).filter(RefreshToken.token_hash == _hash_refresh_token(plaintext_token)).first()
+    if row is not None and row.revoked_at is None:
+        row.revoked_at = _now_utc_naive()
+        db.commit()
+
+
+def revoke_all_refresh_tokens(db: Session, user_id: int) -> None:
+    """Revokes every currently-active refresh token for one user in a single statement -- shared
+    by rotate_refresh_token's reuse-detection path (a suspected-compromise response) and
+    routes/auth.py's change-password endpoint (a "the credential may be stale, sign out
+    everywhere else" response to a deliberate password change). Commits itself."""
+    db.query(RefreshToken).filter(RefreshToken.user_id == user_id, RefreshToken.revoked_at.is_(None)).update(
+        {"revoked_at": _now_utc_naive()}
+    )
+    db.commit()

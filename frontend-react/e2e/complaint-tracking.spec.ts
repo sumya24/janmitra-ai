@@ -70,7 +70,8 @@ test("full complaint lifecycle: reject reassigns to the next worker, accept unlo
   await page.goto("/signup");
   await page.getByLabel("Full name").fill("Tracking Test Citizen");
   await page.getByLabel("Phone number").fill(citizenPhone);
-  await page.getByLabel("Password").fill("citizenpass123");
+  await page.getByLabel("Password", { exact: true }).fill("citizenpass123");
+  await page.locator("#signup-confirm-password").fill("citizenpass123");
   await fillHomeLocationPicker(page);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/citizen$/);

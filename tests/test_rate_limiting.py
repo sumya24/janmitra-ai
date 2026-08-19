@@ -107,6 +107,49 @@ def test_login_different_phones_do_not_share_a_bucket_via_the_request_body(clien
     assert response.status_code == 429
 
 
+# --- Signup --------------------------------------------------------------------------------
+# Its own dedicated limiter (SIGNUP_RATE_LIMIT, per-hour) -- see backend/deps.py's
+# require_signup_rate_limit and config.py's own comment on why signup gets a stricter, differently
+# -shaped window than login. Distinct phone numbers per attempt (real signups, not duplicate-phone
+# 409s) so this genuinely exercises the RATE limit itself, not the separate uniqueness check.
+
+
+def _signup_body(phone: str) -> dict:
+    return {
+        "full_name": "Test Citizen", "phone": phone, "password": "secret123",
+        "preferred_language": "en", "ward": "Test Ward",
+    }
+
+
+def test_signup_requests_up_to_the_limit_all_succeed(client):
+    for i in range(settings.SIGNUP_RATE_LIMIT):
+        response = client.post("/auth/signup", json=_signup_body(f"91100000{i:02d}"))
+        assert response.status_code == 200, response.text
+
+
+def test_signup_exceeding_limit_returns_429_with_retry_after(client):
+    for i in range(settings.SIGNUP_RATE_LIMIT):
+        client.post("/auth/signup", json=_signup_body(f"91100001{i:02d}"))
+
+    response = client.post("/auth/signup", json=_signup_body("9110000199"))
+    assert response.status_code == 429
+    assert "Retry-After" in response.headers
+    assert int(response.headers["Retry-After"]) > 0
+
+
+def test_signup_limiter_has_its_own_bucket_separate_from_login(client, make_citizen):
+    """Exhausting the login limiter must never affect signup, and vice versa -- see
+    backend/deps.py's own comment that the three limiters never share state."""
+    make_citizen(phone="9110000200")
+    for _ in range(settings.LOGIN_RATE_LIMIT):
+        client.post("/auth/login", json={"phone": "9110000200", "password": "secret123"})
+    exhausted_login = client.post("/auth/login", json={"phone": "9110000200", "password": "secret123"})
+    assert exhausted_login.status_code == 429
+
+    still_fresh_signup = client.post("/auth/signup", json=_signup_body("9110000201"))
+    assert still_fresh_signup.status_code == 200, still_fresh_signup.text
+
+
 # --- Ask Sarthi (AI) ---------------------------------------------------------------------------
 
 
