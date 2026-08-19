@@ -20,6 +20,40 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def init_error_monitoring() -> None:
+    """Wire up Sentry error alerting, if configured.
+
+    A no-op when SENTRY_DSN is unset (the default) -- same "off unless explicitly configured"
+    rule LangSmith tracing follows (see backend/services/observability/tracing.py): the app must
+    behave identically whether or not this is set up. Wrapped in try/except so a bad DSN or a
+    transient network issue during init can never block the app from starting -- the monitoring
+    tool itself must not become a new way for the app to go down.
+    """
+    if not settings.SENTRY_DSN:
+        return
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.fastapi import FastApiIntegration
+        from sentry_sdk.integrations.starlette import StarletteIntegration
+
+        sentry_sdk.init(
+            dsn=settings.SENTRY_DSN,
+            environment=settings.SENTRY_ENVIRONMENT,
+            traces_sample_rate=settings.SENTRY_TRACES_SAMPLE_RATE,
+            integrations=[StarletteIntegration(), FastApiIntegration()],
+            # Request/user data can contain citizen PII (phone numbers, complaint text). False is
+            # already the SDK's own default -- set explicitly so a future sentry-sdk version
+            # silently changing its own default can't quietly start sending PII unnoticed.
+            send_default_pii=False,
+        )
+        logger.info("Sentry error monitoring initialized (environment=%s)", settings.SENTRY_ENVIRONMENT)
+    except Exception:
+        logger.exception("Failed to initialize Sentry -- continuing without error monitoring")
+
+
+init_error_monitoring()
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     """Initialize the database, then warm the RAG embedding model, on application startup.

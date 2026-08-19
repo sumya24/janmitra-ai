@@ -216,6 +216,20 @@ class Settings:
     # backlog, not a moderation queue. Created automatically on first use if it doesn't exist yet.
     LANGSMITH_REVIEW_QUEUE_NAME: str = os.getenv("LANGSMITH_REVIEW_QUEUE_NAME", "jansarthi-ai-knowledge-gaps")
 
+    # Error monitoring (Sentry -- see backend/main.py's init_error_monitoring()). OFF by default,
+    # same "off unless explicitly configured" pattern as LANGSMITH_TRACING above: only actually
+    # initializes when SENTRY_DSN is set, and the app must behave identically whether or not it
+    # is (a failed/skipped Sentry init must never block startup or affect a request).
+    SENTRY_DSN: str = os.getenv("SENTRY_DSN", "")
+    # Free-text label shown on every event in the Sentry UI (e.g. "production", "staging") so
+    # errors from a local dev run never get mixed in with real deployment errors.
+    SENTRY_ENVIRONMENT: str = os.getenv("SENTRY_ENVIRONMENT", "development")
+    # Fraction of requests to also capture full performance traces for (0.0-1.0). Low by default
+    # -- this is an error-alerting feature first; tracing every request would be needless volume
+    # (and, on Sentry's hosted free/paid tiers, needless cost) for what's fundamentally meant to
+    # answer "did something break", not "profile every request".
+    SENTRY_TRACES_SAMPLE_RATE: float = float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.0"))
+
     # Supported languages: short code -> (display name, Sarvam BCP-47 code)
     SUPPORTED_LANGUAGES: dict[str, dict[str, str]] = {
         "mr": {"name": "Marathi", "bcp47": "mr-IN"},
