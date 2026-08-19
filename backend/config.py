@@ -229,6 +229,23 @@ class Settings:
     # (and, on Sentry's hosted free/paid tiers, needless cost) for what's fundamentally meant to
     # answer "did something break", not "profile every request".
     SENTRY_TRACES_SAMPLE_RATE: float = float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.0"))
+    # Forwards this app's existing `logging.getLogger(...)` calls (already used throughout
+    # backend/) to Sentry's Logs product too, in addition to full unhandled-exception events --
+    # no new logging calls needed anywhere for this to work, it rides the logging this codebase
+    # already does. Off by default -- same "opt in" rule as everything else here.
+    SENTRY_ENABLE_LOGS: bool = os.getenv("SENTRY_ENABLE_LOGS", "false").strip().lower() == "true"
+    # Enables sentry_sdk.metrics (count/gauge/distribution) -- see the small set of business
+    # metrics this actually powers: complaint creation (routes/complaints.py), Ask Sarthi request
+    # volume (routes/ask_janmitra.py), and rate-limit trips (middleware.py, deps.py). Those calls
+    # are always present in the code (calling them with this off is a harmless no-op, confirmed
+    # directly against the SDK) -- this flag only controls whether they actually get sent.
+    SENTRY_ENABLE_METRICS: bool = os.getenv("SENTRY_ENABLE_METRICS", "false").strip().lower() == "true"
+    # Fraction of trace "sessions" to also collect a code-level profile for (0.0-1.0) -- which
+    # exact lines/functions were slow, not just which route. Only ever actually samples while
+    # there's an active trace to attach to (profile_lifecycle="trace", set unconditionally in
+    # init_error_monitoring() below) -- so this has no effect unless SENTRY_TRACES_SAMPLE_RATE is
+    # also > 0. Off by default, same reasoning as SENTRY_TRACES_SAMPLE_RATE above.
+    SENTRY_PROFILE_SESSION_SAMPLE_RATE: float = float(os.getenv("SENTRY_PROFILE_SESSION_SAMPLE_RATE", "0.0"))
 
     # Supported languages: short code -> (display name, Sarvam BCP-47 code)
     SUPPORTED_LANGUAGES: dict[str, dict[str, str]] = {

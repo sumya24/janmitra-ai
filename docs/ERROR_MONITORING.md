@@ -11,14 +11,33 @@ settings are pointed at) fires the moment something actually breaks.
 
 ## What's wired up
 
-- **Backend** (`backend/main.py`'s `init_error_monitoring()`): every unhandled exception in any
-  route is automatically captured and sent, with the FastAPI/Starlette route name attached.
+- **Backend** (`backend/main.py`'s `init_error_monitoring()`, called from inside `lifespan()` --
+  see that function's own docstring for why it deliberately does NOT run at plain module-import
+  time): every unhandled exception in any route is automatically captured and sent, with the
+  FastAPI/Starlette route name attached. Four Sentry products, each its own on/off setting:
+  - **Error monitoring** -- always on once `SENTRY_DSN` is set; this is the core feature.
+  - **Logs** (`SENTRY_ENABLE_LOGS`) -- forwards this app's existing `logging.getLogger(...)`
+    calls (already used throughout `backend/`) to Sentry's Logs product too. No new logging
+    calls needed anywhere for this to work.
+  - **Application Metrics** (`SENTRY_ENABLE_METRICS`) -- a small set of business counters already
+    wired into the code: `complaint.created` (tagged by ward, `routes/complaints.py`),
+    `ask_janmitra.request` (tagged by channel: text/image/voice, `routes/ask_janmitra.py`), and
+    `rate_limit.exceeded` (tagged by which limiter tripped: general/login/ai, `middleware.py` +
+    `deps.py`). Calling these when the flag is off is a harmless no-op (confirmed directly
+    against the SDK) -- they're always present in the code, this flag just controls whether
+    they're actually sent.
+  - **Tracing + Profiling** (`SENTRY_TRACES_SAMPLE_RATE`, `SENTRY_PROFILE_SESSION_SAMPLE_RATE`)
+    -- performance traces and code-level profiles. Profiling is coupled to tracing
+    (`profile_lifecycle="trace"`, fixed): it only ever samples while there's an active trace, so
+    it has no effect unless the traces rate is also `> 0`.
 - **Frontend** (`frontend-react/src/main.tsx`): a top-level `Sentry.ErrorBoundary` wraps the
   whole app. Two independent things happen on a crash:
   1. The error is reported to Sentry (only if `VITE_SENTRY_DSN` is set).
   2. The citizen sees a plain "Something went wrong / Reload page" screen instead of a blank
      white page. This part always happens, DSN or not -- a crash-safety net and an alerting
      integration are two different concerns that happen to share one component.
+  (Logs/Metrics/Profiling are backend-only for now -- the frontend side only wires up Error
+  monitoring + Tracing, matching what `@sentry/react`'s `Sentry.init()` actually takes here.)
 
 ## Getting a DSN
 
@@ -31,7 +50,7 @@ settings are pointed at) fires the moment something actually breaks.
 
 | Where | What to set | Effect |
 |---|---|---|
-| Server's `.env` (never committed, see `docker-compose.prod.yml`'s `env_file`) | `SENTRY_DSN`, `SENTRY_ENVIRONMENT=production` | Backend reporting -- read at container **startup**, so a plain restart picks up a newly-added DSN, no rebuild needed. |
+| Server's `.env` (never committed, see `docker-compose.prod.yml`'s `env_file`) | `SENTRY_DSN`, `SENTRY_ENVIRONMENT=production`, plus optionally `SENTRY_ENABLE_LOGS`/`SENTRY_ENABLE_METRICS`/`SENTRY_TRACES_SAMPLE_RATE`/`SENTRY_PROFILE_SESSION_SAMPLE_RATE` | Backend reporting -- read at container **startup**, so a plain restart picks up a newly-added DSN, no rebuild needed. |
 | GitHub repo Settings > Secrets and variables > Actions | `VITE_SENTRY_DSN` | Frontend reporting -- Vite env vars are baked into the JS bundle at **build** time (see `frontend-react/Dockerfile`), so this must be a CI secret, not just a server `.env` entry; `.github/workflows/cd.yml` threads it through as a Docker build-arg. Takes effect on the next deploy after the secret is added. |
 | Local dev (`.env` / `frontend-react/.env`) | Same variables | Same effect, immediately, for local testing -- see `SENTRY_ENVIRONMENT=development` default so local errors never mix into the production project's event stream. |
 

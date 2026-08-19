@@ -10,6 +10,7 @@ automatically to every request.
 
 from __future__ import annotations
 
+from sentry_sdk import metrics as sentry_metrics
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
@@ -62,6 +63,7 @@ class GeneralRateLimitMiddleware(BaseHTTPMiddleware):
             identifier, settings.GENERAL_RATE_LIMIT, settings.GENERAL_RATE_LIMIT_WINDOW_SECONDS
         )
         if not allowed:
+            sentry_metrics.count("rate_limit.exceeded", 1, attributes={"limiter": "general"})
             return JSONResponse(
                 status_code=429,
                 content={"detail": "Too many requests. Please try again later."},

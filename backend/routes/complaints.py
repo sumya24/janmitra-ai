@@ -16,6 +16,7 @@ import logging
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict, Field
+from sentry_sdk import metrics as sentry_metrics
 from sqlalchemy.orm import Session
 
 from backend.config import settings
@@ -611,6 +612,14 @@ def create_complaint(
 
     assign_next_worker(db, complaint)
     db.refresh(complaint)
+
+    # A no-op when Sentry metrics aren't enabled (confirmed directly against the SDK -- see
+    # backend/main.py's SENTRY_ENABLE_METRICS docstring), so this always runs rather than being
+    # gated behind a settings check here too. Tagged by ward, not a service category -- Complaint
+    # has no category field of its own (that only exists on AiRequestLog, a different model, for
+    # Ask Sarthi's own classification); ward is real, already on this model, and a more directly
+    # actionable breakdown for this app anyway ("which ward is generating the most complaints").
+    sentry_metrics.count("complaint.created", 1, attributes={"ward": complaint.ward or "unknown"})
 
     return _to_response(db, complaint, display_language=None)
 

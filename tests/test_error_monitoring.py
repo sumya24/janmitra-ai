@@ -28,6 +28,9 @@ def test_initializes_sentry_when_dsn_set(monkeypatch):
     monkeypatch.setattr(settings, "SENTRY_DSN", "https://fake@example.ingest.sentry.io/1")
     monkeypatch.setattr(settings, "SENTRY_ENVIRONMENT", "test")
     monkeypatch.setattr(settings, "SENTRY_TRACES_SAMPLE_RATE", 0.25)
+    monkeypatch.setattr(settings, "SENTRY_ENABLE_LOGS", True)
+    monkeypatch.setattr(settings, "SENTRY_ENABLE_METRICS", True)
+    monkeypatch.setattr(settings, "SENTRY_PROFILE_SESSION_SAMPLE_RATE", 0.5)
     import sentry_sdk
 
     fake_init = Mock()
@@ -41,6 +44,30 @@ def test_initializes_sentry_when_dsn_set(monkeypatch):
     assert kwargs["environment"] == "test"
     assert kwargs["traces_sample_rate"] == 0.25
     assert kwargs["send_default_pii"] is False
+    assert kwargs["enable_logs"] is True
+    assert kwargs["enable_metrics"] is True
+    assert kwargs["profile_lifecycle"] == "trace"
+    assert kwargs["profile_session_sample_rate"] == 0.5
+
+
+def test_logs_and_metrics_and_profiling_off_by_default(monkeypatch):
+    """Every one of these flags must independently default to off -- turning on error monitoring
+    (just setting SENTRY_DSN) must not silently turn on the others too."""
+    monkeypatch.setattr(settings, "SENTRY_DSN", "https://fake@example.ingest.sentry.io/1")
+    monkeypatch.setattr(settings, "SENTRY_ENABLE_LOGS", False)
+    monkeypatch.setattr(settings, "SENTRY_ENABLE_METRICS", False)
+    monkeypatch.setattr(settings, "SENTRY_PROFILE_SESSION_SAMPLE_RATE", 0.0)
+    import sentry_sdk
+
+    fake_init = Mock()
+    monkeypatch.setattr(sentry_sdk, "init", fake_init)
+
+    init_error_monitoring()
+
+    _, kwargs = fake_init.call_args
+    assert kwargs["enable_logs"] is False
+    assert kwargs["enable_metrics"] is False
+    assert kwargs["profile_session_sample_rate"] == 0.0
 
 
 def test_never_raises_if_sentry_init_fails(monkeypatch):

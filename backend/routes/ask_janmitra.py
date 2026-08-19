@@ -13,6 +13,7 @@ import logging
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import ValidationError
+from sentry_sdk import metrics as sentry_metrics
 from sqlalchemy.orm import Session
 
 from backend.config import settings
@@ -45,6 +46,8 @@ def ask_janmitra(
     """
     if request.language not in settings.SUPPORTED_LANGUAGES:
         raise HTTPException(status_code=400, detail=f"Unsupported language: {request.language}")
+
+    sentry_metrics.count("ask_janmitra.request", 1, attributes={"channel": "text"})
 
     try:
         return _service.ask(db, current_user, request)
@@ -89,6 +92,8 @@ def ask_janmitra_with_image(
         raise HTTPException(status_code=400, detail=f"Unsupported language: {language}")
 
     history = _parse_conversation_history(conversation_history)
+
+    sentry_metrics.count("ask_janmitra.request", 1, attributes={"channel": "image"})
 
     try:
         return _service.ask_with_image(
@@ -137,6 +142,8 @@ def ask_janmitra_voice(
         raise HTTPException(status_code=400, detail="At least one audio segment is required.")
 
     history = _parse_conversation_history(conversation_history)
+
+    sentry_metrics.count("ask_janmitra.request", 1, attributes={"channel": "voice"})
 
     try:
         return _service.ask_voice(

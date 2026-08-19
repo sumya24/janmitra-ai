@@ -17,8 +17,11 @@ reportlab==5.0.0  # worker complaint-resolution report PDF generation, see backe
 # activates when SENTRY_DSN is actually set, matching this codebase's existing "off unless
 # explicitly configured" pattern for optional external services (LangSmith tracing below, Sarvam
 # itself). sentry-sdk's fastapi extra pulls in nothing beyond sentry-sdk itself -- it's just the
-# integration module, no new transitive dependency tree.
-sentry-sdk[fastapi]==2.19.2
+# integration module, no new transitive dependency tree. Bumped from the first-pinned 2.19.2 to
+# the latest 2.68.0 to pick up Logs/Metrics/Profiling (enable_logs, enable_metrics,
+# profile_session_sample_rate) -- confirmed directly against 2.68.0's own ClientConstructor that
+# all three are real, current options, not deprecated/renamed ones copied from stale docs.
+sentry-sdk[fastapi]==2.68.0
 
 # RAG retrieval (Ask Sarthi) -- see docs/ask_janmitra_rag_architecture.md.
 # torch is CPU-only (~200MB) -- installing plain `pip install torch` on Windows pulls the much
