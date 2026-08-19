@@ -74,6 +74,64 @@ export default function SettingsModal({ onClose, onLogout }: { onClose: () => vo
     }
   }
 
+  // Same collapsed-by-default pattern as change-password above -- own section, own fields, own
+  // submit actions. Two sub-steps live in one section (send code, then verify it) rather than two
+  // separate toggles, since they're really one flow. See backend/routes/auth.py's
+  // send_email_verification/verify_email: the address isn't attached to the account (user.email)
+  // until the code is confirmed, so a citizen can freely retry a mistyped address before that.
+  const [showAddEmail, setShowAddEmail] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [emailCode, setEmailCode] = useState("");
+  const [emailCodeSent, setEmailCodeSent] = useState(false);
+  const [emailFieldErrors, setEmailFieldErrors] = useState<Record<string, boolean>>({});
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [emailSuccess, setEmailSuccess] = useState(false);
+  const [sendingEmailCode, setSendingEmailCode] = useState(false);
+  const [verifyingEmail, setVerifyingEmail] = useState(false);
+
+  async function handleSendEmailCode() {
+    if (!token) return;
+    setEmailError(null);
+    if (!newEmail.trim()) {
+      setEmailFieldErrors({ newEmail: true });
+      return;
+    }
+    setEmailFieldErrors({});
+    setSendingEmailCode(true);
+    try {
+      await api.sendEmailVerification(token, { email: newEmail.trim() });
+      setEmailCodeSent(true);
+    } catch (err) {
+      setEmailError(err instanceof ApiError ? err.message : t(lang, "common.somethingWrong"));
+    } finally {
+      setSendingEmailCode(false);
+    }
+  }
+
+  async function handleVerifyEmail() {
+    if (!token) return;
+    setEmailError(null);
+    if (!emailCode.trim()) {
+      setEmailFieldErrors({ emailCode: true });
+      return;
+    }
+    setEmailFieldErrors({});
+    setVerifyingEmail(true);
+    try {
+      const updated = await api.verifyEmail(token, { code: emailCode.trim() });
+      updateUser(updated);
+      setEmailSuccess(true);
+      setShowAddEmail(false);
+      setNewEmail("");
+      setEmailCode("");
+      setEmailCodeSent(false);
+    } catch (err) {
+      setEmailError(err instanceof ApiError ? err.message : t(lang, "common.somethingWrong"));
+    } finally {
+      setVerifyingEmail(false);
+    }
+  }
+
   const modalRef = useModalA11y(onClose);
 
   return (
@@ -96,6 +154,12 @@ export default function SettingsModal({ onClose, onLogout }: { onClose: () => vo
           <label htmlFor="settings-phone">{t(lang, "settings.phone")}</label>
           <input id="settings-phone" type="tel" value={user?.phone ?? ""} disabled />
         </div>
+        {user?.email && user.email_verified && (
+          <div className="field">
+            <label htmlFor="settings-email">{t(lang, "auth.email.sectionTitle")}</label>
+            <input id="settings-email" type="email" value={`${user.email} (${t(lang, "auth.email.verified")})`} disabled />
+          </div>
+        )}
         {user?.role === "citizen" && (
           <div className="field">
             <label htmlFor="settings-ward">{t(lang, "citizen.ward")}</label>
@@ -179,6 +243,62 @@ export default function SettingsModal({ onClose, onLogout }: { onClose: () => vo
               {changingPassword ? t(lang, "settings.saving") : t(lang, "auth.changePassword.button")}
             </button>
           </div>
+        )}
+
+        {!(user?.email && user.email_verified) && (
+          <>
+            <hr style={{ border: "none", borderTop: "1px solid var(--line)", margin: "16px 0" }} />
+            {!showAddEmail ? (
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowAddEmail(true)}>
+                {t(lang, "auth.email.sectionTitle")}
+              </button>
+            ) : (
+              <div>
+                <h4 style={{ margin: "0 0 10px" }}>{t(lang, "auth.email.sectionTitle")}</h4>
+                {emailError && <div className="banner-error">{emailError}</div>}
+                {emailSuccess && <div className="banner-success">{t(lang, "auth.email.success")}</div>}
+                <div className={`field ${emailFieldErrors.newEmail ? "has-error" : ""}`}>
+                  <label htmlFor="settings-new-email">{t(lang, "auth.email.label")}</label>
+                  <input
+                    id="settings-new-email"
+                    type="email"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    disabled={emailCodeSent}
+                    aria-invalid={emailFieldErrors.newEmail || undefined}
+                  />
+                  {emailFieldErrors.newEmail && <div className="field-error">{t(lang, "common.fieldRequired")}</div>}
+                </div>
+                {!emailCodeSent ? (
+                  <button type="button" className="btn btn-primary btn-sm" onClick={handleSendEmailCode} disabled={sendingEmailCode}>
+                    {sendingEmailCode ? t(lang, "settings.saving") : t(lang, "auth.email.sendCode")}
+                  </button>
+                ) : (
+                  <>
+                    <div className="field-hint">{t(lang, "auth.email.sent")}</div>
+                    <div className={`field ${emailFieldErrors.emailCode ? "has-error" : ""}`}>
+                      <label htmlFor="settings-email-code">{t(lang, "auth.field.otpCode")}</label>
+                      <input
+                        id="settings-email-code"
+                        type="text"
+                        inputMode="numeric"
+                        value={emailCode}
+                        onChange={(e) => setEmailCode(e.target.value)}
+                        aria-invalid={emailFieldErrors.emailCode || undefined}
+                      />
+                      {emailFieldErrors.emailCode && <div className="field-error">{t(lang, "common.fieldRequired")}</div>}
+                    </div>
+                    <button type="button" className="btn btn-primary btn-sm" onClick={handleVerifyEmail} disabled={verifyingEmail}>
+                      {verifyingEmail ? t(lang, "settings.saving") : t(lang, "auth.email.verify")}
+                    </button>
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={handleSendEmailCode} disabled={sendingEmailCode}>
+                      {t(lang, "auth.email.resend")}
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </>
         )}
 
         <div className="modal-actions">

@@ -177,6 +177,8 @@ export interface UserProfile {
   id: number;
   full_name: string;
   phone: string;
+  email: string | null;
+  email_verified: boolean;
   role: "citizen" | "worker" | "admin";
   preferred_language: string;
   ward: string | null;
@@ -404,13 +406,30 @@ export const api = {
     home_state_id?: number; home_district_id?: number; home_ward_id?: number; home_locality_id?: number;
   }) => request<AuthResponse>("/auth/signup", { method: "POST", body }),
 
-  login: (body: { phone: string; password: string }) =>
+  // identifier accepts either a phone number or a verified email -- see backend/routes/auth.py's
+  // login() for the phone-shaped-vs-email-shaped detection.
+  login: (body: { identifier: string; password: string }) =>
     request<AuthResponse>("/auth/login", { method: "POST", body }),
 
   me: (token: string) => request<UserProfile>("/auth/me", { token }),
 
   updateMe: (token: string, body: { full_name?: string; preferred_language?: string }) =>
     request<UserProfile>("/auth/me", { method: "PATCH", token, body }),
+
+  // Send a 6-digit OTP to a candidate email; it isn't attached to the account until verifyEmail
+  // below confirms it (see backend/routes/auth.py's send_email_verification docstring).
+  sendEmailVerification: (token: string, body: { email: string }) =>
+    request<void>("/auth/email/send-verification", { method: "POST", token, body }),
+
+  verifyEmail: (token: string, body: { code: string }) =>
+    request<UserProfile>("/auth/email/verify", { method: "POST", token, body }),
+
+  // No token on either -- both are pre-login, self-service account recovery.
+  forgotPassword: (body: { email: string }) =>
+    request<void>("/auth/forgot-password", { method: "POST", body }),
+
+  resetPassword: (body: { email: string; code: string; new_password: string }) =>
+    request<void>("/auth/reset-password", { method: "POST", body }),
 
   // No `token` option on either -- /auth/refresh and /auth/logout both authenticate via the
   // refresh token in the body, not a Bearer access token (see backend/routes/auth.py's

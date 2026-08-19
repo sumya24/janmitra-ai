@@ -51,7 +51,7 @@ def main() -> None:
         ["python", "scripts/seed_admin.py", "--phone", admin_phone, "--password", "adminpass123", "--name", "Multi-Ward Seed Admin"],
         check=True,
     )
-    admin_token = requests.post(f"{BASE}/auth/login", json={"phone": admin_phone, "password": "adminpass123"}).json()["access_token"]
+    admin_token = requests.post(f"{BASE}/auth/login", json={"identifier": admin_phone, "password": "adminpass123"}).json()["access_token"]
 
     created = []
     for i, area in enumerate(AREAS):

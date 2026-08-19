@@ -103,20 +103,20 @@ def test_signup_rejects_unsupported_language(client):
 
 def test_login_with_correct_credentials_succeeds(client, make_citizen):
     make_citizen(phone="9000000001", password="secret123")
-    response = client.post("/auth/login", json={"phone": "9000000001", "password": "secret123"})
+    response = client.post("/auth/login", json={"identifier": "9000000001", "password": "secret123"})
     assert response.status_code == 200
     assert response.json()["access_token"]
 
 
 def test_login_with_wrong_password_returns_401(client, make_citizen):
     make_citizen(phone="9000000001", password="secret123")
-    response = client.post("/auth/login", json={"phone": "9000000001", "password": "wrong"})
+    response = client.post("/auth/login", json={"identifier": "9000000001", "password": "wrong"})
     assert response.status_code == 401
 
 
 def test_login_with_unknown_phone_returns_401_not_404(client):
     """Unknown phone and wrong password must look identical — never reveal which."""
-    response = client.post("/auth/login", json={"phone": "0000000000", "password": "whatever"})
+    response = client.post("/auth/login", json={"identifier": "0000000000", "password": "whatever"})
     assert response.status_code == 401
 
 

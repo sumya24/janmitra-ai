@@ -41,7 +41,7 @@ def test_signup_returns_a_refresh_token(client):
 
 def test_login_returns_a_refresh_token(client, make_citizen):
     make_citizen(phone="9200000002")
-    response = client.post("/auth/login", json={"phone": "9200000002", "password": "secret123"})
+    response = client.post("/auth/login", json={"identifier": "9200000002", "password": "secret123"})
     assert response.status_code == 200, response.text
     assert response.json()["refresh_token"]
 
@@ -152,9 +152,9 @@ def test_change_password_with_correct_current_password_succeeds(client):
     )
     assert response.status_code == 204
 
-    new_login = client.post("/auth/login", json={"phone": "9200000010", "password": "newpass456"})
+    new_login = client.post("/auth/login", json={"identifier": "9200000010", "password": "newpass456"})
     assert new_login.status_code == 200
-    old_login = client.post("/auth/login", json={"phone": "9200000010", "password": "oldpass123"})
+    old_login = client.post("/auth/login", json={"identifier": "9200000010", "password": "oldpass123"})
     assert old_login.status_code == 401
 
 
@@ -192,7 +192,7 @@ def test_change_password_revokes_other_refresh_tokens(client):
     """Password change assumes the old credential may be compromised -- every OTHER active
     refresh token for the account must stop working too, not just get left alone."""
     body = _signup(client, phone="9200000014", password="oldpass123")
-    second_login = client.post("/auth/login", json={"phone": "9200000014", "password": "oldpass123"})
+    second_login = client.post("/auth/login", json={"identifier": "9200000014", "password": "oldpass123"})
     second_refresh_token = second_login.json()["refresh_token"]
 
     response = client.post(

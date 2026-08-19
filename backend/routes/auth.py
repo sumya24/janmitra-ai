@@ -17,17 +17,25 @@ from sqlalchemy.orm import Session
 
 from backend.config import settings
 from backend.database import get_db
-from backend.deps import get_current_user, require_login_rate_limit, require_signup_rate_limit
+from backend.deps import (
+    get_current_user,
+    require_login_rate_limit,
+    require_otp_rate_limit,
+    require_signup_rate_limit,
+)
 from backend.models import District, Locality, State, ULB, User, Ward
 from backend.services.auth_service import (
     create_access_token,
+    create_email_otp,
     create_refresh_token,
     hash_password,
     revoke_all_refresh_tokens,
     revoke_refresh_token,
     rotate_refresh_token,
+    verify_email_otp,
     verify_password,
 )
+from backend.services.email_service import EmailServiceError, send_otp_email
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -52,6 +60,15 @@ _PASSWORD_HAS_DIGIT = re.compile(r"\d")
 # "wrong credentials" check, not a format gate, so a citizen who signed up before this validation
 # existed is never locked out of their own account.
 _PHONE_PATTERN = re.compile(r"^[6-9]\d{9}$")
+
+# Deliberately simple (not RFC 5322-complete) -- this is only ever used to (a) distinguish an
+# email-shaped identifier from a phone-shaped one at login, and (b) reject an obviously-malformed
+# address before spending an OTP send on it. The real proof of ownership is the OTP round-trip
+# itself, not this regex.
+_EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+_VERIFY_EMAIL_PURPOSE = "verify_email"
+_RESET_PASSWORD_PURPOSE = "reset_password"
 
 
 class SignupRequest(BaseModel):
@@ -83,9 +100,9 @@ class SignupRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    """Request body for logging in."""
+    """Request body for logging in -- with either a phone number or a verified email."""
 
-    phone: str
+    identifier: str
     password: str
 
 
@@ -111,6 +128,32 @@ class ChangePasswordRequest(BaseModel):
     new_password: str
 
 
+class SendEmailVerificationRequest(BaseModel):
+    """Request body for POST /auth/email/send-verification."""
+
+    email: str
+
+
+class VerifyEmailRequest(BaseModel):
+    """Request body for POST /auth/email/verify."""
+
+    code: str
+
+
+class ForgotPasswordRequest(BaseModel):
+    """Request body for POST /auth/forgot-password."""
+
+    email: str
+
+
+class ResetPasswordRequest(BaseModel):
+    """Request body for POST /auth/reset-password."""
+
+    email: str
+    code: str
+    new_password: str
+
+
 class MeUpdateRequest(BaseModel):
     """Request body for updating the current user's own profile."""
 
@@ -124,6 +167,8 @@ class UserResponse(BaseModel):
     id: int
     full_name: str
     phone: str
+    email: str | None
+    email_verified: bool
     role: str
     preferred_language: str
     ward: str | None
@@ -258,16 +303,23 @@ def signup(body: SignupRequest, db: Session = Depends(get_db)) -> AuthResponse:
 
 @router.post("/login", response_model=AuthResponse, dependencies=[Depends(require_login_rate_limit)])
 def login(body: LoginRequest, db: Session = Depends(get_db)) -> AuthResponse:
-    """Log in with a phone number and password, for any role.
+    """Log in with a phone number OR a verified email, plus password, for any role.
 
     Rate-limited per client IP (see backend/deps.py's require_login_rate_limit) -- counts every
     attempt, successful or not, before any credential check runs.
     """
-    user = db.query(User).filter(User.phone == body.phone.strip()).first()
+    identifier = body.identifier.strip()
+    if _PHONE_PATTERN.match(identifier):
+        user = db.query(User).filter(User.phone == identifier).first()
+    else:
+        # Only ever matches a VERIFIED email -- an unverified pending address is never written to
+        # User.email in the first place (see EmailOtp/verify_email_otp), so this can't be used to
+        # log in as an account whose email someone merely typed in without proving ownership.
+        user = db.query(User).filter(User.email == identifier, User.email_verified.is_(True)).first()
     if user is None or not verify_password(body.password, user.password_hash):
-        # Deliberately identical error for "no such phone" and "wrong password" —
+        # Deliberately identical error for "no such account" and "wrong password" —
         # never reveal which one it was.
-        raise HTTPException(status_code=401, detail="Incorrect phone number or password.")
+        raise HTTPException(status_code=401, detail="Incorrect phone number/email or password.")
 
     logger.info("User logged in (user_id=%s, role=%s)", user.id, user.role)
     access_token = create_access_token(user)
@@ -320,6 +372,108 @@ def change_password(
     db.commit()
     revoke_all_refresh_tokens(db, current_user.id)
     logger.info("Password changed (user_id=%s) -- all other sessions revoked.", current_user.id)
+
+
+@router.post(
+    "/email/send-verification",
+    status_code=204,
+    dependencies=[Depends(require_otp_rate_limit)],
+)
+def send_email_verification(
+    body: SendEmailVerificationRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
+    """Send a 6-digit OTP to a candidate email address, to prove the citizen owns it before it's
+    attached to their account. The address is NOT written to User.email here -- only once
+    POST /auth/email/verify confirms the code (see EmailOtp/verify_email_otp's own docstrings for
+    why: an unverified/abandoned attempt must never block someone else from claiming it, or let
+    anyone log in with an address nobody proved they own).
+    """
+    email = body.email.strip().lower()
+    if not _EMAIL_PATTERN.match(email):
+        raise HTTPException(status_code=400, detail="Enter a valid email address.")
+
+    existing = db.query(User).filter(User.email == email, User.email_verified.is_(True)).first()
+    if existing is not None and existing.id != current_user.id:
+        raise HTTPException(status_code=409, detail="This email is already in use on another account.")
+
+    code = create_email_otp(db, current_user.id, email, _VERIFY_EMAIL_PURPOSE)
+    try:
+        send_otp_email(email, code, _VERIFY_EMAIL_PURPOSE)
+    except EmailServiceError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    logger.info("Email verification code sent (user_id=%s)", current_user.id)
+
+
+@router.post("/email/verify", response_model=UserResponse)
+def verify_email(
+    body: VerifyEmailRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> UserResponse:
+    """Confirm the OTP sent by POST /auth/email/send-verification and, on success, attach its
+    email to the account as verified."""
+    otp_row = verify_email_otp(db, current_user.id, _VERIFY_EMAIL_PURPOSE, body.code.strip())
+    if otp_row is None:
+        raise HTTPException(status_code=400, detail="Invalid or expired code.")
+
+    existing = db.query(User).filter(User.email == otp_row.email, User.email_verified.is_(True)).first()
+    if existing is not None and existing.id != current_user.id:
+        raise HTTPException(status_code=409, detail="This email is already in use on another account.")
+
+    current_user.email = otp_row.email
+    current_user.email_verified = True
+    db.commit()
+    db.refresh(current_user)
+    logger.info("Email verified (user_id=%s)", current_user.id)
+    return UserResponse.model_validate(current_user)
+
+
+@router.post(
+    "/forgot-password",
+    status_code=204,
+    dependencies=[Depends(require_otp_rate_limit)],
+)
+def forgot_password(body: ForgotPasswordRequest, db: Session = Depends(get_db)) -> None:
+    """Request a password-reset code. Always returns the same 204, whether or not the email is
+    registered/verified -- same no-enumeration principle POST /auth/login already applies to
+    phone/password (never reveal which part of the input was wrong, or here, whether the account
+    exists at all)."""
+    email = body.email.strip().lower()
+    user = db.query(User).filter(User.email == email, User.email_verified.is_(True)).first()
+    if user is not None:
+        code = create_email_otp(db, user.id, email, _RESET_PASSWORD_PURPOSE)
+        try:
+            send_otp_email(email, code, _RESET_PASSWORD_PURPOSE)
+        except EmailServiceError:
+            # Deliberately swallowed, not surfaced to the caller -- surfacing it here would leak
+            # "this email exists but sending failed" vs. "this email doesn't exist", the exact
+            # enumeration this endpoint's identical-response design exists to prevent. Already
+            # logged inside send_otp_email itself for operator visibility.
+            pass
+        logger.info("Password reset code requested (user_id=%s)", user.id)
+
+
+@router.post("/reset-password", status_code=204)
+def reset_password(body: ResetPasswordRequest, db: Session = Depends(get_db)) -> None:
+    """Complete a password reset using the code from POST /auth/forgot-password. Revokes every
+    refresh token for the account on success -- same "assume the old credential may be
+    compromised" posture as POST /auth/change-password."""
+    email = body.email.strip().lower()
+    user = db.query(User).filter(User.email == email, User.email_verified.is_(True)).first()
+    if user is None:
+        raise HTTPException(status_code=400, detail="Invalid or expired code.")
+
+    otp_row = verify_email_otp(db, user.id, _RESET_PASSWORD_PURPOSE, body.code.strip())
+    if otp_row is None:
+        raise HTTPException(status_code=400, detail="Invalid or expired code.")
+
+    _validate_password_strength(body.new_password)
+    user.password_hash = hash_password(body.new_password)
+    db.commit()
+    revoke_all_refresh_tokens(db, user.id)
+    logger.info("Password reset via email OTP (user_id=%s) -- all sessions revoked.", user.id)
 
 
 @router.get("/me", response_model=UserResponse)

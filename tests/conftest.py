@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from backend.database import Base, get_db
-from backend.deps import _ai_limiter, _login_limiter, _signup_limiter
+from backend.deps import _ai_limiter, _login_limiter, _otp_limiter, _signup_limiter
 from backend.main import app
 from backend.middleware import _general_limiter
 
@@ -19,7 +19,7 @@ def _reset_rate_limiters():
     unrelated requests (every /auth/login call; every OTHER request too, now that
     GeneralRateLimitMiddleware covers every route) would all share ONE bucket per limiter and
     quickly exceed it, breaking tests that have nothing to do with rate limiting. Resetting all
-    four limiters before every test keeps each test's rate-limit state isolated, same as
+    five limiters before every test keeps each test's rate-limit state isolated, same as
     db_session already isolates each test's database -- this doesn't weaken the rate limiters
     themselves (see tests/test_rate_limiting.py, which deliberately exceeds the real limits within
     a single test to verify the real 429 behavior), it only stops accumulation *across* unrelated
@@ -27,6 +27,7 @@ def _reset_rate_limiters():
     _login_limiter.reset()
     _signup_limiter.reset()
     _ai_limiter.reset()
+    _otp_limiter.reset()
     _general_limiter.reset()
 
 
@@ -120,7 +121,9 @@ def make_worker(client, make_admin):
         # with a test that also calls make_admin() directly with the default phone.
         bootstrap_admin_phone = "9999900000"
         make_admin(phone=bootstrap_admin_phone, password="bootstrap-pass")
-        admin_login = client.post("/auth/login", json={"phone": bootstrap_admin_phone, "password": "bootstrap-pass"})
+        admin_login = client.post(
+            "/auth/login", json={"identifier": bootstrap_admin_phone, "password": "bootstrap-pass"}
+        )
         admin_token = admin_login.json()["access_token"]
 
         response = client.post(
@@ -136,7 +139,7 @@ def make_worker(client, make_admin):
         )
         assert response.status_code == 200, response.text
 
-        worker_login = client.post("/auth/login", json={"phone": phone, "password": password})
+        worker_login = client.post("/auth/login", json={"identifier": phone, "password": password})
         body = worker_login.json()
         return body["access_token"], body["user"]
 

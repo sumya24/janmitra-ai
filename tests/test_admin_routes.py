@@ -2,7 +2,7 @@
 
 
 def _login(client, phone, password):
-    response = client.post("/auth/login", json={"phone": phone, "password": password})
+    response = client.post("/auth/login", json={"identifier": phone, "password": password})
     assert response.status_code == 200
     return response.json()["access_token"]
 
@@ -28,7 +28,7 @@ def test_admin_can_create_worker(client, make_admin):
     assert body["ward"] == "Ward 14"
 
     # and the new worker can actually log in
-    worker_login = client.post("/auth/login", json={"phone": "9000000002", "password": "secret123"})
+    worker_login = client.post("/auth/login", json={"identifier": "9000000002", "password": "secret123"})
     assert worker_login.status_code == 200
     assert worker_login.json()["user"]["role"] == "worker"
 
@@ -226,9 +226,9 @@ def test_admin_can_reset_worker_password(client, make_admin, make_worker):
     assert response.status_code == 200
 
     # old password no longer works, new one does
-    old_login = client.post("/auth/login", json={"phone": "9000000002", "password": "oldpassword"})
+    old_login = client.post("/auth/login", json={"identifier": "9000000002", "password": "oldpassword"})
     assert old_login.status_code == 401
-    new_login = client.post("/auth/login", json={"phone": "9000000002", "password": "brandnewpass123"})
+    new_login = client.post("/auth/login", json={"identifier": "9000000002", "password": "brandnewpass123"})
     assert new_login.status_code == 200
 
 
@@ -292,7 +292,7 @@ def test_admin_can_delete_worker(client, make_admin, make_worker):
     assert response.json() == {"deleted_worker_id": worker["id"], "reset_to_pending": 0}
 
     # deleted -- no longer able to log in
-    login = client.post("/auth/login", json={"phone": "9000000002", "password": "secret123"})
+    login = client.post("/auth/login", json={"identifier": "9000000002", "password": "secret123"})
     assert login.status_code == 401
 
     # and gone from the worker list

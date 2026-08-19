@@ -2,7 +2,7 @@
 
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Float, ForeignKey, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from backend.database import Base
@@ -548,6 +548,13 @@ class User(Base):
     Attributes:
         id: Primary key.
         phone: Login identifier, unique.
+        email: A SECOND, optional login identifier -- unlike `phone`, never written here until
+            proven owned (see EmailOtp below); nullable+unique, so multiple accounts can each
+            still have no email at once (SQL treats NULLs as distinct under a unique constraint).
+        email_verified: True once an OTP sent to `email` has been confirmed (routes/auth.py's
+            POST /auth/email/verify). An unverified pending email lives only in EmailOtp.email,
+            never here -- so this flag is really "is `email` usable for login/password-reset",
+            not just "was an email typed in once."
         password_hash: Bcrypt hash of the password — the plaintext is never stored.
         full_name: Display name.
         role: One of "citizen", "worker", "admin".
@@ -581,6 +588,8 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     phone: Mapped[str] = mapped_column(String(20), unique=True, nullable=False, index=True)
+    email: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
+    email_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     full_name: Mapped[str] = mapped_column(String(120), nullable=False)
     role: Mapped[str] = mapped_column(String(16), nullable=False)
@@ -642,3 +651,50 @@ class RefreshToken(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     replaced_by_id: Mapped[int | None] = mapped_column(ForeignKey("refresh_tokens.id"), nullable=True)
+
+
+class EmailOtp(Base):
+    """A single one-time code issued to verify an email, or to authorize a password reset.
+
+    Same hash-only-at-rest principle as RefreshToken.token_hash: only `code_hash` (a SHA-256
+    digest) is ever stored, never the plaintext 6-digit code -- that's returned to
+    services/email_service.py exactly once, at issuance, to be emailed and then discarded.
+
+    Unlike a refresh token's 256-bit secret, a 6-digit code has only 1,000,000 possibilities and
+    is meaningfully brute-forceable -- `attempts` exists specifically to cap wrong-code guesses
+    against a single row (see services/auth_service.py's verify_email_otp).
+
+    Attributes:
+        id: Primary key.
+        user_id: The account this code was issued for -- both verify-email and forgot-password
+            always resolve to an existing account first, so this is never null.
+        email: The address the code was sent to. For purpose="verify_email" this is the *pending*
+            address being proven -- not necessarily (and not yet) User.email, which is only
+            written once this row is successfully verified. For purpose="reset_password" this is
+            the account's own already-verified User.email.
+        purpose: "verify_email" or "reset_password" -- verify_email_otp() only ever matches a row
+            with the purpose it was asked to check, so a code issued for one can't be replayed
+            against the other.
+        code_hash: SHA-256 hex digest of the plaintext 6-digit code.
+        created_at: When this code was issued.
+        expires_at: Hard expiry (see settings.OTP_EXPIRE_MINUTES) -- short-lived by design, unlike
+            a refresh token.
+        consumed_at: Set the moment this code is successfully verified. Null means still usable
+            (subject to expires_at/attempts below). A consumed row is never matched again, so a
+            code can't be replayed after success either.
+        attempts: Wrong-code guesses against this row so far: incremented on every mismatch, and
+            once it reaches settings.OTP_MAX_ATTEMPTS the row is treated as exhausted even if
+            still unexpired.
+    """
+
+    __tablename__ = "email_otps"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    email: Mapped[str] = mapped_column(String(255), nullable=False)
+    purpose: Mapped[str] = mapped_column(String(32), nullable=False)
+    code_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=_utcnow)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    consumed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

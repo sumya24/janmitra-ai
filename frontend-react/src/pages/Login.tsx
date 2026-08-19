@@ -14,7 +14,7 @@ export default function Login() {
   const { setSession } = useAuth();
   const navigate = useNavigate();
 
-  const [phone, setPhone] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -25,14 +25,14 @@ export default function Login() {
     setFormError(null);
 
     const errors: Record<string, boolean> = {};
-    if (!phone.trim()) errors.phone = true;
+    if (!identifier.trim()) errors.identifier = true;
     if (!password) errors.password = true;
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
 
     setSubmitting(true);
     try {
-      const { access_token, refresh_token, user } = await api.login({ phone: phone.trim(), password });
+      const { access_token, refresh_token, user } = await api.login({ identifier: identifier.trim(), password });
       setSession(access_token, refresh_token, user);
       navigate(user.role === "citizen" ? "/citizen" : user.role === "worker" ? "/worker" : "/admin");
     } catch (err) {
@@ -60,19 +60,19 @@ export default function Login() {
           {formError && <div className="banner-error">{formError}</div>}
 
           <form onSubmit={handleSubmit} noValidate>
-            <div className={`field ${fieldErrors.phone ? "has-error" : ""}`}>
-              <label htmlFor="login-phone">{t(lang, "auth.field.phone")}</label>
+            <div className={`field ${fieldErrors.identifier ? "has-error" : ""}`}>
+              <label htmlFor="login-identifier">{t(lang, "auth.field.identifier")}</label>
               <input
-                id="login-phone"
-                type="tel"
+                id="login-identifier"
+                type="text"
                 placeholder="98xxxxxxxx"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                aria-invalid={fieldErrors.phone || undefined}
-                aria-describedby={fieldErrors.phone ? "login-phone-error" : undefined}
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                aria-invalid={fieldErrors.identifier || undefined}
+                aria-describedby={fieldErrors.identifier ? "login-identifier-error" : undefined}
               />
-              {fieldErrors.phone && (
-                <div className="field-error" id="login-phone-error">
+              {fieldErrors.identifier && (
+                <div className="field-error" id="login-identifier-error">
                   {t(lang, "common.fieldRequired")}
                 </div>
               )}
@@ -92,6 +92,9 @@ export default function Login() {
                   {t(lang, "common.fieldRequired")}
                 </div>
               )}
+            </div>
+            <div className="switchline" style={{ textAlign: "right", marginTop: "-0.5rem" }}>
+              <Link to="/forgot-password">{t(lang, "auth.login.forgotLink")}</Link>
             </div>
             <button type="submit" className="btn btn-primary full" disabled={submitting}>
               {submitting ? "…" : t(lang, "auth.login.button")}
