@@ -75,6 +75,7 @@ def require_role(*allowed_roles: str):
 _login_limiter = RateLimiter()
 _signup_limiter = RateLimiter()
 _ai_limiter = RateLimiter()
+_otp_limiter = RateLimiter()
 
 
 def client_ip(request: Request) -> str:
@@ -130,6 +131,23 @@ def require_signup_rate_limit(request: Request) -> None:
         raise HTTPException(
             status_code=429,
             detail="Too many signup attempts. Please try again later.",
+            headers={"Retry-After": str(retry_after)},
+        )
+
+
+def require_otp_rate_limit(request: Request) -> None:
+    """Dependency for both OTP-sending routes (POST /auth/email/send-verification and POST
+    /auth/forgot-password) -- keyed per client IP (not per user, since forgot-password has no
+    auth to key on) so the two share one counting namespace, stopping someone from working around
+    the limit by alternating between them. Stops a spam script from flooding a victim's inbox or
+    burning the 300/day Brevo free quota."""
+    allowed, retry_after = _otp_limiter.check(
+        client_ip(request), settings.OTP_RATE_LIMIT, settings.OTP_RATE_LIMIT_WINDOW_SECONDS
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many code requests. Please try again later.",
             headers={"Retry-After": str(retry_after)},
         )
 

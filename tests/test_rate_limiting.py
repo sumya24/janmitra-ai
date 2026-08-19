@@ -29,7 +29,7 @@ from tests.test_ask_janmitra_image import _install_real_service as _install_real
 def test_login_within_limit_succeeds(client, make_citizen):
     """A single real login must never be affected by the limiter -- the normal case."""
     _, user = make_citizen(phone="9100000001")
-    response = client.post("/auth/login", json={"phone": "9100000001", "password": "secret123"})
+    response = client.post("/auth/login", json={"identifier": "9100000001", "password": "secret123"})
     assert response.status_code == 200, response.text
     assert response.json()["user"]["phone"] == "9100000001"
 
@@ -39,17 +39,17 @@ def test_login_requests_up_to_the_limit_all_succeed(client, make_citizen):
     role logins, must never trip the limit -- only genuinely EXCEEDING it should."""
     make_citizen(phone="9100000002")
     for _ in range(settings.LOGIN_RATE_LIMIT):
-        response = client.post("/auth/login", json={"phone": "9100000002", "password": "secret123"})
+        response = client.post("/auth/login", json={"identifier": "9100000002", "password": "secret123"})
         assert response.status_code == 200, response.text
 
 
 def test_login_exceeding_limit_returns_429_with_retry_after(client, make_citizen):
     make_citizen(phone="9100000003")
     for _ in range(settings.LOGIN_RATE_LIMIT):
-        response = client.post("/auth/login", json={"phone": "9100000003", "password": "secret123"})
+        response = client.post("/auth/login", json={"identifier": "9100000003", "password": "secret123"})
         assert response.status_code == 200
 
-    response = client.post("/auth/login", json={"phone": "9100000003", "password": "secret123"})
+    response = client.post("/auth/login", json={"identifier": "9100000003", "password": "secret123"})
     assert response.status_code == 429
     # Same plain error shape every other endpoint in this API already uses -- no custom handler.
     assert "detail" in response.json()
@@ -63,12 +63,12 @@ def test_login_counts_failed_attempts_too(client, make_citizen):
     throttled even though it never actually succeeds. Counts BOTH outcomes toward one limit."""
     make_citizen(phone="9100000004")
     for _ in range(settings.LOGIN_RATE_LIMIT):
-        response = client.post("/auth/login", json={"phone": "9100000004", "password": "wrong-password"})
+        response = client.post("/auth/login", json={"identifier": "9100000004", "password": "wrong-password"})
         assert response.status_code == 401
 
     # The limit is now exhausted by failed attempts alone -- even the CORRECT password is
     # throttled, proving this isn't secretly only counting successes.
-    response = client.post("/auth/login", json={"phone": "9100000004", "password": "secret123"})
+    response = client.post("/auth/login", json={"identifier": "9100000004", "password": "secret123"})
     assert response.status_code == 429
 
 
@@ -82,13 +82,13 @@ def test_login_recovers_after_window_expires(client, make_citizen, monkeypatch):
     make_citizen(phone="9100000005")
 
     for _ in range(settings.LOGIN_RATE_LIMIT):
-        client.post("/auth/login", json={"phone": "9100000005", "password": "secret123"})
-    blocked = client.post("/auth/login", json={"phone": "9100000005", "password": "secret123"})
+        client.post("/auth/login", json={"identifier": "9100000005", "password": "secret123"})
+    blocked = client.post("/auth/login", json={"identifier": "9100000005", "password": "secret123"})
     assert blocked.status_code == 429
 
     time.sleep(3.3)
 
-    recovered = client.post("/auth/login", json={"phone": "9100000005", "password": "secret123"})
+    recovered = client.post("/auth/login", json={"identifier": "9100000005", "password": "secret123"})
     assert recovered.status_code == 200, recovered.text
 
 
@@ -100,10 +100,10 @@ def test_login_different_phones_do_not_share_a_bucket_via_the_request_body(clien
     make_citizen(phone="9100000006")
     make_citizen(phone="9100000007")
     for _ in range(settings.LOGIN_RATE_LIMIT):
-        client.post("/auth/login", json={"phone": "9100000006", "password": "secret123"})
+        client.post("/auth/login", json={"identifier": "9100000006", "password": "secret123"})
 
     # Same TestClient == same apparent IP -- a different phone number does not get a fresh bucket.
-    response = client.post("/auth/login", json={"phone": "9100000007", "password": "secret123"})
+    response = client.post("/auth/login", json={"identifier": "9100000007", "password": "secret123"})
     assert response.status_code == 429
 
 
@@ -142,8 +142,8 @@ def test_signup_limiter_has_its_own_bucket_separate_from_login(client, make_citi
     backend/deps.py's own comment that the three limiters never share state."""
     make_citizen(phone="9110000200")
     for _ in range(settings.LOGIN_RATE_LIMIT):
-        client.post("/auth/login", json={"phone": "9110000200", "password": "secret123"})
-    exhausted_login = client.post("/auth/login", json={"phone": "9110000200", "password": "secret123"})
+        client.post("/auth/login", json={"identifier": "9110000200", "password": "secret123"})
+    exhausted_login = client.post("/auth/login", json={"identifier": "9110000200", "password": "secret123"})
     assert exhausted_login.status_code == 429
 
     still_fresh_signup = client.post("/auth/signup", json=_signup_body("9110000201"))

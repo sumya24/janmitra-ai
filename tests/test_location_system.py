@@ -612,7 +612,7 @@ def test_assignment_skips_worker_who_already_rejected_via_structured_ward_id(cli
     complaint_id = response.json()["id"]
     assert response.json()["assigned_worker_name"] == "Worker A (will reject)"  # lowest id first
 
-    worker_a_login = client.post("/auth/login", json={"phone": "9000000032", "password": "secret123"})
+    worker_a_login = client.post("/auth/login", json={"identifier": "9000000032", "password": "secret123"})
     worker_a_token = worker_a_login.json()["access_token"]
     reject_response = client.post(
         f"/complaints/{complaint_id}/reject", headers={"Authorization": f"Bearer {worker_a_token}"},

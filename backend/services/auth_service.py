@@ -19,7 +19,7 @@ import bcrypt
 from sqlalchemy.orm import Session
 
 from backend.config import settings
-from backend.models import RefreshToken, User
+from backend.models import EmailOtp, RefreshToken, User
 
 logger = logging.getLogger(__name__)
 
@@ -245,3 +245,98 @@ def revoke_all_refresh_tokens(db: Session, user_id: int) -> None:
         {"revoked_at": _now_utc_naive()}
     )
     db.commit()
+
+
+# --- Email OTPs ------------------------------------------------------------------------------
+# Same hash-only-at-rest principle and naive-UTC handling as refresh tokens above, but a 6-digit
+# code (not a 256-bit token) has only 1,000,000 possibilities -- meaningfully brute-forceable
+# without a per-row attempt cap, hence `attempts`/OTP_MAX_ATTEMPTS below (see models.EmailOtp's
+# own docstring).
+
+_OTP_DIGITS = "0123456789"
+_OTP_LENGTH = 6
+
+
+def generate_otp_code() -> str:
+    """Generate a random 6-digit one-time code.
+
+    Uses `secrets` (not `random`), matching this module's existing posture of only ever using a
+    cryptographically secure source for anything security-relevant (see create_refresh_token's
+    `secrets.token_urlsafe` above).
+
+    Returns:
+        A 6-character string of digits, e.g. "042817" (leading zeros preserved).
+    """
+    return "".join(secrets.choice(_OTP_DIGITS) for _ in range(_OTP_LENGTH))
+
+
+def _hash_otp_code(code: str) -> str:
+    return hashlib.sha256(code.encode("utf-8")).hexdigest()
+
+
+def create_email_otp(db: Session, user_id: int, email: str, purpose: str) -> str:
+    """Issue a brand-new OTP for verifying an email or authorizing a password reset.
+
+    Args:
+        user_id: The account this code is issued for.
+        email: The address the code is being sent to -- the pending address for
+            purpose="verify_email", or the account's own already-verified address for
+            purpose="reset_password".
+        purpose: "verify_email" or "reset_password".
+        db: Active database session (the new row is committed here).
+
+    Returns:
+        The plaintext 6-digit code -- handed to services/email_service.py to send exactly once;
+        only its SHA-256 hash is ever persisted.
+    """
+    plaintext = generate_otp_code()
+    db.add(
+        EmailOtp(
+            user_id=user_id,
+            email=email,
+            purpose=purpose,
+            code_hash=_hash_otp_code(plaintext),
+            expires_at=_now_utc_naive() + timedelta(minutes=settings.OTP_EXPIRE_MINUTES),
+        )
+    )
+    db.commit()
+    return plaintext
+
+
+def verify_email_otp(db: Session, user_id: int, purpose: str, code: str) -> EmailOtp | None:
+    """Check a submitted OTP against the latest still-usable code issued for this user+purpose.
+
+    Args:
+        db: Active database session.
+        user_id: The account the code should have been issued to.
+        purpose: "verify_email" or "reset_password" -- only ever matches a row issued for this
+            same purpose, so a code issued for one can't be replayed against the other.
+        code: The plaintext code the caller submitted.
+
+    Returns:
+        The now-consumed EmailOtp row on success (its `.email` is the address to write/act on),
+        or None if there is no matching unconsumed/unexpired/not-yet-exhausted row, or the code is
+        wrong (in which case that row's `attempts` is incremented as a side effect).
+    """
+    now = _now_utc_naive()
+    row = (
+        db.query(EmailOtp)
+        .filter(
+            EmailOtp.user_id == user_id,
+            EmailOtp.purpose == purpose,
+            EmailOtp.consumed_at.is_(None),
+        )
+        .order_by(EmailOtp.created_at.desc())
+        .first()
+    )
+    if row is None or row.expires_at <= now or row.attempts >= settings.OTP_MAX_ATTEMPTS:
+        return None
+
+    if not hmac.compare_digest(row.code_hash, _hash_otp_code(code)):
+        row.attempts += 1
+        db.commit()
+        return None
+
+    row.consumed_at = now
+    db.commit()
+    return row

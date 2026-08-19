@@ -24,7 +24,7 @@ test("login with wrong password shows an error and does not navigate away", asyn
   await page.getByLabel("Password").fill("wrong-password");
   await page.getByRole("button", { name: "Log in" }).click();
 
-  await expect(page.locator(".banner-error")).toContainText("Incorrect phone number or password");
+  await expect(page.locator(".banner-error")).toContainText("Incorrect phone number/email or password");
   await expect(page).toHaveURL(/\/login$/);
 });
 

@@ -415,7 +415,7 @@ def test_notification_created_on_reassignment(client, make_worker, db_session):
         json={"reason": "Reassign to the next worker."},
     )
 
-    worker2_login = client.post("/auth/login", json={"phone": "9000000098", "password": "secret123"})
+    worker2_login = client.post("/auth/login", json={"identifier": "9000000098", "password": "secret123"})
     token2 = worker2_login.json()["access_token"]
 
     notifs = client.get("/notifications", headers={"Authorization": f"Bearer {token2}"})
@@ -456,7 +456,7 @@ def test_notification_mark_read_is_idempotent(client, make_worker, db_session):
 def test_worker_cannot_mark_another_workers_notification_read(client, make_worker, db_session):
     token1, worker1 = make_worker(phone="9000000002", ward="Ward 14")
     _worker2_id = _make_worker_row(db_session, phone="9000000098", ward="Ward 14", full_name="Second Worker")
-    worker2_login = client.post("/auth/login", json={"phone": "9000000098", "password": "secret123"})
+    worker2_login = client.post("/auth/login", json={"identifier": "9000000098", "password": "secret123"})
     token2 = worker2_login.json()["access_token"]
 
     db = db_session()

@@ -3,6 +3,7 @@ import LanguageGate from "./pages/LanguageGate";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import ForgotPassword from "./pages/ForgotPassword";
 import CitizenHome from "./pages/CitizenHome";
 import CitizenDashboard from "./pages/CitizenDashboard";
 import CitizenComplaintDetail from "./pages/CitizenComplaintDetail";
@@ -25,6 +26,7 @@ export default function App() {
       <Route path="/welcome" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route
         path="/citizen"
         element={

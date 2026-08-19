@@ -73,7 +73,7 @@ def main() -> None:
         # complaint-resolution workflow now requires going through accept -> start -> resolve
         # (see backend/routes/complaints.py) rather than a single status PATCH, which this script
         # predates.
-        r = requests.post(f"{BASE}/auth/login", json={"phone": area["worker_phone"], "password": area["worker_password"]})
+        r = requests.post(f"{BASE}/auth/login", json={"identifier": area["worker_phone"], "password": area["worker_password"]})
         worker_token = r.json()["access_token"]
         headers = {"Authorization": f"Bearer {worker_token}"}
         complaint_id = area["complaint_id"]

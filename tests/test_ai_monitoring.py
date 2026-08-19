@@ -18,7 +18,7 @@ from backend.repositories import ai_request_log_repository
 
 
 def _login(client, phone, password):
-    response = client.post("/auth/login", json={"phone": phone, "password": password})
+    response = client.post("/auth/login", json={"identifier": phone, "password": password})
     assert response.status_code == 200
     return response.json()["access_token"]
 

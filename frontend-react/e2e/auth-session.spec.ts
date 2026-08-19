@@ -121,7 +121,7 @@ test("citizen can change their own password and log in with the new one", async 
   await page.getByLabel("Phone number").fill(phone);
   await page.getByLabel("Password").fill("oldpassword1");
   await page.getByRole("button", { name: "Log in" }).click();
-  await expect(page.locator(".banner-error")).toContainText("Incorrect phone number or password");
+  await expect(page.locator(".banner-error")).toContainText("Incorrect phone number/email or password");
 
   await page.getByLabel("Password").fill("newpassword2");
   await page.getByRole("button", { name: "Log in" }).click();

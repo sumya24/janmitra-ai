@@ -11,6 +11,14 @@ export function uniquePhone(): string {
   return "9" + String(Date.now()).slice(-7) + suffix;
 }
 
+let _uniqueEmailCounter = 0;
+
+export function uniqueEmail(): string {
+  _uniqueEmailCounter = (_uniqueEmailCounter + 1) % 100;
+  const suffix = String(_uniqueEmailCounter).padStart(2, "0");
+  return `test${Date.now()}${suffix}@example.com`;
+}
+
 /** Fills Signup's mandatory State/City/Ward/Area picker (HomeLocationPicker.tsx) -- the single
  * shared implementation every spec that signs up a citizen should call, replacing what used to
  * be 12 separate copies of near-identical select-or-freetext logic against the old single "Area

@@ -193,7 +193,7 @@ def test_worker_only_sees_complaints_assigned_to_them(client, make_worker, db_se
 
 def test_admin_sees_every_complaint(client, make_admin, db_session):
     make_admin(phone="9999999999", password="adminpass")
-    login = client.post("/auth/login", json={"phone": "9999999999", "password": "adminpass"})
+    login = client.post("/auth/login", json={"identifier": "9999999999", "password": "adminpass"})
     admin_token = login.json()["access_token"]
 
     db = db_session()
@@ -217,7 +217,7 @@ def test_admin_can_filter_by_worker_id(client, make_admin, make_worker, db_sessi
     """The Admin Worker Detail page's data source -- see routes/complaints.py's list_complaints()
     docstring for why this is admin-only-effective, not a separate permission check."""
     make_admin(phone="9999999999", password="adminpass")
-    login = client.post("/auth/login", json={"phone": "9999999999", "password": "adminpass"})
+    login = client.post("/auth/login", json={"identifier": "9999999999", "password": "adminpass"})
     admin_token = login.json()["access_token"]
     _, worker = make_worker(phone="9000000002", ward="Ward 14")
 
@@ -273,7 +273,7 @@ def test_worker_id_filter_is_ignored_for_non_admin_roles(client, make_worker, db
 def test_list_complaints_translates_on_read(client, monkeypatch, make_admin, db_session):
     """GET /complaints?lang=hi should translate stored English text on read only."""
     make_admin(phone="9999999999", password="adminpass")
-    login = client.post("/auth/login", json={"phone": "9999999999", "password": "adminpass"})
+    login = client.post("/auth/login", json={"identifier": "9999999999", "password": "adminpass"})
     admin_token = login.json()["access_token"]
 
     db = db_session()
@@ -303,7 +303,7 @@ def test_list_complaints_translates_on_read(client, monkeypatch, make_admin, db_
 def test_list_complaints_falls_back_to_english_on_translation_failure(client, monkeypatch, make_admin, db_session):
     """If on-read translation fails, the API should still return the English text."""
     make_admin(phone="9999999999", password="adminpass")
-    login = client.post("/auth/login", json={"phone": "9999999999", "password": "adminpass"})
+    login = client.post("/auth/login", json={"identifier": "9999999999", "password": "adminpass"})
     admin_token = login.json()["access_token"]
 
     db = db_session()

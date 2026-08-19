@@ -172,6 +172,36 @@ class Settings:
     # family on detected reuse, which is what makes a month-long lifetime an acceptable tradeoff.
     REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "30"))
 
+    # Email (plain SMTP via Python's stdlib smtplib -- see services/email_service.py) for OTP-based
+    # email verification and forgot-password. No third-party email-provider account needed --
+    # point this at any existing mailbox (Gmail, Outlook, a custom domain). Same "off unless
+    # configured" posture as SARVAM_API_KEY/LANGSMITH_API_KEY above: blank SMTP credentials make
+    # the email-touching routes return a clear 503, never a silent no-op or a fabricated "sent"
+    # response (see email_service.py).
+    SMTP_HOST: str = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
+    # For Gmail: the full Gmail address. SMTP_PASSWORD must be a 16-character Google "App
+    # Password" (Google Account -> Security -> 2-Step Verification -> App passwords) -- Gmail
+    # rejects plain-password SMTP login by default, so the normal account password won't work.
+    SMTP_USERNAME: str = os.getenv("SMTP_USERNAME", "")
+    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
+    # Defaults to SMTP_USERNAME (the common case: sending FROM the same mailbox being logged
+    # into) but kept as its own setting since some providers allow sending as a different verified
+    # alias than the login username.
+    EMAIL_FROM_ADDRESS: str = os.getenv("EMAIL_FROM_ADDRESS") or os.getenv("SMTP_USERNAME", "")
+    EMAIL_FROM_NAME: str = os.getenv("EMAIL_FROM_NAME", "JanSarthi AI")
+    # A 6-digit OTP is short-lived by design, unlike the month-long refresh token above.
+    OTP_EXPIRE_MINUTES: int = int(os.getenv("OTP_EXPIRE_MINUTES", "10"))
+    # A 6-digit code has only 1,000,000 possibilities -- meaningfully brute-forceable without a
+    # cap, unlike the 256-bit refresh token. See models.EmailOtp.attempts.
+    OTP_MAX_ATTEMPTS: int = int(os.getenv("OTP_MAX_ATTEMPTS", "5"))
+    # Its own dedicated limiter (not just GENERAL_RATE_LIMIT below), keyed per client IP, on both
+    # OTP-sending routes -- stops someone spamming a victim's inbox or burning the 300/day Brevo
+    # free quota. Generous enough for a real user resending once after not receiving the first
+    # code; tight enough to block a spam script.
+    OTP_RATE_LIMIT: int = int(os.getenv("OTP_RATE_LIMIT", "3"))
+    OTP_RATE_LIMIT_WINDOW_SECONDS: int = int(os.getenv("OTP_RATE_LIMIT_WINDOW_SECONDS", "600"))
+
     # Rate limiting (see backend/services/rate_limiter.py, backend/deps.py's
     # require_login_rate_limit/require_ai_rate_limit) -- a small, in-process, stdlib-only sliding
     # window, matching this codebase's existing preference for hand-rolled-over-new-dependency
