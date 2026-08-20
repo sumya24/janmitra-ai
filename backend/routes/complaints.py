@@ -76,7 +76,10 @@ def _citizen_notification_message(complaint: Complaint) -> str:
 
 
 def _send_lifecycle_email_best_effort(
-    db: Session, complaint: Complaint, event: Literal["created", "accepted", "started", "resolved"]
+    db: Session,
+    complaint: Complaint,
+    event: Literal["created", "accepted", "started", "resolved"],
+    worker_note: str | None = None,
 ) -> None:
     """Fire-and-forget: sends the citizen a real email for one of their complaint's lifecycle
     moments, if (and only if) they have a verified email -- silently skipped otherwise, exactly
@@ -84,14 +87,34 @@ def _send_lifecycle_email_best_effort(
     an EmailServiceError (SMTP not configured, or a real send failure) is caught and logged here,
     not surfaced to the caller -- see send_complaint_status_email's own docstring for why this
     must never fail the actual accept/start/resolve/create action it's attached to.
+
+    Renders in the citizen's own preferred_language, translating the summary the same way the
+    on-page complaint detail already does for that citizen (get_display_text_and_summary, the
+    exact helper _to_response uses) -- reusing its cache rather than a separate translation path,
+    and falling back to the stored English summary on an AIServiceError exactly like _to_response
+    does, so a translation hiccup degrades to an English email rather than losing the send.
+
+    worker_note: passed straight through to send_complaint_status_email -- start_work()/
+    resolve_complaint() pass their own assessment/completion_status text here so the citizen sees
+    it in the email too, not only on the app's own complaint page (see that function's own
+    docstring for why this text is NOT translated, unlike the summary above).
     """
     citizen = db.query(User).filter(User.id == int(complaint.citizen_id)).first()
     if citizen is None or not citizen.email or not citizen.email_verified:
         return
+    lang = citizen.preferred_language or "en"
+    summary = complaint.summary
+    if lang != "en":
+        try:
+            _, summary = get_display_text_and_summary(db, complaint, lang, _translation_service)
+        except AIServiceError as exc:
+            logger.error("Complaint %s: failed to translate lifecycle email into %s: %s", complaint.id, lang, exc)
+            summary = complaint.summary
     cta_url = f"{settings.FRONTEND_BASE_URL}/citizen/complaints/{complaint.id}" if settings.FRONTEND_BASE_URL else None
     try:
         send_complaint_status_email(
-            citizen.email, event, f"JM-{complaint.id:05d}", complaint.summary or "", complaint.ward or "", cta_url=cta_url,
+            citizen.email, event, f"JM-{complaint.id:05d}", summary or "", complaint.ward or "",
+            cta_url=cta_url, lang=lang, worker_note=worker_note,
         )
     except EmailServiceError as exc:
         logger.error("Complaint %s: failed to send '%s' lifecycle email: %s", complaint.id, event, exc)
@@ -875,7 +898,7 @@ def start_work(
         message=_citizen_notification_message(complaint),
         complaint_id=complaint.id,
     )
-    _send_lifecycle_email_best_effort(db, complaint, "started")
+    _send_lifecycle_email_best_effort(db, complaint, "started", worker_note=assessment)
     logger.info("Complaint %s work started by worker %s", complaint_id, worker.id)
     return _to_response(db, complaint, display_language=None)
 
@@ -964,7 +987,7 @@ def resolve_complaint(
         message=_citizen_notification_message(complaint),
         complaint_id=complaint.id,
     )
-    _send_lifecycle_email_best_effort(db, complaint, "resolved")
+    _send_lifecycle_email_best_effort(db, complaint, "resolved", worker_note=cleaned_status)
     logger.info("Complaint %s resolved by worker %s", complaint_id, worker.id)
     return _to_response(db, complaint, display_language=None)
 
