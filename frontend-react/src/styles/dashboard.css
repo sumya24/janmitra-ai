@@ -30,11 +30,63 @@
    width regardless of which block or component it's in, so values always line up. 128px comfortably
    fits the longest label across all 6 languages (Hindi's "दर्ज की गई तारीख"); dt's existing
    white-space: nowrap already guarantees no label wraps either way. */
-.report-fields { display: grid; grid-template-columns: 128px 1fr; gap: 6px 14px; margin: 0 0 16px; }
+.report-fields { display: grid; grid-template-columns: 128px 1fr; gap: 6px 14px; margin: 0; }
 .report-fields dt { color: var(--ink-2); font-size: 11.5px; font-weight: 700; white-space: nowrap; }
 .report-fields dd { margin: 0; color: var(--ink); }
 .report-section { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 12px; }
 .report-section p { margin: 4px 0; line-height: 1.5; }
+
+/* Bordered card wrapper around a <dl className="report-fields"> block -- previously the fields
+   just sat as bare text with no visual boundary, making a dense report read as an unstructured
+   wall of label/value pairs. Matches the light, bordered-panel look already used for the report
+   PDF's info panels, just simpler (no navy header bar) since this is a compact in-app popup, not
+   a printable document. */
+.report-fields-panel {
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px;
+  padding: 12px 14px; margin: 0 0 14px;
+}
+
+/* "Resolved" banner at the top of a report -- the PDF version already has a green confirmation
+   banner; the in-app HTML view had no equivalent, so a resolved report read identically to any
+   other status until you'd read every field. */
+.report-resolved-banner {
+  display: flex; align-items: center; gap: 8px; background: var(--status-resolved-bg);
+  color: var(--status-resolved); border: 1px solid var(--status-resolved);
+  border-radius: 10px; padding: 10px 14px; margin: 0 0 14px; font-size: 13px; font-weight: 700;
+}
+
+/* A real grid, not a flex row -- fixed column widths mean the "from" badges line up in one
+   vertical column, the arrows in another, and the "to" badges/timestamps in their own columns,
+   down the entire list, regardless of how long any individual row's status word happens to be.
+   minmax(0, ...) on the two badge columns lets a badge's own text wrap/shrink to fit -- but a
+   status badge never actually wraps (see .status-badge's white-space: nowrap), so if a column is
+   narrower than its badge's full text, the badge just overflows past the column boundary instead
+   of shrinking. A 0.7fr/1.3fr split (an earlier attempt at nudging the arrow left) was narrow
+   enough that Hindi/Marathi/Bengali's longer "accepted" status phrase overflowed column 1 far
+   enough to visually collide with column 3's badge -- confirmed by measuring actual on-screen
+   bounding boxes for all 6 languages, not just eyeballing it. Equal 1fr/1fr columns give every
+   language's longest real status phrase enough room; verified overlap-free the same way. */
+.report-timeline-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1fr) auto;
+  align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line);
+}
+.report-timeline-row:last-child { border-bottom: none; }
+.report-timeline-from, .report-timeline-to { display: flex; justify-content: flex-start; }
+/* The arrow nudges a few px left of its column's true center -- purely cosmetic (moves the glyph
+   within its own fixed-width column), unlike the column-ratio approach above, so it can't ever
+   eat into either badge's column and cause the same kind of overflow/collision. */
+.report-timeline-connector { text-align: center; margin-left: -6px; color: var(--ink-3); font-size: 13px; }
+.report-timeline-time { color: var(--ink-3); font-size: 12px; white-space: nowrap; text-align: right; }
+
+/* Small round icon-only button (ReportModal's header Share action) -- a light border, just big
+   enough to hold the 14px glyph centered, no text label. */
+.icon-pill-btn {
+  display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px;
+  border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2);
+  transition: background-color var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out);
+}
+.icon-pill-btn:hover:not(:disabled) { background: var(--surface-2); border-color: var(--ink-3); }
+.icon-pill-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* Worker-authored update timeline (initial assessment / progress updates / completion) --
    shown on the worker task-detail page and the citizen-facing complaint tracker alike, so both

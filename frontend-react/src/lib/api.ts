@@ -559,7 +559,8 @@ export const api = {
   getComplaintReport: (token: string, id: number, lang?: string) =>
     request<ComplaintReport>(`/complaints/${id}/report${lang ? `?lang=${lang}` : ""}`, { token }),
 
-  downloadComplaintReport: (token: string, id: number) => requestBlob(`/complaints/${id}/report/download`, token),
+  downloadComplaintReport: (token: string, id: number, lang?: string) =>
+    requestBlob(`/complaints/${id}/report/download${lang ? `?lang=${lang}` : ""}`, token),
 
   // In-app notifications -- worker-only in practice today, see AppNotification's docstring.
   listNotifications: (token: string) => request<NotificationList>("/notifications", { token }),

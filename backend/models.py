@@ -190,10 +190,10 @@ class ComplaintUpdateTranslation(Base):
     Unlike Complaint.translated_text, a ComplaintUpdate has no "always canonical English" storage
     guarantee -- `text` is stored exactly as the worker typed it, in whatever language that was
     (see ComplaintUpdate's own docstring), and no original-language column is recorded for it.
-    The source language is therefore APPROXIMATED as the authoring worker's CURRENT
-    `User.preferred_language` at translation time (see
-    complaint_update_translation_cache.py's own docstring for the full reasoning) -- not a
-    stored, immutable fact the way a citizen's complaint's original_language is.
+    The source language is therefore left unspecified at translation time and auto-detected by
+    Sarvam (see complaint_update_translation_cache.py's own docstring for the full reasoning,
+    including why an earlier version that approximated it from the worker's own
+    `User.preferred_language` turned out to be wrong).
 
     Attributes:
         id: Primary key.
