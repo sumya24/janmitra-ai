@@ -25,6 +25,7 @@ from backend.deps import get_current_user, require_role
 from backend.models import ULB, Complaint, ComplaintRejection, ComplaintStatusHistory, District, State, User
 from backend.repositories import complaint_workflow_repository, evidence_repository, notification_repository
 from backend.services import complaint_report_service
+from backend.services import metrics as sentry_metrics
 from backend.services.assignment_service import assign_next_worker
 from backend.services.complaint_agent import ComplaintAgent
 from backend.services.complaint_translation_cache import get_display_text_and_summary
@@ -671,7 +672,16 @@ def create_complaint(
     assign_next_worker(db, complaint)
     db.refresh(complaint)
 
+    # A no-op when Sentry metrics aren't enabled -- see backend/services/metrics.py's own
+    # docstring for why that gating lives there (the SDK's own enable_metrics flag is a confirmed
+    # no-op) rather than a settings check here too. Tagged by ward, not a service category --
+    # Complaint has no category field of its own (that only exists on AiRequestLog, a different
+    # model, for Ask Sarthi's own classification); ward is real, already on this model, and a
+    # more directly actionable breakdown for this app anyway ("which ward is generating the most
+    # complaints").
+    sentry_metrics.count("complaint.created", 1, attributes={"ward": complaint.ward or "unknown"})
     _send_lifecycle_email_best_effort(db, complaint, "created")
+
     return _to_response(db, complaint, display_language=None)
 
 
