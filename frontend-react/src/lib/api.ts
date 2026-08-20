@@ -286,12 +286,23 @@ export interface StatusHistoryEntry {
   created_at: string;
 }
 
+// One worker's rejection of this complaint -- admin-only (see backend/routes/complaints.py's
+// RejectionResponse/_to_detail_response docstrings). Always present on ComplaintDetail but only
+// ever non-empty when the viewer is an admin; citizens and workers always get an empty array,
+// enforced server-side, not just hidden here.
+export interface ComplaintRejection {
+  worker_name: string;
+  reason: string | null;
+  created_at: string;
+}
+
 export interface ComplaintDetail extends Complaint {
   updates: ComplaintUpdateEntry[];
   status_history: StatusHistoryEntry[];
   // Every evidence file across every stage -- group by `.stage` (and, within PROGRESS_UPDATE,
   // by `.update_id`) to show citizen/initial/progress/completion evidence separately.
   evidence: EvidenceFile[];
+  rejections: ComplaintRejection[];
 }
 
 export interface ComplaintReport {
@@ -318,13 +329,21 @@ export interface ComplaintReport {
   completion_evidence: string[];
 }
 
-// In-app notifications -- see backend/routes/notifications.py. NEW_ASSIGNMENT/REASSIGNED go to
-// workers (created by assignment_service.py). AI_ALERT goes to every admin, created by
-// backend/repositories/ai_request_log_repository.py's check_and_fire_alerts() when the Ask
-// Sarthi pipeline's rolling error rate or latency crosses a threshold -- see that function's
-// docstring for the cooldown that keeps a sustained problem from spamming a notification per
-// request. AI_ALERT notifications never have a complaint_id (see NotificationBell.tsx).
-export type NotificationType = "NEW_ASSIGNMENT" | "REASSIGNED" | "AI_ALERT";
+// In-app notifications -- see backend/models.py's Notification docstring for the authoritative
+// list. NEW_ASSIGNMENT/REASSIGNED go to workers (assignment_service.py). COMPLAINT_ACCEPTED/
+// STARTED/RESOLVED go to the citizen who filed it (routes/complaints.py). COMPLAINT_REJECTED and
+// AI_ALERT are both broadcast to every admin (routes/complaints.py's reject_complaint(), and
+// ai_request_log_repository.py's check_and_fire_alerts() for a sustained Ask Sarthi error-rate/
+// latency problem -- see that function's own cooldown docstring). AI_ALERT is the one type that
+// never carries a complaint_id, since it isn't about any single complaint (see NotificationBell.tsx).
+export type NotificationType =
+  | "NEW_ASSIGNMENT"
+  | "REASSIGNED"
+  | "COMPLAINT_ACCEPTED"
+  | "COMPLAINT_STARTED"
+  | "COMPLAINT_RESOLVED"
+  | "COMPLAINT_REJECTED"
+  | "AI_ALERT";
 
 export interface AppNotification {
   id: number;
@@ -397,12 +416,25 @@ export interface AiRequestLogEntry {
 }
 
 export const api = {
-  // ward is mandatory, one-time-at-signup -- see SignupRequest.ward's docstring (backend/routes/
-  // auth.py). Not present on updateMe below: it's deliberately not editable later. The four
+  // Email verification is mandatory at signup, but decoupled from the rest of the form behind
+  // its own "Verify" button (see backend/routes/auth.py's module docstring): sendSignupEmailCode
+  // + verifySignupEmailCode handle that round trip using only the email address, and hand back a
+  // one-time email_verification_token that must be included in the final signup() call below.
+  sendSignupEmailCode: (body: { email: string }) =>
+    request<void>("/auth/signup/email/send-code", { method: "POST", body }),
+
+  verifySignupEmailCode: (body: { email: string; code: string }) =>
+    request<{ email_verification_token: string }>("/auth/signup/email/verify-code", { method: "POST", body }),
+
+  // Creates the account directly, in one call -- but only succeeds if email_verification_token
+  // proves verifySignupEmailCode above already succeeded for this email (see backend/routes/
+  // auth.py's signup()). ward is mandatory, one-time-at-signup -- see SignupRequest.ward's
+  // docstring. Not present on updateMe below: it's deliberately not editable later. The four
   // home_*_id fields are optional and additive (see the same docstring) -- only the deepest one
   // the citizen's cascading picker actually reached needs to be sent.
   signup: (body: {
-    full_name: string; phone: string; password: string; preferred_language: string; ward: string;
+    full_name: string; phone: string; email: string; email_verification_token: string; password: string;
+    preferred_language: string; ward: string;
     home_state_id?: number; home_district_id?: number; home_ward_id?: number; home_locality_id?: number;
   }) => request<AuthResponse>("/auth/signup", { method: "POST", body }),
 

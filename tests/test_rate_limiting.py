@@ -29,7 +29,7 @@ from tests.test_ask_janmitra_image import _install_real_service as _install_real
 def test_login_within_limit_succeeds(client, make_citizen):
     """A single real login must never be affected by the limiter -- the normal case."""
     _, user = make_citizen(phone="9100000001")
-    response = client.post("/auth/login", json={"identifier": "9100000001", "password": "secret123"})
+    response = client.post("/auth/login", json={"identifier": "9100000001", "password": "secret123!"})
     assert response.status_code == 200, response.text
     assert response.json()["user"]["phone"] == "9100000001"
 
@@ -39,17 +39,17 @@ def test_login_requests_up_to_the_limit_all_succeed(client, make_citizen):
     role logins, must never trip the limit -- only genuinely EXCEEDING it should."""
     make_citizen(phone="9100000002")
     for _ in range(settings.LOGIN_RATE_LIMIT):
-        response = client.post("/auth/login", json={"identifier": "9100000002", "password": "secret123"})
+        response = client.post("/auth/login", json={"identifier": "9100000002", "password": "secret123!"})
         assert response.status_code == 200, response.text
 
 
 def test_login_exceeding_limit_returns_429_with_retry_after(client, make_citizen):
     make_citizen(phone="9100000003")
     for _ in range(settings.LOGIN_RATE_LIMIT):
-        response = client.post("/auth/login", json={"identifier": "9100000003", "password": "secret123"})
+        response = client.post("/auth/login", json={"identifier": "9100000003", "password": "secret123!"})
         assert response.status_code == 200
 
-    response = client.post("/auth/login", json={"identifier": "9100000003", "password": "secret123"})
+    response = client.post("/auth/login", json={"identifier": "9100000003", "password": "secret123!"})
     assert response.status_code == 429
     # Same plain error shape every other endpoint in this API already uses -- no custom handler.
     assert "detail" in response.json()
@@ -68,7 +68,7 @@ def test_login_counts_failed_attempts_too(client, make_citizen):
 
     # The limit is now exhausted by failed attempts alone -- even the CORRECT password is
     # throttled, proving this isn't secretly only counting successes.
-    response = client.post("/auth/login", json={"identifier": "9100000004", "password": "secret123"})
+    response = client.post("/auth/login", json={"identifier": "9100000004", "password": "secret123!"})
     assert response.status_code == 429
 
 
@@ -82,13 +82,13 @@ def test_login_recovers_after_window_expires(client, make_citizen, monkeypatch):
     make_citizen(phone="9100000005")
 
     for _ in range(settings.LOGIN_RATE_LIMIT):
-        client.post("/auth/login", json={"identifier": "9100000005", "password": "secret123"})
-    blocked = client.post("/auth/login", json={"identifier": "9100000005", "password": "secret123"})
+        client.post("/auth/login", json={"identifier": "9100000005", "password": "secret123!"})
+    blocked = client.post("/auth/login", json={"identifier": "9100000005", "password": "secret123!"})
     assert blocked.status_code == 429
 
     time.sleep(3.3)
 
-    recovered = client.post("/auth/login", json={"identifier": "9100000005", "password": "secret123"})
+    recovered = client.post("/auth/login", json={"identifier": "9100000005", "password": "secret123!"})
     assert recovered.status_code == 200, recovered.text
 
 
@@ -100,54 +100,52 @@ def test_login_different_phones_do_not_share_a_bucket_via_the_request_body(clien
     make_citizen(phone="9100000006")
     make_citizen(phone="9100000007")
     for _ in range(settings.LOGIN_RATE_LIMIT):
-        client.post("/auth/login", json={"identifier": "9100000006", "password": "secret123"})
+        client.post("/auth/login", json={"identifier": "9100000006", "password": "secret123!"})
 
     # Same TestClient == same apparent IP -- a different phone number does not get a fresh bucket.
-    response = client.post("/auth/login", json={"identifier": "9100000007", "password": "secret123"})
+    response = client.post("/auth/login", json={"identifier": "9100000007", "password": "secret123!"})
     assert response.status_code == 429
 
 
 # --- Signup --------------------------------------------------------------------------------
 # Its own dedicated limiter (SIGNUP_RATE_LIMIT, per-hour) -- see backend/deps.py's
 # require_signup_rate_limit and config.py's own comment on why signup gets a stricter, differently
-# -shaped window than login. Distinct phone numbers per attempt (real signups, not duplicate-phone
-# 409s) so this genuinely exercises the RATE limit itself, not the separate uniqueness check.
+# -shaped window than login. Now lives on POST /auth/signup/email/send-code specifically (the
+# real start of a signup attempt), not the final POST /auth/signup call -- see that route's own
+# docstring in routes/auth.py. Distinct email addresses per attempt so this genuinely exercises
+# the RATE limit itself, not the separate email-uniqueness check.
 
 
-def _signup_body(phone: str) -> dict:
-    return {
-        "full_name": "Test Citizen", "phone": phone, "password": "secret123",
-        "preferred_language": "en", "ward": "Test Ward",
-    }
-
-
-def test_signup_requests_up_to_the_limit_all_succeed(client):
+def test_signup_requests_up_to_the_limit_all_succeed(client, monkeypatch):
+    monkeypatch.setattr("backend.routes.auth.send_otp_email", lambda to_email, code, purpose: None)
     for i in range(settings.SIGNUP_RATE_LIMIT):
-        response = client.post("/auth/signup", json=_signup_body(f"91100000{i:02d}"))
-        assert response.status_code == 200, response.text
+        response = client.post("/auth/signup/email/send-code", json={"email": f"c{i:03d}@example.com"})
+        assert response.status_code == 204, response.text
 
 
-def test_signup_exceeding_limit_returns_429_with_retry_after(client):
+def test_signup_exceeding_limit_returns_429_with_retry_after(client, monkeypatch):
+    monkeypatch.setattr("backend.routes.auth.send_otp_email", lambda to_email, code, purpose: None)
     for i in range(settings.SIGNUP_RATE_LIMIT):
-        client.post("/auth/signup", json=_signup_body(f"91100001{i:02d}"))
+        client.post("/auth/signup/email/send-code", json={"email": f"d{i:03d}@example.com"})
 
-    response = client.post("/auth/signup", json=_signup_body("9110000199"))
+    response = client.post("/auth/signup/email/send-code", json={"email": "over-limit@example.com"})
     assert response.status_code == 429
     assert "Retry-After" in response.headers
     assert int(response.headers["Retry-After"]) > 0
 
 
-def test_signup_limiter_has_its_own_bucket_separate_from_login(client, make_citizen):
+def test_signup_limiter_has_its_own_bucket_separate_from_login(client, make_citizen, monkeypatch):
     """Exhausting the login limiter must never affect signup, and vice versa -- see
     backend/deps.py's own comment that the three limiters never share state."""
+    monkeypatch.setattr("backend.routes.auth.send_otp_email", lambda to_email, code, purpose: None)
     make_citizen(phone="9110000200")
     for _ in range(settings.LOGIN_RATE_LIMIT):
-        client.post("/auth/login", json={"identifier": "9110000200", "password": "secret123"})
-    exhausted_login = client.post("/auth/login", json={"identifier": "9110000200", "password": "secret123"})
+        client.post("/auth/login", json={"identifier": "9110000200", "password": "secret123!"})
+    exhausted_login = client.post("/auth/login", json={"identifier": "9110000200", "password": "secret123!"})
     assert exhausted_login.status_code == 429
 
-    still_fresh_signup = client.post("/auth/signup", json=_signup_body("9110000201"))
-    assert still_fresh_signup.status_code == 200, still_fresh_signup.text
+    still_fresh_signup = client.post("/auth/signup/email/send-code", json={"email": "fresh-signup@example.com"})
+    assert still_fresh_signup.status_code == 204, still_fresh_signup.text
 
 
 # --- Ask Sarthi (AI) ---------------------------------------------------------------------------

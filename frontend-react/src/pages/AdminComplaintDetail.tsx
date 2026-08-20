@@ -160,6 +160,27 @@ export default function AdminComplaintDetail() {
           ))}
         </div>
 
+        {c.rejections.length > 0 && (
+          <div className="surface-card" style={{ padding: 18, marginBottom: 16 }}>
+            <div className="section-label" style={{ marginTop: 0 }}>{t(lang, "admin.rejectionHistory")}</div>
+            {c.rejections.map((r, i) => (
+              <div key={i} className="status-history-entry" style={{ display: "block" }}>
+                <div>
+                  <strong>{t(lang, "admin.rejectedBy")}:</strong> {r.worker_name}
+                  <span className="mono" style={{ color: "var(--ink-3)", marginLeft: 10 }}>
+                    {new Date(r.created_at).toLocaleString()}
+                  </span>
+                </div>
+                {r.reason && (
+                  <div style={{ marginTop: 4 }}>
+                    <strong>{t(lang, "admin.rejectionReason")}:</strong> {r.reason}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
         {c.status === "resolved" && (
           <div className="surface-card" style={{ padding: 18 }}>
             <div className="section-label" style={{ marginTop: 0 }}>{t(lang, "worker.detail.report")}</div>

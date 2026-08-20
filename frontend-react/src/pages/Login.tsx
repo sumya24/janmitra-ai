@@ -65,7 +65,7 @@ export default function Login() {
               <input
                 id="login-identifier"
                 type="text"
-                placeholder="98xxxxxxxx"
+                placeholder="98xxxxxxxx or you@example.com"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 aria-invalid={fieldErrors.identifier || undefined}

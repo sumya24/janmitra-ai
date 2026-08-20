@@ -62,27 +62,62 @@ def client(db_session):
 
 @pytest.fixture()
 def make_citizen(client):
-    """Factory fixture: sign up a citizen via the real API and return (token, user)."""
+    """Factory fixture: sign up a citizen via the real three-call API (POST /auth/signup/email/
+    send-code, POST /auth/signup/email/verify-code, then POST /auth/signup with the returned
+    proof token) and return (token, user).
+
+    Email verification is mandatory at signup, decoupled from the rest of the form behind its own
+    "Verify" button on the frontend (see backend/routes/auth.py's module docstring) -- this
+    fixture intercepts backend.routes.auth.send_otp_email purely to capture the plaintext code
+    without a real network call, then completes the same round trip a real citizen would, so
+    every one of this fixture's many existing callers keeps working unchanged against the same
+    (token, user) contract as before.
+
+    Uses unittest.mock.patch as a `with` block, NOT the shared monkeypatch fixture -- deliberately:
+    monkeypatch.setattr only reverts at the end of the WHOLE test, so if a test has already
+    patched this same target itself (e.g. tests/test_email_otp.py's _fake_send_otp_email, to
+    capture codes from ITS OWN later calls), calling this fixture would permanently clobber that
+    test's patch for the rest of the test. A `with patch(...)` block instead restores whatever was
+    there before -- the test's own patch included -- the moment this fixture is done with it.
+    """
 
     def _make(
         phone: str = "9000000001",
-        password: str = "secret123",
+        password: str = "secret123!",
         full_name: str = "Test Citizen",
         preferred_language: str = "en",
         ward: str = "Test Ward",
+        email: str | None = None,
     ):
-        response = client.post(
+        from unittest.mock import patch
+
+        email = email or f"citizen{phone}@example.com"
+        sent_codes: list[str] = []
+        with patch("backend.routes.auth.send_otp_email", lambda to_email, code, purpose: sent_codes.append(code)):
+            send_response = client.post("/auth/signup/email/send-code", json={"email": email})
+            assert send_response.status_code == 204, send_response.text
+            assert sent_codes, "signup should have emailed a verification code"
+
+        verify_response = client.post(
+            "/auth/signup/email/verify-code", json={"email": email, "code": sent_codes[-1]}
+        )
+        assert verify_response.status_code == 200, verify_response.text
+        token = verify_response.json()["email_verification_token"]
+
+        signup_response = client.post(
             "/auth/signup",
             json={
                 "full_name": full_name,
                 "phone": phone,
+                "email": email,
+                "email_verification_token": token,
                 "password": password,
                 "preferred_language": preferred_language,
                 "ward": ward,
             },
         )
-        assert response.status_code == 200, response.text
-        body = response.json()
+        assert signup_response.status_code == 200, signup_response.text
+        body = signup_response.json()
         return body["access_token"], body["user"]
 
     return _make
@@ -116,7 +151,7 @@ def make_admin(db_session):
 def make_worker(client, make_admin):
     """Factory fixture: seed an admin, then use it to create a worker via the real API."""
 
-    def _make(phone: str = "9000000002", password: str = "secret123", full_name: str = "Test Worker", ward: str = "Ward 14", preferred_language: str = "hi"):
+    def _make(phone: str = "9000000002", password: str = "secret123!", full_name: str = "Test Worker", ward: str = "Ward 14", preferred_language: str = "hi"):
         # Uses its own dedicated bootstrap-admin phone so this fixture composes safely
         # with a test that also calls make_admin() directly with the default phone.
         bootstrap_admin_phone = "9999900000"

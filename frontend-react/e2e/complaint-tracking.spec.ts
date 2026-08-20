@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { execSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { fillHomeLocationPicker, uniquePhone } from "./helpers";
+import { verifySignupEmail, fillHomeLocationPicker, uniqueEmail, uniquePhone } from "./helpers";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../..");
@@ -70,9 +70,11 @@ test("full complaint lifecycle: reject reassigns to the next worker, accept unlo
   await page.goto("/signup");
   await page.getByLabel("Full name").fill("Tracking Test Citizen");
   await page.getByLabel("Phone number").fill(citizenPhone);
-  await page.getByLabel("Password", { exact: true }).fill("citizenpass123");
-  await page.locator("#signup-confirm-password").fill("citizenpass123");
+  await page.getByLabel("Password", { exact: true }).fill("citizenpass123!");
+  await page.getByLabel("Email address").fill(uniqueEmail());
+  await page.locator("#signup-confirm-password").fill("citizenpass123!");
   await fillHomeLocationPicker(page);
+  await verifySignupEmail(page);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/citizen$/);
 
@@ -176,7 +178,7 @@ test("full complaint lifecycle: reject reassigns to the next worker, accept unlo
 
   // --- Citizen sees the full tracking history: reassignment happened, now resolved, worker B's
   // phone is visible (only now, post-accept), and a feedback form is waiting. ---
-  await login(page, citizenPhone, "citizenpass123");
+  await login(page, citizenPhone, "citizenpass123!");
   await expect(page).toHaveURL(/\/citizen$/);
   // Scoped to the "track prompt" card's own button -- a nav-drawer link with the same text also
   // exists on the page (see components/NavDrawer.tsx), so an unscoped role/name locator is

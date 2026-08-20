@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { fillHomeLocationPicker, uniquePhone } from "./helpers";
+import { verifySignupEmail, fillHomeLocationPicker, uniqueEmail, uniquePhone } from "./helpers";
 
 test("an unauthenticated visitor is redirected away from protected dashboards", async ({ page }) => {
   await page.goto("/citizen");
@@ -17,9 +17,11 @@ test("a citizen cannot reach the worker or admin dashboards by URL", async ({ pa
   await page.goto("/signup");
   await page.getByLabel("Full name").fill("Just A Citizen");
   await page.getByLabel("Phone number").fill(phone);
-  await page.getByLabel("Password", { exact: true }).fill("secret123");
-  await page.locator("#signup-confirm-password").fill("secret123");
+  await page.getByLabel("Password", { exact: true }).fill("secret123!");
+  await page.getByLabel("Email address").fill(uniqueEmail());
+  await page.locator("#signup-confirm-password").fill("secret123!");
   await fillHomeLocationPicker(page);
+  await verifySignupEmail(page);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/citizen$/);
 

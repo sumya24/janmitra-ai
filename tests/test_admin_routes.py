@@ -17,7 +17,7 @@ def test_admin_can_create_worker(client, make_admin):
         json={
             "full_name": "Ramesh Kadam",
             "phone": "9000000002",
-            "password": "secret123",
+            "password": "secret123!",
             "ward": "Ward 14",
             "preferred_language": "hi",
         },
@@ -28,7 +28,7 @@ def test_admin_can_create_worker(client, make_admin):
     assert body["ward"] == "Ward 14"
 
     # and the new worker can actually log in
-    worker_login = client.post("/auth/login", json={"identifier": "9000000002", "password": "secret123"})
+    worker_login = client.post("/auth/login", json={"identifier": "9000000002", "password": "secret123!"})
     assert worker_login.status_code == 200
     assert worker_login.json()["user"]["role"] == "worker"
 
@@ -41,7 +41,7 @@ def test_citizen_cannot_create_worker(client, make_citizen):
         json={
             "full_name": "Ramesh Kadam",
             "phone": "9000000002",
-            "password": "secret123",
+            "password": "secret123!",
             "ward": "Ward 14",
             "preferred_language": "hi",
         },
@@ -57,7 +57,7 @@ def test_worker_cannot_create_another_worker(client, make_worker):
         json={
             "full_name": "Another Worker",
             "phone": "9000000003",
-            "password": "secret123",
+            "password": "secret123!",
             "ward": "Ward 9",
             "preferred_language": "en",
         },
@@ -71,7 +71,7 @@ def test_unauthenticated_request_is_rejected(client):
         json={
             "full_name": "Ramesh",
             "phone": "9000000002",
-            "password": "secret123",
+            "password": "secret123!",
             "ward": "Ward 14",
             "preferred_language": "hi",
         },
@@ -90,7 +90,7 @@ def test_create_worker_rejects_duplicate_phone(client, make_admin, make_citizen)
         json={
             "full_name": "Ramesh",
             "phone": "9000000001",
-            "password": "secret123",
+            "password": "secret123!",
             "ward": "Ward 14",
             "preferred_language": "hi",
         },
@@ -263,7 +263,7 @@ def test_worker_cannot_reset_own_or_others_password(client, make_worker, db_sess
     token, _ = make_worker(phone="9000000002")
     db = db_session()
     other = User(
-        full_name="Other Worker", phone="9000000003", password_hash=hash_password("secret123"),
+        full_name="Other Worker", phone="9000000003", password_hash=hash_password("secret123!"),
         role="worker", preferred_language="en", ward="Ward 9",
     )
     db.add(other)
@@ -292,7 +292,7 @@ def test_admin_can_delete_worker(client, make_admin, make_worker):
     assert response.json() == {"deleted_worker_id": worker["id"], "reset_to_pending": 0}
 
     # deleted -- no longer able to log in
-    login = client.post("/auth/login", json={"identifier": "9000000002", "password": "secret123"})
+    login = client.post("/auth/login", json={"identifier": "9000000002", "password": "secret123!"})
     assert login.status_code == 401
 
     # and gone from the worker list
@@ -425,7 +425,7 @@ def test_worker_cannot_delete_worker(client, make_worker, db_session):
 
     db = db_session()
     other = User(
-        full_name="Other Worker", phone="9000000003", password_hash=hash_password("secret123"),
+        full_name="Other Worker", phone="9000000003", password_hash=hash_password("secret123!"),
         role="worker", preferred_language="en", ward="Ward 9",
     )
     db.add(other)

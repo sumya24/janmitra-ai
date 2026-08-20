@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { fillHomeLocationPicker, uniquePhone } from "./helpers";
+import { verifySignupEmail, fillHomeLocationPicker, uniqueEmail, uniquePhone } from "./helpers";
 
 /**
  * E2E coverage for Ask Sarthi against the REAL backend (POST /ask-janmitra) — not a mock.
@@ -21,9 +21,11 @@ async function signUpAndReachCitizenHome(page: import("@playwright/test").Page) 
   const phone = uniquePhone();
   await page.getByLabel("Full name").fill("Ask Sarthi Tester");
   await page.getByLabel("Phone number").fill(phone);
-  await page.getByLabel("Password", { exact: true }).fill("secret123");
-  await page.locator("#signup-confirm-password").fill("secret123");
+  await page.getByLabel("Email address").fill(uniqueEmail());
+  await page.getByLabel("Password", { exact: true }).fill("secret123!");
+  await page.locator("#signup-confirm-password").fill("secret123!");
   await fillHomeLocationPicker(page);
+  await verifySignupEmail(page);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/citizen$/);
 }
@@ -106,8 +108,9 @@ test("Ask Sarthi: a question with no location asks for clarification instead of 
   const phone = uniquePhone();
   await page.getByLabel("Full name").fill("Ask Sarthi Tester");
   await page.getByLabel("Phone number").fill(phone);
-  await page.getByLabel("Password", { exact: true }).fill("secret123");
-  await page.locator("#signup-confirm-password").fill("secret123");
+  await page.getByLabel("Email address").fill(uniqueEmail());
+  await page.getByLabel("Password", { exact: true }).fill("secret123!");
+  await page.locator("#signup-confirm-password").fill("secret123!");
   const stateField = page.locator("#signup-home-state");
   await expect.poll(() => stateField.locator("option").count()).toBeGreaterThan(1);
   await stateField.selectOption({ label: "Maharashtra" });
@@ -117,6 +120,7 @@ test("Ask Sarthi: a question with no location asks for clarification instead of 
   const wardField = page.locator("#signup-home-ward");
   await expect.poll(() => wardField.isEnabled()).toBe(true);
   await wardField.selectOption({ index: 1 });
+  await verifySignupEmail(page);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/citizen$/);
 
