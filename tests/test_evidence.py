@@ -34,7 +34,7 @@ def _fake_agent_create_complaint(db, citizen_id, language_code, text, audio_chun
 def _make_worker_row(db_session, phone: str, ward: str, full_name: str = "Worker") -> int:
     db = db_session()
     worker = User(
-        full_name=full_name, phone=phone, password_hash=hash_password("secret123"),
+        full_name=full_name, phone=phone, password_hash=hash_password("secret123!"),
         role="worker", preferred_language="en", ward=ward,
     )
     db.add(worker)

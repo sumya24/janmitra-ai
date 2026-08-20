@@ -13,7 +13,11 @@ export default function AddWorkerModal({ onClose, onCreated }: { onClose: () => 
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [ward, setWard] = useState("");
-  const [language, setLanguage] = useState<LangCode>("mr");
+  // Defaults to the admin's own current UI language, same convention Signup.tsx uses for a
+  // citizen's preferred_language -- was previously hardcoded to "mr" regardless of who was
+  // creating the account, silently giving every new worker Marathi unless the admin noticed
+  // and changed the pill themselves.
+  const [language, setLanguage] = useState<LangCode>(lang);
   const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);

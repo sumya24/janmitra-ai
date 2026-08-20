@@ -44,7 +44,8 @@ export default function SettingsModal({ onClose, onLogout }: { onClose: () => vo
 
   // Same client-side echo of the server's rule as Signup.tsx -- see that file's own comment.
   const newPasswordTooWeak =
-    newPassword.length > 0 && (newPassword.length < 8 || !/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword));
+    newPassword.length > 0 &&
+    (newPassword.length < 8 || !/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword) || !/[^A-Za-z0-9]/.test(newPassword));
 
   async function handleChangePassword() {
     if (!token) return;

@@ -182,6 +182,37 @@ class ComplaintUpdate(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=_utcnow)
 
 
+class ComplaintUpdateTranslation(Base):
+    """A cached translation of one worker-authored ComplaintUpdate.text (initial assessment,
+    progress update, or completion note) into one display language -- the same "translate once,
+    cache forever" pattern ComplaintTranslation already uses for complaint text, applied here too.
+
+    Unlike Complaint.translated_text, a ComplaintUpdate has no "always canonical English" storage
+    guarantee -- `text` is stored exactly as the worker typed it, in whatever language that was
+    (see ComplaintUpdate's own docstring), and no original-language column is recorded for it.
+    The source language is therefore left unspecified at translation time and auto-detected by
+    Sarvam (see complaint_update_translation_cache.py's own docstring for the full reasoning,
+    including why an earlier version that approximated it from the worker's own
+    `User.preferred_language` turned out to be wrong).
+
+    Attributes:
+        id: Primary key.
+        complaint_update_id: The ComplaintUpdate this translation belongs to.
+        language_code: Short language code the text is translated into, e.g. "hi".
+        translated_text: The update's text translated into language_code.
+        created_at: UTC timestamp of when this translation was cached.
+    """
+
+    __tablename__ = "complaint_update_translations"
+    __table_args__ = (UniqueConstraint("complaint_update_id", "language_code", name="uq_complaint_update_translation_lang"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    complaint_update_id: Mapped[int] = mapped_column(ForeignKey("complaint_updates.id"), nullable=False, index=True)
+    language_code: Mapped[str] = mapped_column(String(8), nullable=False)
+    translated_text: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=_utcnow)
+
+
 class ComplaintEvidence(Base):
     """One uploaded evidence file (photo) on a complaint -- the multi-file evidence system
     (evidence upload phase). Supersedes `Complaint.photo_path` / `ComplaintUpdate.photo_path`
@@ -240,24 +271,29 @@ class ComplaintEvidence(Base):
 
 class Notification(Base):
     """An in-app notification for a user -- workers get one for a new/reassigned complaint (see
-    assignment_service.py's assign_next_worker()), and citizens get one for their own complaint's
-    key status changes (see routes/complaints.py's accept_complaint/start_work/resolve_complaint,
-    the three creation sites). Deliberately minimal: no push/SMS/email delivery, no per-user
-    preferences -- just a row a user's own GET /notifications can list, and mark read
-    individually.
+    assignment_service.py's assign_next_worker()), citizens get one for their own complaint's key
+    status changes (see routes/complaints.py's accept_complaint/start_work/resolve_complaint),
+    and admins get one broadcast to every admin account for a rejection (routes/complaints.py's
+    reject_complaint()) or an AI-pipeline alert (repositories/ai_request_log_repository.py's
+    check_and_fire_alerts()). Deliberately minimal: no push/SMS delivery, no per-user preferences
+    -- just a row a user's own GET /notifications can list, and mark read individually. (Some
+    events, separately, also send a real email -- see services/email_service.py -- but that's
+    independent of this table, not driven by it.)
 
     Attributes:
         id: Primary key.
         recipient_id: The user this notification is for.
         type: "NEW_ASSIGNMENT" | "REASSIGNED" (worker-facing) | "COMPLAINT_ACCEPTED" |
-            "COMPLAINT_STARTED" | "COMPLAINT_RESOLVED" (citizen-facing). Deliberately no
+            "COMPLAINT_STARTED" | "COMPLAINT_RESOLVED" (citizen-facing) | "COMPLAINT_REJECTED" |
+            "AI_ALERT" (admin-facing, broadcast to every admin). Deliberately no
             per-progress-update notification type -- a citizen would get one per optional worker
             update, which is noisy; ComplaintUpdatesTimeline already surfaces those on request
-            instead of pushing a notification for each one.
+            instead of pushing a notification for each one. Similarly deliberate: citizens are
+            never notified of a rejection at all -- see reject_complaint()'s own docstring.
         title: Short headline, already-formatted (e.g. "New complaint assigned").
         message: One-line detail (e.g. "Streetlight complaint — Ward 14").
-        complaint_id: The complaint this notification is about, or None (kept nullable for
-            forward compatibility; every notification generated today has one).
+        complaint_id: The complaint this notification is about, or None -- AI_ALERT is the one
+            type that never has one (it isn't about any single complaint).
         created_at: UTC timestamp.
         read_at: UTC timestamp the recipient's client marked it read, or None while unread.
     """
@@ -750,3 +786,48 @@ class EmailOtp(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     consumed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+
+class SignupEmailVerification(Base):
+    """Tracks the email-ownership proof behind Signup.tsx's inline "Verify" button, decoupled
+    from the rest of the signup form -- a citizen can verify their email before or after filling
+    in name/phone/password/ward, since this OTP round-trip only ever needs the email address
+    itself. Once the OTP is confirmed, a one-time proof token is issued (proof_token_hash); the
+    final POST /auth/signup call must present that token to actually create the account, so
+    account creation is a single call, with email ownership already established server-side --
+    not just a bare client-side "verified: true" claim, which can't be trusted.
+
+    Same hash-only-at-rest principle as EmailOtp/RefreshToken: only code_hash and
+    proof_token_hash (both SHA-256 digests) are ever stored, never the plaintext code or token.
+
+    Attributes:
+        id: Primary key.
+        email: The address being verified.
+        code_hash: SHA-256 digest of the plaintext 6-digit OTP sent to `email`.
+        created_at: When the OTP was issued.
+        expires_at: OTP hard expiry (settings.OTP_EXPIRE_MINUTES) -- short-lived, same as EmailOtp.
+        attempts: Wrong-code guesses against this OTP so far (same cap as EmailOtp.attempts).
+        verified_at: Set once the OTP is confirmed correct. Null means still just a pending code.
+        proof_token_hash: SHA-256 digest of the one-time token issued the moment verified_at is
+            set -- returned to the frontend once, held across the rest of the signup form, and
+            presented back at POST /auth/signup as proof this email was actually verified.
+        proof_expires_at: How long that proof stays usable (settings.
+            EMAIL_VERIFICATION_TOKEN_EXPIRE_MINUTES) -- long enough to finish filling in the rest
+            of the form, short enough that a stale, unused verification can't be resurrected much
+            later.
+        consumed_at: Set once this proof token is actually used to create an account -- a proof
+            token can only ever create one account, never replayed across multiple signups.
+    """
+
+    __tablename__ = "signup_email_verifications"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    email: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    code_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=_utcnow)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    proof_token_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    proof_expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    consumed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)

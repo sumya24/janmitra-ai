@@ -1,5 +1,8 @@
-"""Repository layer for `Notification` -- see models.py's `Notification` docstring for scope
-(worker-only, NEW_ASSIGNMENT/REASSIGNED, created solely from assignment_service.py).
+"""Repository layer for `Notification`. Created from several places, one per event type -- see
+models.py's `Notification` docstring for the full list: assignment_service.py (NEW_ASSIGNMENT/
+REASSIGNED, to a worker), routes/complaints.py (COMPLAINT_ACCEPTED/STARTED/RESOLVED, to the
+citizen; COMPLAINT_REJECTED, broadcast to every admin), and
+repositories/ai_request_log_repository.py (AI_ALERT, broadcast to every admin).
 """
 
 from __future__ import annotations

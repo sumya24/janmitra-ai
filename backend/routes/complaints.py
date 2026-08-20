@@ -12,6 +12,7 @@ see everything.
 """
 
 import logging
+from typing import Literal
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import Response
@@ -38,6 +39,7 @@ from backend.services.evidence_service import (
     save_photo as _save_photo,
     validate_and_write as _validate_and_write,
 )
+from backend.services.email_service import EmailServiceError, send_complaint_status_email
 from backend.services.location_resolver import LocationResolver
 from backend.services.sarvam_client import AIServiceError
 from backend.services.translation_service import TranslationService
@@ -71,6 +73,28 @@ def _citizen_notification_message(complaint: Complaint) -> str:
         snippet = snippet[:_CITIZEN_NOTIFICATION_SNIPPET_LENGTH].rstrip() + "…"
     ward_label = f"Ward: {complaint.ward}" if complaint.ward else "Ward: unknown"
     return f"{snippet} — {ward_label}" if snippet else ward_label
+
+
+def _send_lifecycle_email_best_effort(
+    db: Session, complaint: Complaint, event: Literal["created", "accepted", "started", "resolved"]
+) -> None:
+    """Fire-and-forget: sends the citizen a real email for one of their complaint's lifecycle
+    moments, if (and only if) they have a verified email -- silently skipped otherwise, exactly
+    the same as every other email_verified check in this codebase, never an error. Never raises:
+    an EmailServiceError (SMTP not configured, or a real send failure) is caught and logged here,
+    not surfaced to the caller -- see send_complaint_status_email's own docstring for why this
+    must never fail the actual accept/start/resolve/create action it's attached to.
+    """
+    citizen = db.query(User).filter(User.id == int(complaint.citizen_id)).first()
+    if citizen is None or not citizen.email or not citizen.email_verified:
+        return
+    cta_url = f"{settings.FRONTEND_BASE_URL}/citizen/complaints/{complaint.id}" if settings.FRONTEND_BASE_URL else None
+    try:
+        send_complaint_status_email(
+            citizen.email, event, f"JM-{complaint.id:05d}", complaint.summary or "", complaint.ward or "", cta_url=cta_url,
+        )
+    except EmailServiceError as exc:
+        logger.error("Complaint %s: failed to send '%s' lifecycle email: %s", complaint.id, event, exc)
 
 
 class ComplaintResponse(BaseModel):
@@ -168,6 +192,19 @@ class StatusHistoryEntryResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class RejectionResponse(BaseModel):
+    """One worker's rejection of this complaint, with their reason -- admin-only (see
+    _to_detail_response's viewer_role gating below). Never sent to a citizen or worker, even one
+    currently assigned to the same complaint -- see reject_complaint()'s own docstring for why
+    this stays purely an admin/worker-ops matter."""
+
+    worker_name: str
+    reason: str | None
+    created_at: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class ComplaintDetailResponse(ComplaintResponse):
     """The full detail view (GET /complaints/{id}) -- everything ComplaintResponse already has,
     plus the update/status timeline and every evidence file. A separate model from
@@ -178,6 +215,8 @@ class ComplaintDetailResponse(ComplaintResponse):
     updates: list[ComplaintUpdateResponse]
     status_history: list[StatusHistoryEntryResponse]
     evidence: list[EvidenceResponse]
+    # Always present, but only ever non-empty for an admin viewer -- see _to_detail_response.
+    rejections: list[RejectionResponse]
 
 
 class ComplaintReportResponse(BaseModel):
@@ -349,12 +388,32 @@ def _to_evidence_response(entry) -> EvidenceResponse:
     )
 
 
-def _to_detail_response(db: Session, complaint: Complaint, display_language: str | None) -> ComplaintDetailResponse:
+def _to_rejection_response(db: Session, rejection: ComplaintRejection) -> RejectionResponse:
+    worker = db.query(User).filter(User.id == rejection.worker_id).first()
+    return RejectionResponse(
+        worker_name=worker.full_name if worker else "Unknown worker",
+        reason=rejection.reason,
+        created_at=rejection.created_at.isoformat(),
+    )
+
+
+def _to_detail_response(
+    db: Session, complaint: Complaint, display_language: str | None, viewer_role: str
+) -> ComplaintDetailResponse:
     base = _to_response(db, complaint, display_language)
     updates = [_to_update_response(db, u) for u in complaint_workflow_repository.get_complaint_updates(db, complaint.id)]
     history = [_to_history_response(h) for h in complaint_workflow_repository.get_status_history(db, complaint.id)]
     evidence = [_to_evidence_response(e) for e in evidence_repository.get_evidence_for_complaint(db, complaint.id)]
-    return ComplaintDetailResponse(**base.model_dump(), updates=updates, status_history=history, evidence=evidence)
+    # Admin-only, enforced here (not just hidden in the frontend) -- see RejectionResponse's own
+    # docstring for why citizens/workers never get this, even for their own complaint.
+    rejections = (
+        [_to_rejection_response(db, r) for r in complaint_workflow_repository.get_rejections_for_complaint(db, complaint.id)]
+        if viewer_role == "admin"
+        else []
+    )
+    return ComplaintDetailResponse(
+        **base.model_dump(), updates=updates, status_history=history, evidence=evidence, rejections=rejections,
+    )
 
 
 @router.get("/wards", response_model=list[str])
@@ -621,6 +680,7 @@ def create_complaint(
     # more directly actionable breakdown for this app anyway ("which ward is generating the most
     # complaints").
     sentry_metrics.count("complaint.created", 1, attributes={"ward": complaint.ward or "unknown"})
+    _send_lifecycle_email_best_effort(db, complaint, "created")
 
     return _to_response(db, complaint, display_language=None)
 
@@ -678,7 +738,7 @@ def get_complaint(
         raise HTTPException(status_code=400, detail=f"Unsupported language: {lang}")
     complaint = _get_visible_complaint(db, complaint_id, current_user)
     display_language = lang or current_user.preferred_language
-    return _to_detail_response(db, complaint, display_language=display_language)
+    return _to_detail_response(db, complaint, display_language=display_language, viewer_role=current_user.role)
 
 
 @router.post("/{complaint_id}/accept", response_model=ComplaintResponse)
@@ -708,6 +768,7 @@ def accept_complaint(
         message=_citizen_notification_message(complaint),
         complaint_id=complaint.id,
     )
+    _send_lifecycle_email_best_effort(db, complaint, "accepted")
     logger.info("Complaint %s accepted by worker %s", complaint_id, worker.id)
     return _to_response(db, complaint, display_language=None)
 
@@ -724,6 +785,12 @@ def reject_complaint(
     `reason` is mandatory (see RejectComplaintRequest) -- Pydantic's min_length catches an empty
     string, and the explicit .strip() check below additionally catches whitespace-only input,
     which min_length alone would not reject.
+
+    Deliberately never notifies (or otherwise informs) the citizen -- a rejection is an internal
+    worker/admin operational matter, not something a citizen needs or should know happened; the
+    citizen only ever sees the same generic "waiting to be assigned" state either way. Every admin
+    IS notified (see the broadcast below and RejectionResponse in this file), since they're the
+    ones who need to know a worker declined an assignment and why.
     """
     reason = body.reason.strip()
     if not reason:
@@ -735,6 +802,19 @@ def reject_complaint(
 
     complaint_workflow_repository.record_rejection(db, complaint_id=complaint.id, worker_id=worker.id, reason=reason)
     logger.info("Complaint %s rejected by worker %s (reason recorded)", complaint_id, worker.id)
+
+    # Broadcast to every admin -- same per-admin loop pattern as ai_request_log_repository.py's
+    # _try_fire (AI_ALERT), except this one DOES carry a complaint_id (AI_ALERT never does, since
+    # it isn't about any single complaint).
+    for admin in db.query(User).filter(User.role == "admin").all():
+        notification_repository.create_notification(
+            db,
+            recipient_id=admin.id,
+            type="COMPLAINT_REJECTED",
+            title="A worker rejected a complaint",
+            message=f"{worker.full_name} rejected a complaint in {complaint.ward}.",
+            complaint_id=complaint.id,
+        )
 
     # assign_next_worker() records its own status-history row for the reassignment outcome
     # (assigned-to-someone-else, or pending) -- that IS the record of this rejection's effect, so
@@ -795,6 +875,7 @@ def start_work(
         message=_citizen_notification_message(complaint),
         complaint_id=complaint.id,
     )
+    _send_lifecycle_email_best_effort(db, complaint, "started")
     logger.info("Complaint %s work started by worker %s", complaint_id, worker.id)
     return _to_response(db, complaint, display_language=None)
 
@@ -883,6 +964,7 @@ def resolve_complaint(
         message=_citizen_notification_message(complaint),
         complaint_id=complaint.id,
     )
+    _send_lifecycle_email_best_effort(db, complaint, "resolved")
     logger.info("Complaint %s resolved by worker %s", complaint_id, worker.id)
     return _to_response(db, complaint, display_language=None)
 
@@ -932,13 +1014,21 @@ def _require_resolved(complaint: Complaint) -> None:
 @router.get("/{complaint_id}/report", response_model=ComplaintReportResponse)
 def view_report(
     complaint_id: int,
+    lang: str | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> ComplaintReportResponse:
-    """JSON report data for the in-app "View Report" screen."""
+    """JSON report data for the in-app "View Report"/"Summary" screens -- `service_summary`/
+    `original_description` are translated into the viewer's own language on read, same as
+    GET /complaints already does (see `_to_response`), so this no longer shows raw English next
+    to an otherwise fully-translated UI. Defaults to the viewer's own `preferred_language`,
+    overridable via `?lang=`, matching /complaints and /complaints/area-summary's own convention."""
+    if lang is not None and lang not in settings.SUPPORTED_LANGUAGES:
+        raise HTTPException(status_code=400, detail=f"Unsupported language: {lang}")
+    display_language = lang or current_user.preferred_language
     complaint = _get_visible_complaint(db, complaint_id, current_user)
     _require_resolved(complaint)
-    data = complaint_report_service.build_report_data(db, complaint)
+    data = complaint_report_service.build_report_data(db, complaint, display_language, _translation_service)
     return ComplaintReportResponse(
         complaint_id=data.complaint_id,
         display_id=data.display_id,
@@ -971,15 +1061,21 @@ def view_report(
 @router.get("/{complaint_id}/report/download")
 def download_report(
     complaint_id: int,
+    lang: str | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Response:
-    """PDF download of the same report data view_report() returns as JSON."""
+    """PDF download of the same report data view_report() returns as JSON -- same `?lang=`
+    convention (defaults to the viewer's own preferred_language, overridable), so the downloaded
+    document and the in-app "View Report" popup show the same language by default."""
+    if lang is not None and lang not in settings.SUPPORTED_LANGUAGES:
+        raise HTTPException(status_code=400, detail=f"Unsupported language: {lang}")
+    display_language = lang or current_user.preferred_language
     complaint = _get_visible_complaint(db, complaint_id, current_user)
     _require_resolved(complaint)
-    data = complaint_report_service.build_report_data(db, complaint)
+    data = complaint_report_service.build_report_data(db, complaint, display_language, _translation_service)
     try:
-        pdf_bytes = complaint_report_service.generate_pdf_bytes(data)
+        pdf_bytes = complaint_report_service.generate_pdf_bytes(data, display_language)
     except Exception:
         logger.exception("Report PDF generation failed for complaint %s", complaint_id)
         raise HTTPException(status_code=500, detail="Could not generate the report. Please try again.")

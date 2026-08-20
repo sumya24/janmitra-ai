@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { fillHomeLocationPicker, uniquePhone } from "./helpers";
+import { verifySignupEmail, fillHomeLocationPicker, uniqueEmail, uniquePhone } from "./helpers";
 
 test("theme toggle cycles system -> light -> dark -> system and persists across reload", async ({ page }) => {
   await page.goto("/welcome");
@@ -36,8 +36,10 @@ test("citizen can switch to voice input, record a complaint, and submit it", asy
   await page.getByLabel("Full name").fill("Voice User");
   await page.getByLabel("Phone number").fill(phone);
   await page.getByLabel("Password", { exact: true }).fill("voice-pass1");
+  await page.getByLabel("Email address").fill(uniqueEmail());
   await page.locator("#signup-confirm-password").fill("voice-pass1");
   await fillHomeLocationPicker(page);
+  await verifySignupEmail(page);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/citizen$/);
 

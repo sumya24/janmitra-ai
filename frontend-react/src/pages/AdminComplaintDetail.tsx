@@ -12,6 +12,10 @@ import { t } from "../lib/i18n";
 import { api, ApiError, type ComplaintDetail, type ComplaintReport } from "../lib/api";
 
 const STATUS_LABEL_KEY = {
+  // See CitizenDashboard.tsx's own copy of this map for why "open" (the complaint's brand-new,
+  // usually-transient status) needs an explicit entry -- without one, StatusBadge rendered with
+  // no label text at all for a complaint sitting in that state.
+  open: "citizen.trackSubmitted",
   pending: "admin.pendingStat",
   assigned: "admin.filterAssigned",
   accepted: "admin.filterAccepted",
@@ -159,6 +163,27 @@ export default function AdminComplaintDetail() {
             </div>
           ))}
         </div>
+
+        {c.rejections.length > 0 && (
+          <div className="surface-card" style={{ padding: 18, marginBottom: 16 }}>
+            <div className="section-label" style={{ marginTop: 0 }}>{t(lang, "admin.rejectionHistory")}</div>
+            {c.rejections.map((r, i) => (
+              <div key={i} className="status-history-entry" style={{ display: "block" }}>
+                <div>
+                  <strong>{t(lang, "admin.rejectedBy")}:</strong> {r.worker_name}
+                  <span className="mono" style={{ color: "var(--ink-3)", marginLeft: 10 }}>
+                    {new Date(r.created_at).toLocaleString()}
+                  </span>
+                </div>
+                {r.reason && (
+                  <div style={{ marginTop: 4 }}>
+                    <strong>{t(lang, "admin.rejectionReason")}:</strong> {r.reason}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
 
         {c.status === "resolved" && (
           <div className="surface-card" style={{ padding: 18 }}>

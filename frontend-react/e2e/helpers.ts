@@ -19,6 +19,42 @@ export function uniqueEmail(): string {
   return `test${Date.now()}${suffix}@example.com`;
 }
 
+/** Completes Signup.tsx's inline, mandatory email-verification step -- email verification is
+ * mandatory at signup (see backend/routes/auth.py's module docstring), but lives inline on the
+ * email field itself (a "Send code" button, then a confirm-code step right there), not as a
+ * separate page/step after the rest of the form. The "Create account" button stays disabled
+ * until this succeeds, so every spec that signs up a citizen needs this called after the
+ * #signup-email field has a value and BEFORE clicking "Create account" -- exactly where in the
+ * rest of the form-filling that happens doesn't matter, since verifying the email doesn't
+ * disturb any other already-filled field. Reads the email back from the #signup-email input
+ * itself (rather than requiring callers to pass it in) so callers don't need to thread a
+ * variable through.
+ *
+ * Fetches the code from GET /auth/_dev/otp-code (backend/routes/auth.py's dev/test-only
+ * endpoint, 404s in production) instead of reading a real inbox -- this project's local .env may
+ * have real SMTP credentials configured for manual testing, and e2e specs must never depend on
+ * (or spam) a real mailbox. Full absolute backend URL, not a relative path: page.request's own
+ * baseURL is the Vite dev server on :5173 (per playwright.config.ts), which doesn't proxy
+ * /auth/* -- only the React app itself talks to the backend directly, via VITE_API_URL (see
+ * lib/api.ts). */
+export async function verifySignupEmail(page: Page): Promise<void> {
+  const email = await page.locator("#signup-email").inputValue();
+  await page.getByRole("button", { name: "Send code" }).click();
+  // Longer-than-default timeout: the send-code call does a real (non-mocked) SMTP send before
+  // returning, and that occasionally takes several seconds -- observed causing flaky/failed
+  // e2e runs at the default 5000ms even though the backend request itself always succeeds.
+  // Matches this suite's existing precedent of widening waits around real backend round-trips
+  // (see fillHomeLocationPicker's expect.poll below).
+  await expect(page.getByLabel("Verification code")).toBeVisible({ timeout: 15000 });
+  const otpResponse = await page.request.get(
+    `http://localhost:8000/auth/_dev/otp-code?email=${encodeURIComponent(email)}`
+  );
+  const { code } = (await otpResponse.json()) as { code: string };
+  await page.getByLabel("Verification code").fill(code);
+  await page.getByRole("button", { name: "Verify" }).click();
+  await expect(page.getByText("Verified", { exact: false })).toBeVisible();
+}
+
 /** Fills Signup's mandatory State/City/Ward/Area picker (HomeLocationPicker.tsx) -- the single
  * shared implementation every spec that signs up a citizen should call, replacing what used to
  * be 12 separate copies of near-identical select-or-freetext logic against the old single "Area

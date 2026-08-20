@@ -8,9 +8,10 @@ import AuthPanel from "../components/AuthPanel";
 import AuthFormBrand from "../components/AuthFormBrand";
 import "./Auth.css";
 
-// Two-step form: (1) email -> request code, always shown as sent regardless of whether the
-// email is actually registered/verified (see backend/routes/auth.py's forgot_password -- no
-// enumeration); (2) code + new password -> submit, then back to /login.
+// Two-step form: (1) email -> request code -- a clear error if the email isn't a registered,
+// verified account (see backend/routes/auth.py's forgot_password for why this app deliberately
+// doesn't hide that), staying on this step; (2) code + new password -> submit, then back to
+// /login.
 export default function ForgotPassword() {
   const { lang } = useUiLang();
   const navigate = useNavigate();
@@ -25,7 +26,8 @@ export default function ForgotPassword() {
 
   // Same client-side echo of backend/routes/auth.py's _validate_password_strength as Signup.tsx.
   const passwordTooWeak =
-    newPassword.length > 0 && (newPassword.length < 8 || !/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword));
+    newPassword.length > 0 &&
+    (newPassword.length < 8 || !/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword) || !/[^A-Za-z0-9]/.test(newPassword));
 
   async function handleRequestCode(e: FormEvent) {
     e.preventDefault();
@@ -75,8 +77,11 @@ export default function ForgotPassword() {
         <ThemeToggle className="theme-toggle" />
         <AuthFormBrand />
         <div className="authcard enter">
-          <div className="authtabs">
-            <span className="authtab active">{t(lang, "auth.forgotPassword.title")}</span>
+          <div className="forgot-password-head">
+            <Link to="/login" className="forgot-password-back">
+              ← {t(lang, "auth.forgotPassword.backToLogin")}
+            </Link>
+            <h2 className="display">{t(lang, "auth.forgotPassword.title")}</h2>
           </div>
 
           {formError && <div className="banner-error">{formError}</div>}
@@ -148,10 +153,6 @@ export default function ForgotPassword() {
               </button>
             </form>
           )}
-
-          <div className="switchline">
-            <Link to="/login">{t(lang, "auth.forgotPassword.backToLogin")}</Link>
-          </div>
         </div>
       </div>
     </div>

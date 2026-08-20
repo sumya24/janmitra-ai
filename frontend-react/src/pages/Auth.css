@@ -71,7 +71,7 @@
 }
 /* Pushed to the bottom of the panel on its own, now that the container isn't using
    space-between to do that job for all three sections at once. */
-.auth-panel-foot { position: relative; font-size: 11.5px; opacity: 0.6; margin-top: auto; }
+.auth-panel-foot { position: relative; font-size: 11.5px; opacity: 0.6; margin-top: auto; text-align: center; }
 
 .auth-form-side {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -113,10 +113,25 @@
 .auth-form-brand-ai { color: var(--service-water); }
 .auth-form-side .authcard { position: relative; z-index: 1; }
 .authcard {
-  width: 100%; max-width: 400px; background: var(--surface); border: 1px solid var(--line);
+  /* 460px, not the original 400px -- Signup's inline email verification block (email + "Send
+     code" side by side, then the code-sent box) and the longer password hint wrapped
+     uncomfortably tight at 400px. Applied to all three auth cards (Login/Signup/ForgotPassword),
+     not just Signup, so the card doesn't visibly resize when switching between them. */
+  width: 100%; max-width: 460px; background: var(--surface); border: 1px solid var(--line);
   border-radius: 16px; padding: 30px 30px 26px; box-shadow: var(--shadow);
 }
 .authtabs { display: flex; background: var(--surface-2); border-radius: 10px; padding: 4px; margin-bottom: 22px; }
+/* ForgotPassword's own header -- NOT .authtabs, which is a two-tab switcher (Log in / Sign up)
+   and looked wrong stretched around a single label (one .authtab.active filling a flex
+   container built for two, reading as an oversized, non-interactive pill). A back link + a real
+   heading is the standard pattern for a password-recovery page that branches off Login. */
+.forgot-password-head { margin-bottom: 22px; }
+.forgot-password-back {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; color: var(--ink-2);
+  text-decoration: none; margin-bottom: 10px;
+}
+.forgot-password-back:hover { color: var(--accent-fg); }
+.forgot-password-head h2 { font-size: 20px; margin: 0; }
 .authtab {
   flex: 1; border: none; background: transparent; padding: 9px; border-radius: 7px; font-size: 13.5px;
   font-weight: 700; color: var(--ink-2); text-align: center; text-decoration: none; display: block;
@@ -138,6 +153,29 @@
 .home-location-row-last { margin-bottom: 12px; }
 .home-location-row select:disabled { opacity: 0.45; cursor: not-allowed; background: var(--surface-2); }
 .home-location-note { font-size: 10.5px; color: var(--ink-2); margin-top: 3px; }
+/* Inline email verification on Signup -- a "Send code" button next to the email field itself
+   (not a separate page/step), mirroring the same send-code-then-confirm pattern Settings' own
+   add-email section already uses, just surfaced during signup and gating the "Create account"
+   button below rather than gating account creation behind a second page. */
+.email-verify-block { margin-bottom: 14px; }
+/* Direct child only -- NOT .email-verify-block .field, which would also zero out the OTP code
+   input's own .field further down inside .email-otp-inline (that one still needs its normal
+   14px margin-bottom below it, or its buttons end up flush against the input). */
+.email-verify-block > .field { margin-bottom: 0; }
+.email-verify-row { display: flex; gap: 8px; align-items: flex-start; }
+.email-verify-row .field { flex: 1; }
+.email-verify-row .btn { flex-shrink: 0; margin-top: 1px; white-space: nowrap; }
+.email-verified-badge {
+  display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--status-resolved);
+  background: var(--status-resolved-bg); border-radius: 8px; padding: 8px 10px; flex-shrink: 0; margin-top: 1px;
+}
+.email-otp-inline { border: 1px solid var(--line); border-radius: 10px; padding: 12px 12px 2px; margin-top: 10px; background: var(--surface-2); }
+.email-otp-inline .field-hint { margin-top: 0; margin-bottom: 8px; font-size: 10.5px; }
+.email-otp-inline .btn { margin-bottom: 10px; margin-right: 8px; }
+.email-change-link {
+  background: none; border: none; padding: 0; margin-top: 8px; font-size: 11.5px; color: var(--accent-fg);
+  text-decoration: underline; cursor: pointer;
+}
 .switchline { text-align: center; font-size: 12.5px; color: var(--ink-2); margin-top: 14px; }
 .switchline a { color: var(--accent-fg); font-weight: 700; text-decoration: none; }
 .authcard .btn.full { width: 100%; justify-content: center; padding: 11px; font-size: 14px; }

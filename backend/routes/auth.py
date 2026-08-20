@@ -5,6 +5,14 @@ creates a "citizen" account — it is the only self-service entry point in the
 system. Worker accounts are only ever created by a super admin (see
 routes/admin.py); the first super admin account is seeded directly into the
 database when the system is set up, not created through any API here.
+
+Email verification is mandatory before an account exists at all, not an optional step added
+later from Settings -- but it's decoupled from the rest of the signup form, behind its own
+"Verify" button next to the email field (see Signup.tsx): POST /auth/signup/email/send-code and
+POST /auth/signup/email/verify-code handle that round trip using only the email address, and
+issue a one-time proof token on success (see models.SignupEmailVerification's own docstring).
+POST /auth/signup itself is then a single call that creates the account directly, but only if it
+can present that proof token -- a bare client-side "verified: true" claim is never trusted.
 """
 
 import logging
@@ -25,29 +33,33 @@ from backend.deps import (
 )
 from backend.models import District, Locality, State, ULB, User, Ward
 from backend.services.auth_service import (
+    consume_signup_email_verification,
     create_access_token,
     create_email_otp,
     create_refresh_token,
+    create_signup_email_otp,
     hash_password,
     revoke_all_refresh_tokens,
     revoke_refresh_token,
     rotate_refresh_token,
     verify_email_otp,
     verify_password,
+    verify_signup_email_otp,
 )
 from backend.services.email_service import EmailServiceError, send_otp_email
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-# 8+ chars with at least one letter and one digit -- NIST-style "length over complexity-theater"
-# (no forced symbol/uppercase rules, which frustrate users without proportionate benefit), but a
-# real step up from the previous bare 6-char-minimum. Only enforced at signup and change-password
+# 8+ chars with at least one letter, one digit, and one special character -- the familiar
+# production-app password bar (a step up from bare NIST length-only, which most citizens expect
+# a "real" signup form to enforce). Only enforced at signup and change-password/reset-password
 # (see _validate_password_strength below) -- never at login, so no pre-existing account created
-# under the old, looser rule is ever locked out of its own login.
+# under an older, looser rule is ever locked out of its own login.
 MIN_PASSWORD_LENGTH = 8
 _PASSWORD_HAS_LETTER = re.compile(r"[A-Za-z]")
 _PASSWORD_HAS_DIGIT = re.compile(r"\d")
+_PASSWORD_HAS_SPECIAL = re.compile(r"[^A-Za-z0-9]")
 
 # Standard Indian mobile number: 10 digits, first digit 6-9 -- matches every phone number already
 # used across this codebase's tests/seed data (all 10 digits, all start with 9), and this is the
@@ -70,12 +82,35 @@ _EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 _VERIFY_EMAIL_PURPOSE = "verify_email"
 _RESET_PASSWORD_PURPOSE = "reset_password"
 
+# Dev/test-only OTP cache -- lets Playwright e2e specs (which hit this real running backend, not
+# an in-process mock) complete an OTP flow without reading a real inbox, the same problem
+# tests/test_email_otp.py and friends solve differently (monkeypatching send_otp_email in-process,
+# not possible from a separate Node/Playwright process). Only ever populated/served when
+# settings.ENVIRONMENT != "production" (see _dev_get_otp_code below) -- a real deployment can
+# never read another citizen's OTP through this. Keyed by email, not persisted anywhere; lost on
+# every backend restart, which is fine since it exists purely to bridge one local test run.
+_dev_otp_cache: dict[str, str] = {}
+
+
+def _dev_cache_otp(email: str, code: str) -> None:
+    if settings.ENVIRONMENT != "production":
+        _dev_otp_cache[email] = code
+
 
 class SignupRequest(BaseModel):
-    """Request body for citizen self-registration."""
+    """Request body for citizen self-registration -- creates the account directly, in one call.
+
+    Requires email_verification_token, proving the citizen already completed the
+    POST /auth/signup/email/send-code -> POST /auth/signup/email/verify-code round trip for
+    `email` (see this file's module docstring, and models.SignupEmailVerification). The email
+    itself is never trusted or written to User.email/User.email_verified unless that token checks
+    out server-side.
+    """
 
     full_name: str
     phone: str
+    email: str
+    email_verification_token: str
     password: str
     preferred_language: str
     # Mandatory, one-time-at-signup -- not editable later (no ward field in MeUpdateRequest
@@ -97,6 +132,26 @@ class SignupRequest(BaseModel):
     home_district_id: int | None = None
     home_ward_id: int | None = None
     home_locality_id: int | None = None
+
+
+class SendSignupEmailCodeRequest(BaseModel):
+    """Request body for POST /auth/signup/email/send-code."""
+
+    email: str
+
+
+class VerifySignupEmailCodeRequest(BaseModel):
+    """Request body for POST /auth/signup/email/verify-code."""
+
+    email: str
+    code: str
+
+
+class VerifySignupEmailCodeResponse(BaseModel):
+    """Response for POST /auth/signup/email/verify-code -- the proof token to carry through the
+    rest of the signup form and present back at POST /auth/signup."""
+
+    email_verification_token: str
 
 
 class LoginRequest(BaseModel):
@@ -196,6 +251,8 @@ def _validate_password_strength(password: str) -> None:
         )
     if not _PASSWORD_HAS_LETTER.search(password) or not _PASSWORD_HAS_DIGIT.search(password):
         raise HTTPException(status_code=400, detail="Password must include at least one letter and one number.")
+    if not _PASSWORD_HAS_SPECIAL.search(password):
+        raise HTTPException(status_code=400, detail="Password must include at least one special character.")
 
 
 def _resolve_home_location(db: Session, body: SignupRequest) -> dict[str, int | None]:
@@ -246,15 +303,87 @@ def _resolve_home_location(db: Session, body: SignupRequest) -> dict[str, int | 
     }
 
 
-@router.post("/signup", response_model=AuthResponse, dependencies=[Depends(require_signup_rate_limit)])
-def signup(body: SignupRequest, db: Session = Depends(get_db)) -> AuthResponse:
-    """Register a new citizen account and log them in immediately.
+@router.get("/_dev/otp-code", include_in_schema=False)
+def dev_get_otp_code(email: str) -> dict[str, str]:
+    """Dev/test-only: returns the plaintext code most recently cached for this email by
+    _dev_cache_otp (see that function and _dev_otp_cache's own docstring for why this exists --
+    letting Playwright e2e specs complete a real OTP round trip without reading a real inbox).
+    404s outright in production, and 404s here if nothing's been cached for this email yet."""
+    if settings.ENVIRONMENT == "production":
+        raise HTTPException(status_code=404)
+    code = _dev_otp_cache.get(email.strip().lower())
+    if code is None:
+        raise HTTPException(status_code=404, detail="No OTP cached for this email.")
+    return {"code": code}
 
-    Rate-limited per client IP (see backend/deps.py's require_signup_rate_limit) -- its own
-    dedicated, stricter-than-general limit against mass fake-account creation.
+
+@router.post(
+    "/signup/email/send-code",
+    status_code=204,
+    dependencies=[Depends(require_signup_rate_limit)],
+)
+def signup_send_email_code(body: SendSignupEmailCodeRequest, db: Session = Depends(get_db)) -> None:
+    """Send a 6-digit OTP to a candidate email address, behind Signup.tsx's inline "Verify"
+    button -- decoupled from the rest of the signup form (see this file's module docstring), so
+    this only ever needs the email address itself, before name/phone/password/ward are
+    necessarily filled in.
+
+    Rate-limited per client IP via require_signup_rate_limit (SIGNUP_RATE_LIMIT, per-hour) --
+    NOT require_otp_rate_limit (OTP_RATE_LIMIT, 3/10min): that limiter is sized for an already-
+    authenticated citizen's own settings/forgot-password flows, one account at a time, and would
+    badly throttle a legitimate shared-IP burst of DIFFERENT people signing up (a school/office
+    network, or a NAT'd mobile carrier -- see config.py's own comment on SIGNUP_RATE_LIMIT's
+    sizing). This is the real start of a signup attempt, so it gets that same generous, per-hour
+    budget instead -- also stops someone spamming a victim's inbox or burning the transactional-
+    email provider's daily quota. POST /auth/signup/email/verify-code and POST /auth/signup
+    itself are deliberately NOT separately rate-limited: verify-code relies on
+    OTP_MAX_ATTEMPTS/attempts (see verify_signup_email_otp) the same way POST /auth/email/verify
+    already does, and by the time POST /auth/signup is reached, this rate limit has already gated
+    how many distinct emails could get that far in the first place.
+    """
+    email = body.email.strip().lower()
+    if not _EMAIL_PATTERN.match(email):
+        raise HTTPException(status_code=400, detail="Enter a valid email address.")
+
+    if db.query(User).filter(User.email == email, User.email_verified.is_(True)).first() is not None:
+        raise HTTPException(status_code=409, detail="An account with this email already exists.")
+
+    code = create_signup_email_otp(db, email)
+    _dev_cache_otp(email, code)
+    try:
+        send_otp_email(email, code, _VERIFY_EMAIL_PURPOSE)
+    except EmailServiceError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    logger.info("Signup email verification code sent (email=%s)", email)
+
+
+@router.post("/signup/email/verify-code", response_model=VerifySignupEmailCodeResponse)
+def signup_verify_email_code(
+    body: VerifySignupEmailCodeRequest, db: Session = Depends(get_db)
+) -> VerifySignupEmailCodeResponse:
+    """Confirm the OTP from POST /auth/signup/email/send-code and, on success, issue the one-time
+    proof token POST /auth/signup needs to actually create the account."""
+    email = body.email.strip().lower()
+    proof_token = verify_signup_email_otp(db, email, body.code.strip())
+    if proof_token is None:
+        raise HTTPException(status_code=400, detail="Invalid or expired code.")
+    return VerifySignupEmailCodeResponse(email_verification_token=proof_token)
+
+
+@router.post("/signup", response_model=AuthResponse)
+def signup(body: SignupRequest, db: Session = Depends(get_db)) -> AuthResponse:
+    """Create a citizen account, in one call -- but only if body.email_verification_token proves
+    (see consume_signup_email_verification) that POST /auth/signup/email/send-code and
+    POST /auth/signup/email/verify-code were already completed for body.email.
+
+    Not separately rate-limited -- see POST /auth/signup/email/send-code's own docstring for why
+    that's where require_signup_rate_limit actually lives now (the real start of a signup
+    attempt); by the time this call can succeed, that limiter has already gated how many distinct
+    emails could get this far.
     """
     full_name = body.full_name.strip()
     phone = body.phone.strip()
+    email = body.email.strip().lower()
     ward = body.ward.strip()
 
     if not full_name:
@@ -263,16 +392,29 @@ def signup(body: SignupRequest, db: Session = Depends(get_db)) -> AuthResponse:
         raise HTTPException(status_code=400, detail="Phone number is required.")
     if not _PHONE_PATTERN.match(phone):
         raise HTTPException(status_code=400, detail="Enter a valid 10-digit mobile number.")
+    if not _EMAIL_PATTERN.match(email):
+        raise HTTPException(status_code=400, detail="Enter a valid email address.")
     if not ward:
         raise HTTPException(status_code=400, detail="Area / ward is required.")
     _validate_password_strength(body.password)
     _validate_language(body.preferred_language)
 
+    # Pre-check only -- the same real TOCTOU gap the token-consumption check below closes for
+    # email still applies to phone (two concurrent signups for the same number); the database's
+    # own unique constraint at the INSERT below is the actual source of truth, this just turns a
+    # violation into the same honest 409 for the overwhelmingly common case (an existing account,
+    # not a race). Checked before consuming the email verification token so an already-taken
+    # phone number fails fast, without spending the citizen's one-time proof token on a signup
+    # that was never going to succeed anyway.
     if db.query(User).filter(User.phone == phone).first() is not None:
         raise HTTPException(status_code=409, detail="An account with this phone number already exists.")
 
-    home_location = _resolve_home_location(db, body)
+    if not consume_signup_email_verification(db, email, body.email_verification_token.strip()):
+        raise HTTPException(
+            status_code=400, detail="Email is not verified. Please verify your email address first."
+        )
 
+    home_location = _resolve_home_location(db, body)
     user = User(
         full_name=full_name,
         phone=phone,
@@ -280,19 +422,16 @@ def signup(body: SignupRequest, db: Session = Depends(get_db)) -> AuthResponse:
         role="citizen",
         preferred_language=body.preferred_language,
         ward=ward,
+        email=email,
+        email_verified=True,
         **home_location,
     )
     db.add(user)
     try:
         db.commit()
     except IntegrityError:
-        # Second line of defense against the phone-uniqueness pre-check above racing a
-        # concurrent signup for the same number -- the pre-check alone has a real TOCTOU gap
-        # between the query and this insert; the database's own unique constraint on
-        # User.phone is the actual source of truth, this just turns its violation into the
-        # same honest 409 instead of a raw 500.
         db.rollback()
-        raise HTTPException(status_code=409, detail="An account with this phone number already exists.")
+        raise HTTPException(status_code=409, detail="An account with this phone number or email already exists.")
     db.refresh(user)
     logger.info("New citizen account created (user_id=%s)", user.id)
 
@@ -399,6 +538,7 @@ def send_email_verification(
         raise HTTPException(status_code=409, detail="This email is already in use on another account.")
 
     code = create_email_otp(db, current_user.id, email, _VERIFY_EMAIL_PURPOSE)
+    _dev_cache_otp(email, code)
     try:
         send_otp_email(email, code, _VERIFY_EMAIL_PURPOSE)
     except EmailServiceError as exc:
@@ -436,23 +576,26 @@ def verify_email(
     dependencies=[Depends(require_otp_rate_limit)],
 )
 def forgot_password(body: ForgotPasswordRequest, db: Session = Depends(get_db)) -> None:
-    """Request a password-reset code. Always returns the same 204, whether or not the email is
-    registered/verified -- same no-enumeration principle POST /auth/login already applies to
-    phone/password (never reveal which part of the input was wrong, or here, whether the account
-    exists at all)."""
+    """Request a password-reset code. Explicitly tells the caller if the email isn't a
+    registered, verified account -- a deliberate choice for this app (a citizen-facing civic
+    service, not a high-value target where account enumeration is the primary threat model):
+    clear, honest feedback ("this email isn't registered, go sign up") matters more here than
+    the enumeration-resistance a bank or a mail provider needs. POST /auth/login still gives an
+    identical error for "no such account" vs. "wrong password" -- that's a different, still-
+    valid tradeoff (a login guess is trivially retried privately; this is a one-time lookup a
+    citizen only does when genuinely locked out)."""
     email = body.email.strip().lower()
     user = db.query(User).filter(User.email == email, User.email_verified.is_(True)).first()
-    if user is not None:
-        code = create_email_otp(db, user.id, email, _RESET_PASSWORD_PURPOSE)
-        try:
-            send_otp_email(email, code, _RESET_PASSWORD_PURPOSE)
-        except EmailServiceError:
-            # Deliberately swallowed, not surfaced to the caller -- surfacing it here would leak
-            # "this email exists but sending failed" vs. "this email doesn't exist", the exact
-            # enumeration this endpoint's identical-response design exists to prevent. Already
-            # logged inside send_otp_email itself for operator visibility.
-            pass
-        logger.info("Password reset code requested (user_id=%s)", user.id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="This email isn't registered. Please sign up instead.")
+
+    code = create_email_otp(db, user.id, email, _RESET_PASSWORD_PURPOSE)
+    _dev_cache_otp(email, code)
+    try:
+        send_otp_email(email, code, _RESET_PASSWORD_PURPOSE)
+    except EmailServiceError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    logger.info("Password reset code requested (user_id=%s)", user.id)
 
 
 @router.post("/reset-password", status_code=204)

@@ -54,7 +54,7 @@ def test_ward_fallback_A1_explicit_location_takes_precedence_over_conflicting_ho
     make_worker(phone="9300099001", ward="Kanpur")
     db = db_session()
     db.add(User(
-        full_name="Patiala Worker", phone="9300099002", password_hash=hash_password("secret123"),
+        full_name="Patiala Worker", phone="9300099002", password_hash=hash_password("secret123!"),
         role="worker", preferred_language="en", ward="Patiala",
     ))
     db.commit()
