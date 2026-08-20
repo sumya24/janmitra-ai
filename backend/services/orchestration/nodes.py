@@ -48,6 +48,7 @@ from backend.services.location_extractor import LocationExtractor, LocationResol
 from backend.services.location_resolver import LocationResolver, ResolvedLocation
 from backend.services.observability import tracing
 from backend.services.orchestration.state import GraphState
+from backend.services.rag_answer_cache import get_cached_answer, store_answer
 from backend.services.rag_retriever import RagRetriever, chunk_context_label
 from backend.services.sarvam_client import AIServiceError
 from backend.services.translation_service import TranslationService
@@ -808,11 +809,35 @@ def rag_flow_node(state: GraphState, config: RunnableConfig) -> dict[str, Any]:
         root, "answer_generation", "llm",
         inputs={"question": tracing.redact_text(text), "language": language_name, "context_chunk_count": len(context_chunks)},
     )
-    answer_text, was_llm_generated = deps.answer_service.generate(text, context_chunks, language_name, context_labels)
-    tracing.end_run(
-        answer_span,
-        outputs={"answer_was_llm_generated": was_llm_generated, "answer": tracing.redact_text(answer_text)},
-    )
+    # LIVE PRODUCT FEATURE: the same question, in the same language, with the same resolved
+    # service category/city/state, is only ever sent to the LLM once -- reused from
+    # RagAnswerCache on every later ask, the same "translate/generate once, cache forever"
+    # pattern complaint_translation_cache.py already established for complaint text. Keyed on
+    # resolved category/city/state (not just the question text) specifically so two askers in two
+    # different cities can never see each other's cached city's answer (see RagAnswerCache's own
+    # docstring). Most valuable for this app's own 4 featured starter questions (identical text,
+    # asked by every new user) -- also what keeps Ask Sarthi useful when Sarvam credits/quota run
+    # out (see this fix's own live-reproduced case): a previously-cached question still answers
+    # normally, needing no LLM call at all.
+    ctx = _ctx(config)
+    language_code = state.get("original_language") or "en"
+    location_city = state.get("location_city")
+    location_state = state.get("location_state")
+    cached_answer = get_cached_answer(ctx.db, text, language_code, category, location_city, location_state)
+    if cached_answer is not None:
+        answer_text, was_llm_generated = cached_answer, True
+        tracing.end_run(answer_span, outputs={"answer_was_llm_generated": True, "cache_hit": True})
+    else:
+        answer_text, was_llm_generated = deps.answer_service.generate(text, context_chunks, language_name, context_labels)
+        tracing.end_run(
+            answer_span,
+            outputs={"answer_was_llm_generated": was_llm_generated, "cache_hit": False, "answer": tracing.redact_text(answer_text)},
+        )
+        # Never cache the no-LLM-available fallback (raw chunk echo) -- only a genuinely
+        # LLM-generated answer, so a temporary credits/network outage can never freeze a
+        # degraded answer into the cache for everyone else who asks the same thing later.
+        if was_llm_generated:
+            store_answer(ctx.db, text, language_code, category, location_city, location_state, answer_text)
 
     sources = []
     seen: set[str] = set()
