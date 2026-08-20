@@ -24,12 +24,12 @@ export default function ReportModal({ complaintId, onClose }: { complaintId: num
     setLoading(true);
     setError(null);
     api
-      .getComplaintReport(token, complaintId)
+      .getComplaintReport(token, complaintId, lang)
       .then(setReport)
       .catch((err) => setError(err instanceof ApiError ? err.message : t(lang, "worker.detail.reportLoadFailed")))
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, complaintId]);
+  }, [token, complaintId, lang]);
 
   const modalRef = useModalA11y(onClose);
 

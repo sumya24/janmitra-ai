@@ -33,6 +33,10 @@ from sqlalchemy.orm import Session
 from backend.config import settings
 from backend.models import Complaint, ComplaintStatusHistory, ComplaintUpdate, District, State, ULB, User
 from backend.repositories import complaint_workflow_repository, evidence_repository
+from backend.services.complaint_translation_cache import get_display_text_and_summary
+from backend.services.complaint_update_translation_cache import get_display_text as get_display_update_text
+from backend.services.sarvam_client import AIServiceError
+from backend.services.translation_service import TranslationService
 
 logger = logging.getLogger(__name__)
 
@@ -70,12 +74,61 @@ class ComplaintReportData:
     completion_evidence: list[str] = field(default_factory=list)
 
 
-def build_report_data(db: Session, complaint: Complaint) -> ComplaintReportData:
+def build_report_data(
+    db: Session,
+    complaint: Complaint,
+    display_language: str | None = None,
+    translation_service: TranslationService | None = None,
+) -> ComplaintReportData:
     """Assembles a ComplaintReportData from the database. Caller (routes/complaints.py) is
     responsible for having already verified `complaint.status == "resolved"` and that the
     requester is authorized to see this complaint -- this function does no authorization/status
     checking itself, it only reads and shapes data.
+
+    LIVE PRODUCT FINDING: `service_summary`/`original_description` used to always be the stored
+    English text (`complaint.summary`/`complaint.translated_text`), even when every other view of
+    the same complaint (the complaints list/detail endpoints, via `_to_response`'s own
+    `get_display_text_and_summary` call) already translates them into the viewer's own language on
+    read. Reported directly: a Marathi-speaking citizen saw the complaint LIST show her complaint
+    in Marathi, but the Report/Summary view of that exact same complaint show it in raw English --
+    a real, visible inconsistency, not a translation failure (the cache/translation mechanism
+    already existed and already worked; the report just never called it).
+
+    `display_language`/`translation_service` are both optional and default to None, matching this
+    function's existing callers unchanged: `download_report` (the PDF) intentionally keeps
+    passing neither, so the downloadable document's language is untouched by this fix -- only
+    `view_report` (the JSON "View Report"/"Summary" data) now passes the viewer's own language.
+    On any translation failure, falls back to the stored English text exactly like `_to_response`
+    already does -- this must never turn a translation hiccup into a broken/missing report.
     """
+    service_summary = complaint.summary
+    original_description = complaint.translated_text
+    if display_language and display_language != "en" and translation_service is not None:
+        try:
+            original_description, service_summary = get_display_text_and_summary(
+                db, complaint, display_language, translation_service
+            )
+        except AIServiceError as exc:
+            logger.error("On-read translation failed for complaint %s report: %s", complaint.id, exc)
+            service_summary = complaint.summary
+            original_description = complaint.translated_text
+
+    def _display_update_text(update: ComplaintUpdate | None) -> str | None:
+        """Same optional-translation-with-fallback shape as the block just above, applied to a
+        worker-authored ComplaintUpdate instead of the complaint itself -- see
+        complaint_update_translation_cache.py's own docstring for why this needs a DIFFERENT
+        cache/lookup (no "always English" guarantee, source language is approximated per-update
+        from the authoring worker's own preference)."""
+        if update is None:
+            return None
+        if not display_language or display_language == "en" or translation_service is None:
+            return update.text
+        try:
+            return get_display_update_text(db, update, display_language, translation_service)
+        except AIServiceError as exc:
+            logger.error("On-read translation failed for complaint update %s: %s", update.id, exc)
+            return update.text
+
     location_state = location_district = location_ulb = None
     if complaint.state_id is not None:
         row = db.query(State).filter(State.id == complaint.state_id).first()
@@ -115,8 +168,8 @@ def build_report_data(db: Session, complaint: Complaint) -> ComplaintReportData:
     return ComplaintReportData(
         complaint_id=complaint.id,
         display_id=f"JM-{complaint.id:05d}",
-        service_summary=complaint.summary,
-        original_description=complaint.translated_text,
+        service_summary=service_summary,
+        original_description=original_description,
         created_at=complaint.created_at,
         location_ward=complaint.ward,
         location_state=location_state,
@@ -124,16 +177,16 @@ def build_report_data(db: Session, complaint: Complaint) -> ComplaintReportData:
         location_ulb=location_ulb,
         location_address=complaint.address,
         assigned_worker_name=assigned_worker_name,
-        initial_assessment=initial.text if initial else None,
+        initial_assessment=_display_update_text(initial),
         initial_assessment_at=initial.created_at if initial else None,
         progress_updates=[
             {
-                "text": u.text, "photo_path": u.photo_path, "created_at": u.created_at,
+                "text": _display_update_text(u), "photo_path": u.photo_path, "created_at": u.created_at,
                 "evidence": evidence_by_update_id.get(u.id, []),
             }
             for u in progress
         ],
-        completion_status=completion.text if completion else None,
+        completion_status=_display_update_text(completion),
         completion_evidence_photo=completion.photo_path if completion else None,
         resolved_at=resolved_entry.created_at if resolved_entry else None,
         timeline=[

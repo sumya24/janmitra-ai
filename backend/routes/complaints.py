@@ -1014,13 +1014,21 @@ def _require_resolved(complaint: Complaint) -> None:
 @router.get("/{complaint_id}/report", response_model=ComplaintReportResponse)
 def view_report(
     complaint_id: int,
+    lang: str | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> ComplaintReportResponse:
-    """JSON report data for the in-app "View Report" screen."""
+    """JSON report data for the in-app "View Report"/"Summary" screens -- `service_summary`/
+    `original_description` are translated into the viewer's own language on read, same as
+    GET /complaints already does (see `_to_response`), so this no longer shows raw English next
+    to an otherwise fully-translated UI. Defaults to the viewer's own `preferred_language`,
+    overridable via `?lang=`, matching /complaints and /complaints/area-summary's own convention."""
+    if lang is not None and lang not in settings.SUPPORTED_LANGUAGES:
+        raise HTTPException(status_code=400, detail=f"Unsupported language: {lang}")
+    display_language = lang or current_user.preferred_language
     complaint = _get_visible_complaint(db, complaint_id, current_user)
     _require_resolved(complaint)
-    data = complaint_report_service.build_report_data(db, complaint)
+    data = complaint_report_service.build_report_data(db, complaint, display_language, _translation_service)
     return ComplaintReportResponse(
         complaint_id=data.complaint_id,
         display_id=data.display_id,
