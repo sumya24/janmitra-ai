@@ -17,7 +17,12 @@ services:
     environment:
       # Override the local-dev-relative defaults in backend/config.py so the DB and uploaded
       # photos live on the persistent backend_state volume, surviving redeploys.
-      DATABASE_URL: sqlite:////app/state/db/janmitra.db
+      #
+      # Filename matches the app's current name, JanSarthi AI (renamed from JanMitra) -- this
+      # points at a copy of the old janmitra.db made directly on the volume before this change
+      # deployed, so the switch carries over all existing data. The original janmitra.db file
+      # is left in place on the volume as an untouched fallback.
+      DATABASE_URL: sqlite:////app/state/db/jansarthi.db
       UPLOAD_FOLDER: /app/state/uploads
       # Safe to trust X-Forwarded-For here specifically because this container publishes no port
       # of its own (see below) -- every request genuinely passed through caddy first, so nobody
