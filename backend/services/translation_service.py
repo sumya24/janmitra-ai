@@ -46,3 +46,46 @@ class TranslationService:
             source_language_code=to_bcp47("en"),
             target_language_code=to_bcp47(target_language_code),
         )
+
+    def translate(self, text: str, source_language_code: str, target_language_code: str) -> str:
+        """Translate text between two arbitrary languages, neither of which has to be English --
+        unlike `to_english`/`to_language`, which both assume one side is always English because
+        `Complaint.translated_text` is always canonical English storage. Added for
+        worker-authored free text (ComplaintUpdate.text -- initial assessment/progress/completion
+        notes), which has no such "always English" guarantee (see
+        complaint_update_translation_cache.py's own docstring for the full reasoning).
+
+        Args:
+            text: The text to translate, in source_language_code.
+            source_language_code: Short language code the text is currently in, e.g. "mr".
+            target_language_code: Short language code to translate into, e.g. "hi".
+
+        Returns:
+            The text translated into the target language.
+        """
+        return self._sarvam.translate(
+            text,
+            source_language_code=to_bcp47(source_language_code),
+            target_language_code=to_bcp47(target_language_code),
+        )
+
+    def translate_auto_detecting_source(self, text: str, target_language_code: str) -> str:
+        """Translate text into target_language_code without knowing its source language in
+        advance -- Sarvam detects it for us. For worker-authored `ComplaintUpdate.text`, which
+        (unlike `Complaint.translated_text`) is never forced into English at write time and has no
+        stored source language at all, so there's nothing reliable to pass as a source (see
+        complaint_update_translation_cache.py's docstring for the full reasoning, including why
+        approximating it from the worker's own language preference turned out to be wrong).
+
+        Args:
+            text: Text to translate; its language is unknown/unstored.
+            target_language_code: Short language code to translate into, e.g. "hi".
+
+        Returns:
+            The text translated into the target language.
+        """
+        return self._sarvam.translate(
+            text,
+            source_language_code="auto",
+            target_language_code=to_bcp47(target_language_code),
+        )

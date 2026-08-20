@@ -17,6 +17,9 @@ import { api, ApiError, type ComplaintDetail, type ComplaintReport } from "../li
 import { useToast } from "../lib/toast";
 
 const STATUS_LABEL_KEY = {
+  // See WorkerDashboard.tsx's own copy of this map -- without an explicit "open" entry,
+  // StatusBadge rendered no label text at all for a complaint sitting in that state.
+  open: "worker.filterAssigned",
   pending: "worker.filterAssigned",
   assigned: "worker.statusAssigned",
   accepted: "worker.statusAccepted",

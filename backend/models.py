@@ -182,6 +182,37 @@ class ComplaintUpdate(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=_utcnow)
 
 
+class ComplaintUpdateTranslation(Base):
+    """A cached translation of one worker-authored ComplaintUpdate.text (initial assessment,
+    progress update, or completion note) into one display language -- the same "translate once,
+    cache forever" pattern ComplaintTranslation already uses for complaint text, applied here too.
+
+    Unlike Complaint.translated_text, a ComplaintUpdate has no "always canonical English" storage
+    guarantee -- `text` is stored exactly as the worker typed it, in whatever language that was
+    (see ComplaintUpdate's own docstring), and no original-language column is recorded for it.
+    The source language is therefore left unspecified at translation time and auto-detected by
+    Sarvam (see complaint_update_translation_cache.py's own docstring for the full reasoning,
+    including why an earlier version that approximated it from the worker's own
+    `User.preferred_language` turned out to be wrong).
+
+    Attributes:
+        id: Primary key.
+        complaint_update_id: The ComplaintUpdate this translation belongs to.
+        language_code: Short language code the text is translated into, e.g. "hi".
+        translated_text: The update's text translated into language_code.
+        created_at: UTC timestamp of when this translation was cached.
+    """
+
+    __tablename__ = "complaint_update_translations"
+    __table_args__ = (UniqueConstraint("complaint_update_id", "language_code", name="uq_complaint_update_translation_lang"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    complaint_update_id: Mapped[int] = mapped_column(ForeignKey("complaint_updates.id"), nullable=False, index=True)
+    language_code: Mapped[str] = mapped_column(String(8), nullable=False)
+    translated_text: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=_utcnow)
+
+
 class ComplaintEvidence(Base):
     """One uploaded evidence file (photo) on a complaint -- the multi-file evidence system
     (evidence upload phase). Supersedes `Complaint.photo_path` / `ComplaintUpdate.photo_path`

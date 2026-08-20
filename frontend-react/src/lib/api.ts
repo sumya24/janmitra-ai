@@ -556,9 +556,11 @@ export const api = {
 
   // Resolution report -- both 404 (via the shared ApiError) until the complaint is actually
   // "resolved"; never a fake/partial report before then (see backend/routes/complaints.py).
-  getComplaintReport: (token: string, id: number) => request<ComplaintReport>(`/complaints/${id}/report`, { token }),
+  getComplaintReport: (token: string, id: number, lang?: string) =>
+    request<ComplaintReport>(`/complaints/${id}/report${lang ? `?lang=${lang}` : ""}`, { token }),
 
-  downloadComplaintReport: (token: string, id: number) => requestBlob(`/complaints/${id}/report/download`, token),
+  downloadComplaintReport: (token: string, id: number, lang?: string) =>
+    requestBlob(`/complaints/${id}/report/download${lang ? `?lang=${lang}` : ""}`, token),
 
   // In-app notifications -- worker-only in practice today, see AppNotification's docstring.
   listNotifications: (token: string) => request<NotificationList>("/notifications", { token }),
