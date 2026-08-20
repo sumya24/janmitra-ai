@@ -14,6 +14,12 @@ import { t } from "../lib/i18n";
 import { api, ApiError, type Complaint, type ComplaintUpdateEntry } from "../lib/api";
 
 const STATUS_LABEL_KEY = {
+  // "open" is the complaint's brand-new status, set at creation and normally gone within the
+  // same request once the assignment system's first pass runs (see complaint_agent.py/
+  // assignment_service.py) -- but real data can still be seen sitting at "open" (assignment
+  // failed/was skipped), and this map had no entry for it at all, so StatusBadge rendered with
+  // no label text -- just its icon, no words -- for any complaint in that state.
+  open: "citizen.trackSubmitted",
   pending: "citizen.statusPending",
   assigned: "citizen.statusAssigned",
   accepted: "citizen.statusAccepted",

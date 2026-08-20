@@ -13,7 +13,10 @@ import "../styles/dashboard.css";
 
 // Same reuse-existing-labels approach as AdminDashboard.tsx's own copy of this map -- see that
 // file for why (avoids a near-duplicate string for "In progress" under a new key name).
-const COMPLAINT_STATUS_LABEL_KEY: Record<ComplaintStatus, string> = {
+const COMPLAINT_STATUS_LABEL_KEY: Record<ComplaintStatus | "open", string> = {
+  // See AdminDashboard.tsx's own copy of this map for why "open" needs an explicit entry --
+  // without one, StatusBadge rendered no label text at all for a complaint sitting in that state.
+  open: "citizen.trackSubmitted",
   pending: "admin.pendingStat",
   assigned: "admin.filterAssigned",
   accepted: "admin.filterAccepted",

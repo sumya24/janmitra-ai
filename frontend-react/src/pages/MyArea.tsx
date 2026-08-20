@@ -10,6 +10,10 @@ import { SERVICE_CATEGORY_DEFS } from "../lib/serviceCategories";
 import "../styles/dashboard.css";
 
 const STATUS_LABEL_KEY = {
+  // See CitizenDashboard.tsx's own copy of this map for why "open" (the complaint's brand-new,
+  // usually-transient status) needs an explicit entry -- without one, StatusBadge rendered with
+  // no label text at all for a complaint sitting in that state.
+  open: "citizen.trackSubmitted",
   pending: "citizen.statusPending",
   assigned: "citizen.statusAssigned",
   accepted: "citizen.statusAccepted",
