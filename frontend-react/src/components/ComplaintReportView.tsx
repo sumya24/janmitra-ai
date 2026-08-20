@@ -1,10 +1,30 @@
 import { useUiLang } from "../lib/uiLang";
-import { t } from "../lib/i18n";
-import type { ComplaintReport } from "../lib/api";
+import { t, type LangCode } from "../lib/i18n";
+import type { ComplaintReport, ComplaintStatus } from "../lib/api";
 import EvidenceGallery, { type GalleryItem } from "./EvidenceGallery";
+import StatusBadge from "./StatusBadge";
 
 function toItems(filePaths: string[]): GalleryItem[] {
   return filePaths.map((filePath) => ({ filePath }));
+}
+
+// The timeline's from_status/to_status only ever take these 6 fixed backend status codes (see
+// record_status_change()'s call sites, plus complaint_agent.py which sets the brand-new-complaint
+// status "open" before the assignment system's first pass ever runs) -- a closed set that's
+// already fully translated for every supported language in i18n.ts (the same labels
+// ComplaintTracker's progress bar uses), so this is a plain lookup, not a translation-service call.
+const _STATUS_LABEL_KEYS: Record<string, string> = {
+  open: "citizen.trackSubmitted",
+  pending: "citizen.statusPending",
+  assigned: "citizen.statusAssigned",
+  accepted: "citizen.statusAccepted",
+  in_progress: "citizen.trackInProgress",
+  resolved: "citizen.statusResolved",
+};
+
+function statusLabel(lang: LangCode, status: string): string {
+  const key = _STATUS_LABEL_KEYS[status];
+  return key ? t(lang, key) : status;
 }
 
 /** Renders the same real, deterministically-assembled report data the PDF download contains
@@ -26,7 +46,17 @@ export default function ComplaintReportView({ report }: { report: ComplaintRepor
         </div>
       </div>
 
-      <dl className="report-fields">
+      {report.resolved_at && (
+        <div className="report-resolved-banner">
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+            <circle cx="8" cy="8" r="7" fill="currentColor" opacity="0.18" />
+            <path d="M4.5 8.2 6.8 10.5 11.5 5.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+          </svg>
+          {t(lang, "citizen.statusResolved")}
+        </div>
+      )}
+
+      <dl className="report-fields report-fields-panel">
         <dt>{t(lang, "worker.report.complaintId")}</dt>
         <dd className="mono">{report.display_id}</dd>
 
@@ -44,7 +74,7 @@ export default function ComplaintReportView({ report }: { report: ComplaintRepor
         </div>
       )}
 
-      <dl className="report-fields">
+      <dl className="report-fields report-fields-panel">
         {location && (
           <>
             <dt>{t(lang, "worker.report.location")}</dt>
@@ -117,9 +147,34 @@ export default function ComplaintReportView({ report }: { report: ComplaintRepor
         <div className="report-section">
           <div className="section-label">{t(lang, "worker.detail.timeline")}</div>
           {report.timeline.map((entry, i) => (
-            <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 12.5, padding: "5px 0", borderBottom: i < report.timeline.length - 1 ? "1px solid var(--line)" : "none" }}>
-              <span>{entry.from_status ? `${entry.from_status} → ${entry.to_status}` : entry.to_status}</span>
-              <span className="mono" style={{ color: "var(--ink-3)" }}>{new Date(entry.created_at).toLocaleString()}</span>
+            // Backend status codes include "open" (see _STATUS_LABEL_KEYS above), which predates
+            // StatusBadge's own vocabulary -- it falls back to StatusBadge's default (pending-
+            // style) badge, a reasonable stand-in for "just submitted, not yet actioned" that's
+            // fine here since every StatusBadge call site already treats an unrecognized status
+            // this way, not something new to this component.
+            //
+            // A real grid with fixed column widths (not a flex row) -- so the "from" badges line
+            // up in one vertical column, the arrows in another, and the "to" badges in a third,
+            // down the whole list, instead of each row's badge widths shifting everything after
+            // them left/right depending on how long that row's particular status word is.
+            <div key={i} className="report-timeline-row">
+              <span className="report-timeline-from">
+                {entry.from_status && (
+                  <StatusBadge status={entry.from_status as ComplaintStatus} label={statusLabel(lang, entry.from_status)} />
+                )}
+              </span>
+              {/* Always shown, even for a transition into "assigned" (whose own badge icon is
+                  also an arrow) -- with the two badges now in their own separate grid columns,
+                  this middle column's arrow reads as the row's own connector, not a literal
+                  repeat sitting right next to the badge's icon the way it did before the grid
+                  layout. Hiding it only for that one status made every OTHER row consistent but
+                  this one row look broken/missing its arrow -- worse than the very difference it
+                  was meant to avoid. */}
+              <span className="report-timeline-connector">{entry.from_status ? "→" : ""}</span>
+              <span className="report-timeline-to">
+                <StatusBadge status={entry.to_status as ComplaintStatus} label={statusLabel(lang, entry.to_status)} />
+              </span>
+              <span className="mono report-timeline-time">{new Date(entry.created_at).toLocaleString()}</span>
             </div>
           ))}
         </div>

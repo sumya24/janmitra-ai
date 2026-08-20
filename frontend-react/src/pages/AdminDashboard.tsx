@@ -19,7 +19,14 @@ type ComplaintFilter = "all" | ComplaintStatus;
 
 // i18n key for each status, reused from keys that already exist elsewhere on this same page
 // (the stat tiles) rather than duplicating "Pending"/"Resolved" strings under a new name.
-const COMPLAINT_STATUS_LABEL_KEY: Record<ComplaintStatus, string> = {
+const COMPLAINT_STATUS_LABEL_KEY: Record<ComplaintStatus | "open", string> = {
+  // "open" isn't part of the ComplaintStatus type (the frontend never expected to display it as
+  // a distinct state), but it's a real, if usually-transient, backend status -- the complaint's
+  // brand-new status at creation, normally gone within the same request once the assignment
+  // system's first pass runs (see complaint_agent.py/assignment_service.py). Real data can still
+  // be seen sitting at "open" (assignment failed/was skipped), and without this entry
+  // StatusBadge rendered no label text at all -- just its icon -- for any complaint in that state.
+  open: "citizen.trackSubmitted",
   pending: "admin.pendingStat",
   assigned: "admin.filterAssigned",
   accepted: "admin.filterAccepted",

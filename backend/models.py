@@ -182,6 +182,37 @@ class ComplaintUpdate(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=_utcnow)
 
 
+class ComplaintUpdateTranslation(Base):
+    """A cached translation of one worker-authored ComplaintUpdate.text (initial assessment,
+    progress update, or completion note) into one display language -- the same "translate once,
+    cache forever" pattern ComplaintTranslation already uses for complaint text, applied here too.
+
+    Unlike Complaint.translated_text, a ComplaintUpdate has no "always canonical English" storage
+    guarantee -- `text` is stored exactly as the worker typed it, in whatever language that was
+    (see ComplaintUpdate's own docstring), and no original-language column is recorded for it.
+    The source language is therefore left unspecified at translation time and auto-detected by
+    Sarvam (see complaint_update_translation_cache.py's own docstring for the full reasoning,
+    including why an earlier version that approximated it from the worker's own
+    `User.preferred_language` turned out to be wrong).
+
+    Attributes:
+        id: Primary key.
+        complaint_update_id: The ComplaintUpdate this translation belongs to.
+        language_code: Short language code the text is translated into, e.g. "hi".
+        translated_text: The update's text translated into language_code.
+        created_at: UTC timestamp of when this translation was cached.
+    """
+
+    __tablename__ = "complaint_update_translations"
+    __table_args__ = (UniqueConstraint("complaint_update_id", "language_code", name="uq_complaint_update_translation_lang"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    complaint_update_id: Mapped[int] = mapped_column(ForeignKey("complaint_updates.id"), nullable=False, index=True)
+    language_code: Mapped[str] = mapped_column(String(8), nullable=False)
+    translated_text: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=_utcnow)
+
+
 class ComplaintEvidence(Base):
     """One uploaded evidence file (photo) on a complaint -- the multi-file evidence system
     (evidence upload phase). Supersedes `Complaint.photo_path` / `ComplaintUpdate.photo_path`
@@ -305,6 +336,58 @@ class ComplaintTranslation(Base):
     language_code: Mapped[str] = mapped_column(String(8), nullable=False)
     translated_text: Mapped[str] = mapped_column(Text, nullable=False)
     translated_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
+    )
+
+
+class RagAnswerCache(Base):
+    """A cached, previously-LLM-generated "Ask Sarthi" answer for one (question, language,
+    retrieval context) combination -- the RAG equivalent of ComplaintTranslation: the same
+    question, asked by any citizen/worker/admin, in the same language, with the same resolved
+    service category/city/state, is only ever sent to the LLM once, not on every ask.
+
+    Keyed on a hash of the normalized question text PLUS the resolved retrieval context (service
+    category, city, state) -- not just the question text alone -- because the exact same question
+    text can legitimately resolve to a DIFFERENT real answer depending on the asker's own
+    location (see rag_retriever.py's category+location filtering); including that context in the
+    key is what keeps two askers in two different cities from ever seeing each other's cached
+    city's answer. Most valuable for this app's own 4 featured starter questions (identical text,
+    asked by every new user), but works for any citizen's own phrasing too if it happens to
+    repeat verbatim with the same resolved context.
+
+    Only ever written for a genuinely LLM-generated answer (see rag_flow_node's own caching call
+    site, which checks `answer_was_llm_generated` first) -- never the no-LLM-available fallback
+    template, so a temporary credits/network outage can never freeze a degraded answer into the
+    cache for everyone else.
+
+    Attributes:
+        id: Primary key.
+        cache_key: SHA-256 hex digest of the normalized question text + language_code + resolved
+            service_category/city/state, joined together -- keeps the unique lookup key a fixed,
+            short size regardless of how long a citizen's actual question text is.
+        question_text: The original (normalized) question text, kept alongside the hash for
+            debugging/inspection -- never itself used for lookups.
+        language_code: Short language code the cached answer is written in, e.g. "hi".
+        service_category: The resolved ServiceCategory value this answer was generated for, or
+            None if the question didn't resolve to one.
+        location_city: The resolved city this answer was generated for, or None.
+        location_state: The resolved state this answer was generated for, or None.
+        answer_text: The cached LLM-generated answer.
+        created_at: UTC timestamp of when this answer was cached.
+    """
+
+    __tablename__ = "rag_answer_cache"
+    __table_args__ = (UniqueConstraint("cache_key", name="uq_rag_answer_cache_key"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    cache_key: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    question_text: Mapped[str] = mapped_column(Text, nullable=False)
+    language_code: Mapped[str] = mapped_column(String(8), nullable=False)
+    service_category: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    location_city: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    location_state: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    answer_text: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
     )

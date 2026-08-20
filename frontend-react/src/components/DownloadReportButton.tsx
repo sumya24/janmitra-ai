@@ -20,7 +20,7 @@ export default function DownloadReportButton({ complaintId, className }: { compl
     if (!token) return;
     setDownloading(true);
     try {
-      const { blob, filename } = await api.downloadComplaintReport(token, complaintId);
+      const { blob, filename } = await api.downloadComplaintReport(token, complaintId, lang);
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;

@@ -17,6 +17,10 @@ import { useToast } from "../lib/toast";
 import "../styles/dashboard.css";
 
 const STATUS_LABEL_KEY = {
+  // Same reasoning as "pending" below -- a worker shouldn't normally see a complaint still
+  // sitting at "open" either, but without an explicit entry StatusBadge rendered no label text
+  // at all (just its icon) on the rare complaint that does.
+  open: "worker.filterAssigned",
   pending: "worker.filterAssigned", // a worker never actually sees "pending" (unassigned) items
   assigned: "worker.statusAssigned",
   accepted: "worker.statusAccepted",

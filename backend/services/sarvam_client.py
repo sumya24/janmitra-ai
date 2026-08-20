@@ -119,7 +119,12 @@ class SarvamClient:
 
         Args:
             text: The text to translate.
-            source_language_code: BCP-47 code of the source language, e.g. "mr-IN".
+            source_language_code: BCP-47 code of the source language, e.g. "mr-IN" -- or the
+                literal string "auto" to have Sarvam detect the source language itself. Only
+                Sarvam's mayura:v1 model supports auto-detection, so passing "auto" switches the
+                model used for this call from sarvam-translate:v1 to mayura:v1 (still covers all
+                of this app's SUPPORTED_LANGUAGES -- see complaint_update_translation_cache.py for
+                why auto-detection is needed at all).
             target_language_code: BCP-47 code of the target language, e.g. "en-IN".
 
         Returns:
@@ -132,15 +137,16 @@ class SarvamClient:
             return text
 
         client = self._require_client()
+        model = "mayura:v1" if source_language_code == "auto" else "sarvam-translate:v1"
         logger.info(
-            "Translation started (%s -> %s)", source_language_code, target_language_code
+            "Translation started (%s -> %s, model=%s)", source_language_code, target_language_code, model
         )
         try:
             response = client.text.translate(
                 input=text,
                 source_language_code=source_language_code,
                 target_language_code=target_language_code,
-                model="sarvam-translate:v1",
+                model=model,
             )
             translated = getattr(response, "translated_text", None) or ""
             logger.info(
