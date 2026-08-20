@@ -102,3 +102,14 @@ def record_rejection(db: Session, *, complaint_id: int, worker_id: int, reason: 
     db.commit()
     db.refresh(rejection)
     return rejection
+
+
+def get_rejections_for_complaint(db: Session, complaint_id: int) -> list[ComplaintRejection]:
+    """Admin-only read path (see routes/complaints.py's _to_detail_response) -- citizens and
+    workers never see this; only an admin viewing a complaint's detail gets these rows."""
+    return (
+        db.query(ComplaintRejection)
+        .filter(ComplaintRejection.complaint_id == complaint_id)
+        .order_by(ComplaintRejection.created_at.asc())
+        .all()
+    )

@@ -245,7 +245,10 @@ def test_verify_already_consumed_code_cannot_be_replayed(client, make_citizen, m
     assert replay.status_code == 400
 
 
-# --- Forgot password (no-enumeration) ------------------------------------------------------------
+# --- Forgot password ---------------------------------------------------------------------------
+# Deliberately NOT no-enumeration -- a clear 404 for an unregistered/unverified email, unlike
+# POST /auth/login's identical "wrong credentials" response. See forgot_password's own docstring
+# in routes/auth.py for why this app makes that tradeoff differently than login does.
 
 
 def test_forgot_password_with_verified_email_sends_a_code(client, make_citizen, db_session, monkeypatch):
@@ -259,16 +262,14 @@ def test_forgot_password_with_verified_email_sends_a_code(client, make_citizen, 
     assert sent[0][2] == "reset_password"
 
 
-def test_forgot_password_with_unregistered_email_returns_identical_response(client, monkeypatch):
-    """No-enumeration: an unregistered email must return the exact same 204 as a real one, with
-    no email actually sent."""
+def test_forgot_password_with_unregistered_email_returns_404(client, monkeypatch):
     sent = _fake_send_otp_email(monkeypatch)
     response = client.post("/auth/forgot-password", json={"email": "nobody-here@example.com"})
-    assert response.status_code == 204
+    assert response.status_code == 404
     assert sent == []
 
 
-def test_forgot_password_with_unverified_email_returns_identical_response(client, make_citizen, db_session, monkeypatch):
+def test_forgot_password_with_unverified_email_returns_404(client, make_citizen, db_session, monkeypatch):
     """An email that exists on an account but was never verified must be treated the same as an
     unregistered one -- it was never proven to belong to that account's owner."""
     sent = _fake_send_otp_email(monkeypatch)
@@ -281,7 +282,7 @@ def test_forgot_password_with_unverified_email_returns_identical_response(client
     db.close()
 
     response = client.post("/auth/forgot-password", json={"email": "unverified21@example.com"})
-    assert response.status_code == 204
+    assert response.status_code == 404
     assert sent == []
 
 
@@ -290,35 +291,35 @@ def test_forgot_password_with_unverified_email_returns_identical_response(client
 
 def test_reset_password_with_correct_code_succeeds(client, make_citizen, db_session, monkeypatch):
     sent = _fake_send_otp_email(monkeypatch)
-    _token, user = make_citizen(phone="9300000030", password="oldpass123")
+    _token, user = make_citizen(phone="9300000030", password="oldpass123!")
     _mark_email_verified(db_session, user["id"], "citizen30@example.com")
     client.post("/auth/forgot-password", json={"email": "citizen30@example.com"})
     code = sent[-1][1]
 
     response = client.post(
         "/auth/reset-password",
-        json={"email": "citizen30@example.com", "code": code, "new_password": "newpass456"},
+        json={"email": "citizen30@example.com", "code": code, "new_password": "newpass456!"},
     )
     assert response.status_code == 204
 
-    new_login = client.post("/auth/login", json={"identifier": "9300000030", "password": "newpass456"})
+    new_login = client.post("/auth/login", json={"identifier": "9300000030", "password": "newpass456!"})
     assert new_login.status_code == 200
-    old_login = client.post("/auth/login", json={"identifier": "9300000030", "password": "oldpass123"})
+    old_login = client.post("/auth/login", json={"identifier": "9300000030", "password": "oldpass123!"})
     assert old_login.status_code == 401
 
 
 def test_reset_password_revokes_all_refresh_tokens(client, make_citizen, db_session, monkeypatch):
     sent = _fake_send_otp_email(monkeypatch)
-    signup_token, user = make_citizen(phone="9300000031", password="oldpass123")
+    signup_token, user = make_citizen(phone="9300000031", password="oldpass123!")
     _mark_email_verified(db_session, user["id"], "citizen31@example.com")
-    signup_login = client.post("/auth/login", json={"identifier": "9300000031", "password": "oldpass123"})
+    signup_login = client.post("/auth/login", json={"identifier": "9300000031", "password": "oldpass123!"})
     refresh_token = signup_login.json()["refresh_token"]
 
     client.post("/auth/forgot-password", json={"email": "citizen31@example.com"})
     code = sent[-1][1]
     response = client.post(
         "/auth/reset-password",
-        json={"email": "citizen31@example.com", "code": code, "new_password": "newpass456"},
+        json={"email": "citizen31@example.com", "code": code, "new_password": "newpass456!"},
     )
     assert response.status_code == 204
 
@@ -336,7 +337,7 @@ def test_reset_password_with_wrong_code_fails(client, make_citizen, db_session, 
 
     response = client.post(
         "/auth/reset-password",
-        json={"email": "citizen32@example.com", "code": wrong_code, "new_password": "newpass456"},
+        json={"email": "citizen32@example.com", "code": wrong_code, "new_password": "newpass456!"},
     )
     assert response.status_code == 400
 
@@ -344,7 +345,7 @@ def test_reset_password_with_wrong_code_fails(client, make_citizen, db_session, 
 def test_reset_password_with_unregistered_email_fails(client):
     response = client.post(
         "/auth/reset-password",
-        json={"email": "nobody-here@example.com", "code": "123456", "new_password": "newpass456"},
+        json={"email": "nobody-here@example.com", "code": "123456", "new_password": "newpass456!"},
     )
     assert response.status_code == 400
 
@@ -367,16 +368,16 @@ def test_reset_password_rejects_a_weak_new_password(client, make_citizen, db_ses
 
 
 def test_login_with_verified_email_succeeds(client, make_citizen, db_session):
-    _token, user = make_citizen(phone="9300000040", password="secret123")
+    _token, user = make_citizen(phone="9300000040", password="secret123!")
     _mark_email_verified(db_session, user["id"], "citizen40@example.com")
 
-    response = client.post("/auth/login", json={"identifier": "citizen40@example.com", "password": "secret123"})
+    response = client.post("/auth/login", json={"identifier": "citizen40@example.com", "password": "secret123!"})
     assert response.status_code == 200, response.text
     assert response.json()["user"]["phone"] == "9300000040"
 
 
 def test_login_with_unverified_email_fails(client, make_citizen, db_session):
-    _token, user = make_citizen(phone="9300000041", password="secret123")
+    _token, user = make_citizen(phone="9300000041", password="secret123!")
     db = db_session()
     db_user = db.query(User).filter(User.id == user["id"]).first()
     db_user.email = "citizen41@example.com"
@@ -384,13 +385,13 @@ def test_login_with_unverified_email_fails(client, make_citizen, db_session):
     db.commit()
     db.close()
 
-    response = client.post("/auth/login", json={"identifier": "citizen41@example.com", "password": "secret123"})
+    response = client.post("/auth/login", json={"identifier": "citizen41@example.com", "password": "secret123!"})
     assert response.status_code == 401
 
 
 def test_login_still_works_with_phone_after_email_added(client, make_citizen, db_session):
-    _token, user = make_citizen(phone="9300000042", password="secret123")
+    _token, user = make_citizen(phone="9300000042", password="secret123!")
     _mark_email_verified(db_session, user["id"], "citizen42@example.com")
 
-    response = client.post("/auth/login", json={"identifier": "9300000042", "password": "secret123"})
+    response = client.post("/auth/login", json={"identifier": "9300000042", "password": "secret123!"})
     assert response.status_code == 200

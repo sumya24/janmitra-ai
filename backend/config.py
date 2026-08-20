@@ -201,6 +201,18 @@ class Settings:
     # code; tight enough to block a spam script.
     OTP_RATE_LIMIT: int = int(os.getenv("OTP_RATE_LIMIT", "3"))
     OTP_RATE_LIMIT_WINDOW_SECONDS: int = int(os.getenv("OTP_RATE_LIMIT_WINDOW_SECONDS", "600"))
+    # How long a confirmed email-verification proof (see models.SignupEmailVerification) stays
+    # redeemable at POST /auth/signup -- long enough for a citizen to click "Verify" on the email
+    # field, then take their time filling in the rest of the signup form (name, phone, password,
+    # ward) before submitting, short enough that a stale, unused verification can't be resurrected
+    # much later by someone else who happens to learn the token.
+    EMAIL_VERIFICATION_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("EMAIL_VERIFICATION_TOKEN_EXPIRE_MINUTES", "30"))
+    # The deployed frontend's own origin (e.g. "https://jansarthi.example.com"), used only to
+    # build a "View complaint" link in complaint-lifecycle emails (see email_service.py's
+    # send_complaint_status_email). Optional and blank by default -- same "off unless configured,
+    # degrade gracefully" posture as everything else on this page: an email still sends fine
+    # without this set, it just omits the button rather than linking to a blank/wrong host.
+    FRONTEND_BASE_URL: str = os.getenv("FRONTEND_BASE_URL", "")
 
     # Rate limiting (see backend/services/rate_limiter.py, backend/deps.py's
     # require_login_rate_limit/require_ai_rate_limit) -- a small, in-process, stdlib-only sliding

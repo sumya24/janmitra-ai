@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { fillHomeLocationPicker, uniquePhone } from "./helpers";
+import { fillHomeLocationPicker, uniqueEmail, uniquePhone } from "./helpers";
 
 test("language gate -> landing -> signup validation -> citizen dashboard -> graceful complaint error", async ({ page }) => {
   await page.goto("/");
@@ -22,13 +22,31 @@ test("language gate -> landing -> signup validation -> citizen dashboard -> grac
 
   // Fill in a valid signup and submit.
   const phone = uniquePhone();
+  const email = uniqueEmail();
   await page.getByLabel("पूर्ण नाव").fill("Priya Deshmukh");
   await page.getByLabel("फोन नंबर").fill(phone);
-  await page.getByLabel("पासवर्ड", { exact: true }).fill("secret123");
-  await page.locator("#signup-confirm-password").fill("secret123");
+  await page.getByLabel("ईमेल पत्ता").fill(email);
+  await page.getByLabel("पासवर्ड", { exact: true }).fill("secret123!");
+  await page.locator("#signup-confirm-password").fill("secret123!");
   await fillHomeLocationPicker(page);
-  await page.getByRole("button", { name: "खाते तयार करा" }).click();
 
+  // Mandatory inline email verification, still in Marathi (see backend/routes/auth.py's module
+  // docstring on why this is mandatory, and Signup.tsx for why it's a "Send code"/"Verify" pair
+  // right next to the email field, not a separate page/step). Longer-than-default timeout: the
+  // send-code call does a real (non-mocked) SMTP send before returning, which can occasionally
+  // take several seconds -- see helpers.ts's verifySignupEmail for the same reasoning (this file
+  // doesn't use that shared helper, since its labels are Marathi, not English).
+  await page.getByRole("button", { name: "कोड पाठवा" }).click();
+  await expect(page.getByLabel("पडताळणी कोड")).toBeVisible({ timeout: 15000 });
+  const otpResponse = await page.request.get(
+    `http://localhost:8000/auth/_dev/otp-code?email=${encodeURIComponent(email)}`
+  );
+  const { code } = (await otpResponse.json()) as { code: string };
+  await page.getByLabel("पडताळणी कोड").fill(code);
+  await page.getByRole("button", { name: "पडताळणी करा" }).click();
+  await expect(page.getByText("पडताळणी झाली", { exact: false })).toBeVisible();
+
+  await page.getByRole("button", { name: "खाते तयार करा" }).click();
   await expect(page).toHaveURL(/\/citizen$/);
   await expect(page.getByText("Priya Deshmukh")).toBeVisible();
   await expect(page.getByText("नागरिक", { exact: true })).toBeVisible(); // role pill — also renders in Marathi

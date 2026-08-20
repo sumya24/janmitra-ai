@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { execSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { fillHomeLocationPicker, uniquePhone } from "./helpers";
+import { verifySignupEmail, fillHomeLocationPicker, uniqueEmail, uniquePhone } from "./helpers";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../..");
@@ -74,9 +74,11 @@ test("real multi-file evidence upload, end to end: select -> upload -> storage -
   await page.goto("/signup");
   await page.getByLabel("Full name").fill("Evidence Test Citizen");
   await page.getByLabel("Phone number").fill(citizenPhone);
-  await page.getByLabel("Password", { exact: true }).fill("citizenpass123");
-  await page.locator("#signup-confirm-password").fill("citizenpass123");
+  await page.getByLabel("Password", { exact: true }).fill("citizenpass123!");
+  await page.getByLabel("Email address").fill(uniqueEmail());
+  await page.locator("#signup-confirm-password").fill("citizenpass123!");
   await fillHomeLocationPicker(page);
+  await verifySignupEmail(page);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/citizen$/);
 
@@ -176,7 +178,7 @@ test("real multi-file evidence upload, end to end: select -> upload -> storage -
 
   // --- Citizen sees the worker's evidence too, on their own detail page. Same 10 (5 real files,
   // shown twice -- Updates timeline + Resolution Report) as the worker's view above. ---
-  await login(page, citizenPhone, "citizenpass123");
+  await login(page, citizenPhone, "citizenpass123!");
   await page.goto(complaintUrl.replace("/worker/", "/citizen/"));
   // Longer timeout here specifically: a fresh full navigation (page.goto, not client-side
   // routing) has to load the app shell, authenticate, and fetch the complaint detail before
@@ -215,9 +217,11 @@ test("a file that isn't really an image is rejected with a clear error, not a si
   await page.goto("/signup");
   await page.getByLabel("Full name").fill("Invalid Upload Tester");
   await page.getByLabel("Phone number").fill(uniquePhone());
-  await page.getByLabel("Password", { exact: true }).fill("citizenpass123");
-  await page.locator("#signup-confirm-password").fill("citizenpass123");
+  await page.getByLabel("Password", { exact: true }).fill("citizenpass123!");
+  await page.getByLabel("Email address").fill(uniqueEmail());
+  await page.locator("#signup-confirm-password").fill("citizenpass123!");
   await fillHomeLocationPicker(page);
+  await verifySignupEmail(page);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/citizen$/);
 

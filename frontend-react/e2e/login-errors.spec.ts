@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { fillHomeLocationPicker, uniquePhone } from "./helpers";
+import { verifySignupEmail, fillHomeLocationPicker, uniqueEmail, uniquePhone } from "./helpers";
 
 test("login with wrong password shows an error and does not navigate away", async ({ page }) => {
   const phone = uniquePhone();
@@ -8,9 +8,11 @@ test("login with wrong password shows an error and does not navigate away", asyn
   await page.goto("/signup");
   await page.getByLabel("Full name").fill("Test User");
   await page.getByLabel("Phone number").fill(phone);
+  await page.getByLabel("Email address").fill(uniqueEmail());
   await page.getByLabel("Password", { exact: true }).fill("correct-password1");
   await page.locator("#signup-confirm-password").fill("correct-password1");
   await fillHomeLocationPicker(page);
+  await verifySignupEmail(page);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/citizen$/);
 

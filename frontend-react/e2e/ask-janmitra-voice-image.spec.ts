@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { fillHomeLocationPicker, uniquePhone } from "./helpers";
+import { verifySignupEmail, fillHomeLocationPicker, uniqueEmail, uniquePhone } from "./helpers";
 
 /**
  * E2E coverage for the combined voice+image UI wiring inside VoiceAssistantOverlay (phase 7 of
@@ -32,9 +32,11 @@ async function signUpAndReachCitizenHome(page: import("@playwright/test").Page) 
   const phone = uniquePhone();
   await page.getByLabel("Full name").fill("Ask Sarthi Voice+Image Tester");
   await page.getByLabel("Phone number").fill(phone);
-  await page.getByLabel("Password", { exact: true }).fill("secret123");
-  await page.locator("#signup-confirm-password").fill("secret123");
+  await page.getByLabel("Password", { exact: true }).fill("secret123!");
+  await page.getByLabel("Email address").fill(uniqueEmail());
+  await page.locator("#signup-confirm-password").fill("secret123!");
   await fillHomeLocationPicker(page);
+  await verifySignupEmail(page);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/citizen$/);
 }

@@ -39,7 +39,7 @@ def _make_worker_row(db_session, phone: str, ward: str, full_name: str = "Worker
     tests that want more than one worker in the same ward."""
     db = db_session()
     worker = User(
-        full_name=full_name, phone=phone, password_hash=hash_password("secret123"),
+        full_name=full_name, phone=phone, password_hash=hash_password("secret123!"),
         role="worker", preferred_language="en", ward=ward,
     )
     db.add(worker)
@@ -459,6 +459,75 @@ def test_reject_complaint_reason_is_stored(client, make_worker, db_session):
     assert rejection.reason == "Wrong ward, this belongs elsewhere."
     assert rejection.worker_id == worker["id"]
     db.close()
+
+
+def test_reject_complaint_notifies_every_admin(client, make_worker, make_admin, db_session):
+    """Every admin gets a COMPLAINT_REJECTED notification naming the complaint -- citizens are
+    deliberately never notified (see reject_complaint()'s own docstring); this only checks the
+    admin side."""
+    admin1 = make_admin(phone="9999999991", full_name="Admin One")
+    admin2 = make_admin(phone="9999999992", full_name="Admin Two")
+    token, worker = make_worker(phone="9000000002", ward="Ward 14")
+    complaint_id = _make_assigned_complaint(db_session, worker["id"])
+
+    response = client.post(
+        f"/complaints/{complaint_id}/reject", headers={"Authorization": f"Bearer {token}"},
+        json={"reason": "Outside my assigned area."},
+    )
+    assert response.status_code == 200
+
+    db = db_session()
+    from backend.models import Notification
+    for admin in (admin1, admin2):
+        notif = (
+            db.query(Notification)
+            .filter(Notification.recipient_id == admin.id, Notification.type == "COMPLAINT_REJECTED")
+            .first()
+        )
+        assert notif is not None, f"admin {admin.id} got no COMPLAINT_REJECTED notification"
+        assert notif.complaint_id == complaint_id
+    db.close()
+
+
+def test_complaint_detail_shows_rejections_to_admin_only(client, make_worker, make_citizen, make_admin, db_session):
+    """The core access-control guarantee: a rejection's reason is visible via GET /complaints/{id}
+    for an admin, but the `rejections` field stays empty for the citizen who owns the complaint
+    and for the worker currently assigned to it -- enforced server-side (_to_detail_response's
+    viewer_role gate), not just hidden in a frontend component."""
+    citizen_token, citizen = make_citizen(phone="9000000005")
+    worker_token, worker = make_worker(phone="9000000002", ward="Ward 14")
+    make_admin(phone="9999999993", password="adminpass")
+    admin_login = client.post("/auth/login", json={"identifier": "9999999993", "password": "adminpass"})
+    admin_token = admin_login.json()["access_token"]
+
+    db = db_session()
+    complaint = Complaint(
+        citizen_id=str(citizen["id"]), original_text="a", original_language="en",
+        translated_text="Garbage issue", summary="Garbage not collected.",
+        ward="Ward 14", status="assigned", assigned_worker_id=worker["id"],
+    )
+    db.add(complaint)
+    db.commit()
+    db.refresh(complaint)
+    complaint_id = complaint.id
+    db.close()
+
+    reject_response = client.post(
+        f"/complaints/{complaint_id}/reject", headers={"Authorization": f"Bearer {worker_token}"},
+        json={"reason": "Confidential ops note -- citizen must never see this."},
+    )
+    assert reject_response.status_code == 200
+
+    admin_view = client.get(f"/complaints/{complaint_id}", headers={"Authorization": f"Bearer {admin_token}"})
+    assert admin_view.status_code == 200
+    admin_rejections = admin_view.json()["rejections"]
+    assert len(admin_rejections) == 1
+    assert admin_rejections[0]["worker_name"] == worker["full_name"]
+    assert admin_rejections[0]["reason"] == "Confidential ops note -- citizen must never see this."
+
+    citizen_view = client.get(f"/complaints/{complaint_id}", headers={"Authorization": f"Bearer {citizen_token}"})
+    assert citizen_view.status_code == 200
+    assert citizen_view.json()["rejections"] == []
 
 
 def test_resolve_complaint_requires_accepted_first(client, make_worker, db_session):

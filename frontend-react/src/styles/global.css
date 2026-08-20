@@ -383,7 +383,12 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
 }
 
 .field { margin-bottom: 14px; }
-.field label { display: block; font-size: 12px; font-weight: 700; color: var(--ink-2); margin-bottom: 6px; }
+/* Direct-child selector, not a descendant one -- MultiPhotoUpload's dropzone (.file-drop) is
+   itself a <label>, nested two levels inside a .field via a wrapper div. A descendant selector
+   here would win the specificity fight against .file-drop's own `display: flex` (both are
+   0-1-1 vs 0-1-0, so .field label wins) and silently collapse the dropzone's icon+text row back
+   to plain inline flow -- no gap, wrong font-weight, icon and label crammed together. */
+.field > label { display: block; font-size: 12px; font-weight: 700; color: var(--ink-2); margin-bottom: 6px; }
 .field input, .field select, .field textarea {
   width: 100%; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
   border-radius: 8px; padding: 10px 12px; font-size: 14px; font-family: inherit;

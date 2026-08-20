@@ -19,7 +19,7 @@ import bcrypt
 from sqlalchemy.orm import Session
 
 from backend.config import settings
-from backend.models import EmailOtp, RefreshToken, User
+from backend.models import EmailOtp, RefreshToken, SignupEmailVerification, User
 
 logger = logging.getLogger(__name__)
 
@@ -340,3 +340,108 @@ def verify_email_otp(db: Session, user_id: int, purpose: str, code: str) -> Emai
     row.consumed_at = now
     db.commit()
     return row
+
+
+# --- Signup email verification (the "Verify" button on Signup.tsx) --------------------------
+# Same hash-only-at-rest OTP pattern as EmailOtp above, but keyed by email (not user_id) since
+# there's no User row yet -- see models.SignupEmailVerification's own docstring. Decoupled from
+# the rest of the signup form: a citizen proves they own the email address first (send code,
+# confirm code, get a one-time proof token), then POST /auth/signup creates the account in a
+# single call once it can present that proof token.
+
+
+def _hash_proof_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def create_signup_email_otp(db: Session, email: str) -> str:
+    """Issue a brand-new OTP behind the signup form's "Verify" button.
+
+    Args:
+        db: Active database session (the new row is committed here).
+        email: The address to send the OTP to.
+
+    Returns:
+        The plaintext 6-digit code -- handed to services/email_service.py to send exactly once;
+        only its SHA-256 hash is ever persisted.
+    """
+    plaintext = generate_otp_code()
+    db.add(
+        SignupEmailVerification(
+            email=email,
+            code_hash=_hash_otp_code(plaintext),
+            expires_at=_now_utc_naive() + timedelta(minutes=settings.OTP_EXPIRE_MINUTES),
+        )
+    )
+    db.commit()
+    return plaintext
+
+
+def verify_signup_email_otp(db: Session, email: str, code: str) -> str | None:
+    """Check a submitted OTP against the latest still-usable signup-email code for this address
+    and, on success, issue a one-time proof token that POST /auth/signup can later redeem.
+
+    Args:
+        db: Active database session.
+        email: The address the code should have been sent to.
+        code: The plaintext code the caller submitted.
+
+    Returns:
+        The plaintext proof token on success (only its SHA-256 hash is persisted -- see
+        consume_signup_email_verification below), or None if there is no matching unconsumed/
+        unexpired/not-yet-exhausted row, or the code is wrong (in which case that row's
+        `attempts` is incremented as a side effect).
+    """
+    now = _now_utc_naive()
+    row = (
+        db.query(SignupEmailVerification)
+        .filter(SignupEmailVerification.email == email, SignupEmailVerification.verified_at.is_(None))
+        .order_by(SignupEmailVerification.created_at.desc())
+        .first()
+    )
+    if row is None or row.expires_at <= now or row.attempts >= settings.OTP_MAX_ATTEMPTS:
+        return None
+
+    if not hmac.compare_digest(row.code_hash, _hash_otp_code(code)):
+        row.attempts += 1
+        db.commit()
+        return None
+
+    proof_token = secrets.token_urlsafe(32)
+    row.verified_at = now
+    row.proof_token_hash = _hash_proof_token(proof_token)
+    row.proof_expires_at = now + timedelta(minutes=settings.EMAIL_VERIFICATION_TOKEN_EXPIRE_MINUTES)
+    db.commit()
+    return proof_token
+
+
+def consume_signup_email_verification(db: Session, email: str, proof_token: str) -> bool:
+    """Validate and consume a proof token from verify_signup_email_otp, at the moment
+    POST /auth/signup actually creates the account.
+
+    Args:
+        db: Active database session (the row is committed here on success).
+        email: The address the proof token should have been issued for.
+        proof_token: The plaintext token the caller submitted.
+
+    Returns:
+        True (and marks the row consumed) if the token matches a verified, unexpired,
+        not-already-consumed row for this email; False otherwise. A proof token can only ever
+        create one account -- never replayed across multiple signup attempts.
+    """
+    now = _now_utc_naive()
+    row = (
+        db.query(SignupEmailVerification)
+        .filter(
+            SignupEmailVerification.email == email,
+            SignupEmailVerification.proof_token_hash == _hash_proof_token(proof_token),
+            SignupEmailVerification.consumed_at.is_(None),
+        )
+        .first()
+    )
+    if row is None or row.verified_at is None or row.proof_expires_at is None or row.proof_expires_at <= now:
+        return False
+
+    row.consumed_at = now
+    db.commit()
+    return True

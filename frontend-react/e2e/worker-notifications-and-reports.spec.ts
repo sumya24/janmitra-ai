@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { execSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { fillHomeLocationPicker, uniquePhone } from "./helpers";
+import { verifySignupEmail, fillHomeLocationPicker, uniqueEmail, uniquePhone } from "./helpers";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../..");
@@ -70,9 +70,11 @@ test("worker notification bell, detail-page card rules per status, report visibi
   await page.goto("/signup");
   await page.getByLabel("Full name").fill("Notif Test Citizen");
   await page.getByLabel("Phone number").fill(citizenPhone);
-  await page.getByLabel("Password", { exact: true }).fill("citizenpass123");
-  await page.locator("#signup-confirm-password").fill("citizenpass123");
+  await page.getByLabel("Password", { exact: true }).fill("citizenpass123!");
+  await page.getByLabel("Email address").fill(uniqueEmail());
+  await page.locator("#signup-confirm-password").fill("citizenpass123!");
   await fillHomeLocationPicker(page);
+  await verifySignupEmail(page);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/citizen$/);
 
@@ -179,4 +181,96 @@ test("worker notification bell, detail-page card rules per status, report visibi
   await page.goto(complaintUrl);
   await expect(page.getByText(/isn't assigned to you|not found/i)).toBeVisible({ timeout: 10000 });
   await logout(page);
+});
+
+test("worker rejects a complaint: admin is notified and sees the reason, citizen sees nothing", async ({ page }) => {
+  // One real AI complaint submission, same generous budget as the test above.
+  test.setTimeout(150000);
+
+  const workerPhone = uniquePhone();
+  const citizenPhone = uniquePhone();
+  const rejectionReason = "Confidential ops note -- outside my assigned area.";
+
+  await login(page, ADMIN_PHONE, ADMIN_PASSWORD);
+  await expect(page).toHaveURL(/\/admin$/);
+  await page.locator("a.btn-ghost", { hasText: "Manage Workers" }).click();
+  await expect(page).toHaveURL(/\/admin\/workers$/);
+  await page.getByRole("button", { name: "+ Add worker" }).click();
+  await page.getByLabel("Full name").fill("Rejecting Worker");
+  await page.getByLabel("Phone number").fill(workerPhone);
+  await page.getByLabel("Temporary password").fill("workerpass123");
+  await page.getByLabel("Assign to ward").fill(WARD);
+  await page.getByRole("button", { name: "English", exact: true }).click();
+  await page.getByRole("button", { name: "Add worker", exact: true }).click();
+  await expect(page.getByText("Rejecting Worker").first()).toBeVisible();
+  await logout(page);
+
+  await page.goto("/signup");
+  await page.getByLabel("Full name").fill("Reject Flow Citizen");
+  await page.getByLabel("Phone number").fill(citizenPhone);
+  await page.getByLabel("Password", { exact: true }).fill("citizenpass123!");
+  await page.getByLabel("Email address").fill(uniqueEmail());
+  await page.locator("#signup-confirm-password").fill("citizenpass123!");
+  await fillHomeLocationPicker(page);
+  await verifySignupEmail(page);
+  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(page).toHaveURL(/\/citizen$/);
+
+  await page.locator("a.btn-primary", { hasText: "Report an Issue" }).click();
+  await expect(page).toHaveURL(/\/citizen\/report$/);
+  await page.getByRole("button", { name: "Select location" }).click();
+  await page.locator("#wizard-ward").selectOption(WARD);
+  await page.getByRole("button", { name: "Next" }).click();
+  await page.getByPlaceholder(/Garbage not collected/).fill("Streetlight has been out for a week.");
+  await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Next" }).click();
+  await expect(page.getByText(/Development preview/)).toBeVisible({ timeout: 3000 });
+  await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Submit complaint" }).click();
+  await expect(page.getByText("Complaint submitted successfully.")).toBeVisible({ timeout: 60000 });
+  await page.goto("/citizen/complaints");
+  // Click the mono "JM-XXXXX" reference text specifically, not the outer .surface-card itself --
+  // that card also renders an inline ComplaintTracker widget below the clickable summary row, so
+  // clicking the outer card's geometric center (Playwright's default click point) can land on
+  // that non-interactive tracker area and miss the actual onClick div entirely.
+  await page.locator(".surface-card.hoverable.enter .mono").first().click();
+  await expect(page).toHaveURL(/\/citizen\/complaints\/\d+$/);
+  const complaintDetailUrl = page.url();
+  const complaintId = complaintDetailUrl.match(/\/complaints\/(\d+)$/)![1];
+  await logout(page);
+
+  // --- Worker rejects, with a reason. Navigates by id directly (same complaint, worker-side
+  // route) rather than matching the citizen's original text, which the AI pipeline may have
+  // reworded on the way to `display_text`. ---
+  await login(page, workerPhone, "workerpass123");
+  await expect(page).toHaveURL(/\/worker$/);
+  await page.goto(`/worker/complaints/${complaintId}`);
+  await page.getByRole("button", { name: "Reject" }).click();
+  await page.getByLabel("Reason for rejection").fill(rejectionReason);
+  await page.locator(".modal").getByRole("button", { name: "Reject Complaint", exact: true }).click();
+  // No redirect on success (WorkerComplaintDetail.tsx just toasts and reloads the same page) --
+  // and since no other worker exists in this ward, the reassignment sends it back to "pending"
+  // with no assigned worker, so the reload's own re-fetch now 403s the same way the OTHER
+  // worker's direct-URL attempt does later in the sibling test in this file.
+  await expect(page.getByText(/isn't assigned to you|not found/i)).toBeVisible({ timeout: 10000 });
+  await logout(page);
+
+  // --- Admin sees the notification, and the rejection card with the real reason once they open it. ---
+  await login(page, ADMIN_PHONE, ADMIN_PASSWORD);
+  await expect(page).toHaveURL(/\/admin$/);
+  const bell = page.getByLabel("Notifications");
+  await bell.click();
+  await expect(page.getByText("A worker rejected a complaint")).toBeVisible();
+  await page.getByText("A worker rejected a complaint").click();
+  await expect(page).toHaveURL(/\/admin\/complaints\/\d+$/);
+  await expect(page.getByText("Rejection History")).toBeVisible();
+  await expect(page.getByText("Rejecting Worker")).toBeVisible();
+  await expect(page.getByText(rejectionReason)).toBeVisible();
+  await logout(page);
+
+  // --- Citizen sees nothing about the rejection -- just the same generic pending state. ---
+  await login(page, citizenPhone, "citizenpass123!");
+  await page.goto(complaintDetailUrl);
+  await expect(page.getByText(rejectionReason)).not.toBeVisible();
+  await expect(page.getByText("Rejecting Worker")).not.toBeVisible();
 });

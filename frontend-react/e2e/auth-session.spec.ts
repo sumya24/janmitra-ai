@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { fillHomeLocationPicker, uniquePhone } from "./helpers";
+import { verifySignupEmail, fillHomeLocationPicker, uniqueEmail, uniquePhone } from "./helpers";
 
 /** Covers the production-grade auth upgrade: access+refresh tokens, silent refresh on an
  * expired/invalid access token, real server-side logout, self-service password change, and the
@@ -13,8 +13,10 @@ async function signUpCitizen(page: import("@playwright/test").Page, phone: strin
   await page.getByLabel("Full name").fill("Session Test Citizen");
   await page.getByLabel("Phone number").fill(phone);
   await page.getByLabel("Password", { exact: true }).fill(password);
+  await page.getByLabel("Email address").fill(uniqueEmail());
   await page.locator("#signup-confirm-password").fill(password);
   await fillHomeLocationPicker(page);
+  await verifySignupEmail(page);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/citizen$/);
 }
@@ -23,8 +25,8 @@ test("signup blocks submit when confirm password does not match", async ({ page 
   await page.goto("/signup");
   await page.getByLabel("Full name").fill("Mismatch Tester");
   await page.getByLabel("Phone number").fill(uniquePhone());
-  await page.getByLabel("Password", { exact: true }).fill("goodpass123");
-  await page.locator("#signup-confirm-password").fill("different123");
+  await page.getByLabel("Password", { exact: true }).fill("goodpass123!");
+  await page.locator("#signup-confirm-password").fill("different123!");
   await fillHomeLocationPicker(page);
   await page.getByRole("button", { name: "Create account" }).click();
 
@@ -42,13 +44,15 @@ test("signup blocks submit for a password that fails the strength rule", async (
   await fillHomeLocationPicker(page);
   await page.getByRole("button", { name: "Create account" }).click();
 
-  await expect(page.getByText("Password must be at least 8 characters, with a letter and a number.")).toBeVisible();
+  await expect(
+    page.getByText("Password must be at least 8 characters, with a letter, a number, and a special character.")
+  ).toBeVisible();
   await expect(page).toHaveURL(/\/signup$/);
 });
 
 test("an expired/invalid access token is silently refreshed instead of logging the citizen out", async ({ page }) => {
   const phone = uniquePhone();
-  await signUpCitizen(page, phone, "sessiontest123");
+  await signUpCitizen(page, phone, "sessiontest123!");
 
   // Corrupt ONLY the access token -- the refresh token (still real and valid) is what the
   // interceptor in lib/api.ts should use to silently recover. Any invalid string triggers the
@@ -73,7 +77,7 @@ test("an expired/invalid access token is silently refreshed instead of logging t
 
 test("logout revokes the refresh token server-side, not just locally", async ({ page }) => {
   const phone = uniquePhone();
-  await signUpCitizen(page, phone, "sessiontest123");
+  await signUpCitizen(page, phone, "sessiontest123!");
 
   const refreshToken = await page.evaluate(() => localStorage.getItem("janmitra.refreshToken"));
   expect(refreshToken).toBeTruthy();
@@ -101,13 +105,13 @@ test("logout revokes the refresh token server-side, not just locally", async ({ 
 
 test("citizen can change their own password and log in with the new one", async ({ page }) => {
   const phone = uniquePhone();
-  await signUpCitizen(page, phone, "oldpassword1");
+  await signUpCitizen(page, phone, "oldpassword1!");
 
   await page.getByLabel("Settings").click();
   await page.getByRole("button", { name: "Change Password" }).click();
-  await page.getByLabel("Current password").fill("oldpassword1");
-  await page.getByLabel("New password", { exact: true }).fill("newpassword2");
-  await page.getByLabel("Confirm new password").fill("newpassword2");
+  await page.getByLabel("Current password").fill("oldpassword1!");
+  await page.getByLabel("New password", { exact: true }).fill("newpassword2!");
+  await page.getByLabel("Confirm new password").fill("newpassword2!");
   await page.getByRole("button", { name: "Update password" }).click();
 
   await expect(page.getByText("Password updated. You've been logged out of your other devices.")).toBeVisible();
@@ -119,11 +123,11 @@ test("citizen can change their own password and log in with the new one", async 
 
   await page.goto("/login");
   await page.getByLabel("Phone number").fill(phone);
-  await page.getByLabel("Password").fill("oldpassword1");
+  await page.getByLabel("Password").fill("oldpassword1!");
   await page.getByRole("button", { name: "Log in" }).click();
   await expect(page.locator(".banner-error")).toContainText("Incorrect phone number/email or password");
 
-  await page.getByLabel("Password").fill("newpassword2");
+  await page.getByLabel("Password").fill("newpassword2!");
   await page.getByRole("button", { name: "Log in" }).click();
   await expect(page).toHaveURL(/\/citizen$/);
 });
