@@ -104,9 +104,10 @@ def test_start_work_sends_a_started_email(client, monkeypatch, make_citizen, mak
     assert response.status_code == 200
 
     mock.assert_called_once()
-    args, _kwargs = mock.call_args
+    args, kwargs = mock.call_args
     assert args[0] == citizen["email"]
     assert args[1] == "started"
+    assert kwargs["worker_note"] == "Taking a look today."
 
 
 def test_resolve_complaint_sends_a_resolved_email(client, monkeypatch, make_citizen, make_worker, db_session):
@@ -128,9 +129,10 @@ def test_resolve_complaint_sends_a_resolved_email(client, monkeypatch, make_citi
     assert response.status_code == 200
 
     mock.assert_called_once()
-    args, _kwargs = mock.call_args
+    args, kwargs = mock.call_args
     assert args[0] == citizen["email"]
     assert args[1] == "resolved"
+    assert kwargs["worker_note"] == "Fixed."
 
 
 def test_lifecycle_email_failure_does_not_fail_the_action(client, monkeypatch, make_citizen, make_worker, db_session):
