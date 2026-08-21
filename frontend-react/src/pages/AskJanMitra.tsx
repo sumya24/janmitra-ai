@@ -11,6 +11,7 @@ import { Link } from "react-router-dom";
 import TopBar from "../components/TopBar";
 import SourceCard from "../components/SourceCard";
 import Mascot, { type MascotState } from "../components/Mascot";
+import MicWaveform from "../components/MicWaveform";
 import MultiPhotoUpload from "../components/MultiPhotoUpload";
 import VoiceAssistantOverlay from "../components/VoiceAssistantOverlay";
 import LocationPicker, { type LocationValue } from "../components/LocationPicker";
@@ -685,9 +686,7 @@ export const AskJanMitraContent = forwardRef<AskJanMitraHandle, AskJanMitraConte
               title={t(lang, speech.status === "recording" ? "ask.voice.stop" : "ask.voice.micLabel")}
             >
               {speech.status === "recording" ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor" />
-                </svg>
+                <MicWaveform />
               ) : (
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                   <rect x="9" y="3" width="6" height="12" rx="3" stroke="currentColor" strokeWidth="1.8" />

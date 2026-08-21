@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import TopBar from "../components/TopBar";
+import MicWaveform from "../components/MicWaveform";
 import MultiPhotoUpload from "../components/MultiPhotoUpload";
 import LocationPicker, { type LocationValue } from "../components/LocationPicker";
 import { useAuth } from "../lib/auth";
@@ -281,7 +282,9 @@ export default function ReportIssue() {
                   )}
                   {recorder.isRecording && (
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <span style={{ width: 10, height: 10, borderRadius: "50%", background: "var(--status-critical)", display: "inline-block" }} />
+                      <span style={{ color: "var(--status-critical)" }}>
+                        <MicWaveform />
+                      </span>
                       <span className="mono" style={{ fontSize: 13 }}>{formatSeconds(recorder.seconds)}</span>
                       <button type="button" className="btn btn-primary btn-sm" onClick={recorder.stop}>
                         {t(lang, "citizen.stopRecording")}
