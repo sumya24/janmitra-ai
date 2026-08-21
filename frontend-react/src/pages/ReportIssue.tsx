@@ -19,16 +19,22 @@ const STEPS: Step[] = ["location", "description", "media", "ai", "preview"];
 
 /**
  * Smart Complaint Creation wizard (P0, Task 2). Location -> Description -> Voice/Photo ->
- * AI Understanding (mock) -> Preview/Confirmation -> Submit -> Success.
+ * AI Understanding -> Preview/Confirmation -> Submit -> Success.
  *
- * The only thing in this whole flow that is mock/dev data is the "AI Understanding" step's
- * service-category guess (see lib/serviceCategories.ts#guessServiceCategory) — a plain
- * client-side keyword match, clearly labeled as a development preview, never presented as a
- * real backend classification (the spec's AIServiceIdentification contract has a `confidence`
- * field for when a real model is wired in; this never fills it in with a fake number). Every
- * other piece of data here — ward, description, photo, and the complaint returned after submit
- * — is real, sent through the existing api.createComplaint exactly as CitizenDashboard already
- * did before this wizard replaced its inline form.
+ * "AI Understanding" runs a real 3-layer category classification, in order, each one only
+ * consulted if the one before it couldn't confidently answer: (1) a real Sarvam model call
+ * (POST /complaints/classify-category, see backend/services/complaint_category_service.py),
+ * (2) a client-side keyword match (lib/serviceCategories.ts#guessServiceCategory) if the model
+ * layer isn't configured, fails, times out, or is itself unsure, and (3) the citizen picking a
+ * category themselves in the dropdown below if neither of the first two found anything -- civic
+ * complaints say too many different things in too many different ways for any fixed classifier
+ * to promise full coverage, so a human always has the final say. See classifyIntoStep() below
+ * for exactly how the three chain together, and categorySource for which one actually produced
+ * the current pick (purely for the "AI-suggested" vs "best guess from keywords" badge text --
+ * never sent to the backend). Every other piece of data in this flow — ward, description,
+ * photo, and the complaint returned after submit — is real, sent through the existing
+ * api.createComplaint exactly as CitizenDashboard already did before this wizard replaced its
+ * inline form.
  */
 export default function ReportIssue() {
   const { token } = useAuth();
@@ -50,6 +56,11 @@ export default function ReportIssue() {
   const [category, setCategory] = useState<ServiceCategoryDef | null>(
     SERVICE_CATEGORY_DEFS.find((d) => d.id === preselected) ?? null
   );
+  // Which of the wizard's 3 fallback layers actually produced `category` -- null for a
+  // preselected category (skipped classification entirely) or when nothing matched at all
+  // (manual picker is the only option left). Purely for the "AI-suggested" vs "best guess from
+  // keywords" badge text below; never sent to the backend.
+  const [categorySource, setCategorySource] = useState<"ai" | "keyword" | null>(null);
   const [aiRunning, setAiRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -70,6 +81,58 @@ export default function ReportIssue() {
 
   const stepIndex = STEPS.indexOf(step);
 
+  // Entering the AI step: real model classification first, falling back to the client-side
+  // keyword match if the model isn't confident (missing key, network failure, timeout, or a
+  // genuine "I don't know" -- see backend/services/complaint_category_service.py), and finally
+  // to the manual picker below if neither layer found anything. A category already set (from
+  // the service-card preselection, or a prior visit to this step) is never re-classified over.
+  // Voice-mode complaints have no text to classify yet at this point (transcription only
+  // happens server-side on submit -- see complaint_agent.py), so both layers are skipped and
+  // this goes straight to the manual picker, same as it always has.
+  async function classifyIntoStep() {
+    if (category) {
+      setAiRunning(false);
+      return;
+    }
+
+    // A floor under the loading state so a fast/cached response never flashes the spinner for
+    // an instant and reads as broken -- raced against the real classification work below, not
+    // stacked after it, so a genuinely slow model call never waits any LONGER than it already is.
+    const minDelay = new Promise((resolve) => window.setTimeout(resolve, 500));
+
+    let resolved: ServiceCategoryDef | null = null;
+    let source: "ai" | "keyword" | null = null;
+
+    if (inputMode === "text" && text.trim() && token) {
+      try {
+        const { category: aiCategory } = await api.classifyComplaintCategory(token, text.trim());
+        if (aiCategory) {
+          const match = SERVICE_CATEGORY_DEFS.find((d) => d.id === aiCategory);
+          if (match) {
+            resolved = match;
+            source = "ai";
+          }
+        }
+      } catch {
+        // Best-effort -- falls through to the keyword layer below exactly as if this call had
+        // never been made.
+      }
+    }
+
+    if (!resolved) {
+      const guessed = guessServiceCategory(text);
+      if (guessed) {
+        resolved = guessed;
+        source = "keyword";
+      }
+    }
+
+    await minDelay;
+    setCategory(resolved);
+    setCategorySource(source);
+    setAiRunning(false);
+  }
+
   function goNext() {
     setError(null);
     if (step === "location" && wards.length > 0 && !location.ward) {
@@ -87,14 +150,9 @@ export default function ReportIssue() {
       }
     }
     if (step === "media") {
-      // Entering the AI step: run the mock classification once, briefly, so the loading state
-      // reads as real work happening rather than an instant, suspicious-looking guess.
       setStep("ai");
       setAiRunning(true);
-      window.setTimeout(() => {
-        setCategory((prev) => prev ?? guessServiceCategory(text));
-        setAiRunning(false);
-      }, 900);
+      classifyIntoStep();
       return;
     }
     const next = STEPS[stepIndex + 1];
@@ -355,7 +413,11 @@ export default function ReportIssue() {
                 </div>
               ) : (
                 <div className="surface-card" style={{ padding: 16 }}>
-                  <div className="dev-badge" style={{ marginBottom: 10 }}>{t(lang, "wizard.ai.devBadge")}</div>
+                  {categorySource && (
+                    <div className="dev-badge" style={{ marginBottom: 10 }}>
+                      {t(lang, categorySource === "ai" ? "wizard.ai.aiBadge" : "wizard.ai.keywordBadge")}
+                    </div>
+                  )}
                   {category ? (
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                       <div className={`service-card-icon service-tile-${category.color}`} style={{ marginBottom: 0 }}>{category.icon}</div>
@@ -368,7 +430,16 @@ export default function ReportIssue() {
                     <p style={{ margin: 0, fontSize: 13, color: "var(--ink-2)" }}>{t(lang, "wizard.ai.noMatch")}</p>
                   )}
                   <label style={{ display: "block", marginTop: 14, fontSize: 12, fontWeight: 700, color: "var(--ink-2)" }}>{t(lang, "wizard.ai.changeLabel")}</label>
-                  <select value={category?.id ?? ""} onChange={(e) => setCategory(SERVICE_CATEGORY_DEFS.find((d) => d.id === e.target.value) ?? null)} style={{ marginTop: 6 }}>
+                  <select
+                    value={category?.id ?? ""}
+                    onChange={(e) => {
+                      // A manual pick from here on out -- no longer attributable to the AI or
+                      // keyword layer, so the badge above stops claiming either one.
+                      setCategorySource(null);
+                      setCategory(SERVICE_CATEGORY_DEFS.find((d) => d.id === e.target.value) ?? null);
+                    }}
+                    style={{ marginTop: 6 }}
+                  >
                     <option value="">{t(lang, "wizard.ai.notSure")}</option>
                     {SERVICE_CATEGORY_DEFS.map((d) => (
                       <option key={d.id} value={d.id}>

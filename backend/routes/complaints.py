@@ -21,13 +21,15 @@ from sqlalchemy.orm import Session
 
 from backend.config import settings
 from backend.database import get_db
-from backend.deps import get_current_user, require_role
+from backend.deps import get_current_user, require_ai_rate_limit, require_role
 from backend.models import ULB, Complaint, ComplaintRejection, ComplaintStatusHistory, District, State, User
 from backend.repositories import complaint_workflow_repository, evidence_repository, notification_repository
+from backend.schemas.rag_knowledge import ServiceCategory
 from backend.services import complaint_report_service
 from backend.services import metrics as sentry_metrics
 from backend.services.assignment_service import assign_next_worker
 from backend.services.complaint_agent import ComplaintAgent
+from backend.services.complaint_category_service import ComplaintCategoryService
 from backend.services.complaint_translation_cache import get_display_text_and_summary
 # Relocated to backend/services/evidence_service.py (pure move, no behavior change) so the Ask
 # Sarthi image-to-complaint flow (orchestration/nodes.py) can reuse this exact validate/write/
@@ -50,6 +52,7 @@ router = APIRouter(prefix="/complaints", tags=["complaints"])
 _agent = ComplaintAgent()
 _translation_service = TranslationService()
 _location_resolver = LocationResolver()
+_category_service = ComplaintCategoryService()
 
 # Worker-workflow statuses that must precede each mandatory-field action -- named once here so
 # the checks below and their error messages can't drift out of sync with each other.
@@ -549,6 +552,38 @@ def get_area_summary(
         resolved_count=resolved_count,
         complaints=summaries,
     )
+
+
+class ClassifyCategoryRequest(BaseModel):
+    """Request body for POST /complaints/classify-category."""
+
+    text: str
+
+
+class ClassifyCategoryResponse(BaseModel):
+    """category is None whenever the real model layer couldn't classify this text with
+    confidence -- see ComplaintCategoryService's own docstring for every reason that can happen
+    (missing API key, network failure, timeout, or a genuine "I don't know"). The wizard's own
+    keyword match is the next fallback layer, not this endpoint's concern."""
+
+    category: ServiceCategory | None
+
+
+@router.post(
+    "/classify-category", response_model=ClassifyCategoryResponse, dependencies=[Depends(require_ai_rate_limit)]
+)
+def classify_complaint_category(
+    body: ClassifyCategoryRequest,
+    citizen: User = Depends(require_role("citizen")),
+) -> ClassifyCategoryResponse:
+    """First layer of the Report an Issue wizard's three-layer category classification (real
+    model here -> client-side keyword match -> manual picker, see ReportIssue.tsx). A real,
+    rate-limited Sarvam call -- share require_ai_rate_limit's own per-user quota with Ask Sarthi
+    rather than a separate one, since both are the same kind of paid, abusable LLM call. Never
+    errors on a low-confidence or failed classification: `category` is simply None, and the
+    frontend falls through to its own next layer exactly as if this endpoint didn't exist."""
+    category = _category_service.classify(body.text)
+    return ClassifyCategoryResponse(category=category)
 
 
 @router.post("", response_model=ComplaintResponse)
