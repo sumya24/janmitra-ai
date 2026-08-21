@@ -111,12 +111,24 @@ def test_chroma_collection_opens_and_reports_expected_size():
     # corresponding entries. Confirmed by actually running `scripts/build_rag_embeddings.py`
     # against the real embedding model (intfloat/multilingual-e5-small) and reading the
     # resulting ChromaDB collection size directly -- not counted by hand.
-    # 926, not the earlier 923 -- Uttarakhand's remaining Roads/Potholes gap closed via Nagar
-    # Nigam Dehradun's own "Public Work Department" contact page (nagarnigamdehradun.com), naming
-    # a real Executive Engineer with a direct phone number. Uttarakhand now has full 4/4 coverage.
-    # See knowledge_records/verified/uttarakhand/dehradun.json (UK_NNDDN_ROADS_POTHOLES) and
-    # sources/inventory.json's UK_NNDDN_PUBLIC_WORK_DEPARTMENT entry.
-    assert store.size == 926
+    # 953, not the earlier 926 -- 3 more states moved off the zero-coverage list (see
+    # RAG_REAL_VS_SYNTHETIC_RESEARCH_PREP.md):
+    # - Chhattisgarh (Raipur, 3 of 4 -- Streetlights explicitly NOT found): Raipur Municipal
+    #   Corporation's own Contact Us page, naming a main line plus 10 zones' Executive Engineers
+    #   with direct mobile numbers (used for Roads/Potholes, same PWD-equivalent reasoning as
+    #   Uttarakhand's record).
+    # - Himachal Pradesh (Shimla, full 4/4): MC Shimla's own Citizen Charter explicitly describes
+    #   each department's function (Road & Building; Water System & Sewerage; Health Branch for
+    #   sanitation), plus a dedicated Street Light Complaint toll-free number (1800-180-3580)
+    #   confirmed verbatim on the homepage, independently re-checked before trusting it.
+    # - Puducherry (Oulgaret, 2 of 4 -- Roads/Potholes and Streetlights explicitly NOT found):
+    #   Oulgaret Municipality's own Grievance Redressal page, with genuinely category-specific
+    #   phone numbers for Garbage/Side-drain and Underground Drainage (PWD) complaints.
+    # See knowledge_records/verified/chhattisgarh/raipur.json,
+    # knowledge_records/verified/himachal_pradesh/shimla.json,
+    # knowledge_records/verified/puducherry/oulgaret.json, and sources/inventory.json's
+    # corresponding entries.
+    assert store.size == 953
 
 
 def test_chroma_persist_dir_is_configurable_not_hardcoded():

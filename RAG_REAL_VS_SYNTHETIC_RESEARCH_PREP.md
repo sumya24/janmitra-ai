@@ -78,11 +78,22 @@ Every other verified or synthetic record — all 235 of them — has no district
 | Goa | 4 | 0 | ✅ Fully real — closed 2026-08-21, was zero coverage (Streetlights added same day via the Electricity Department, a different department from the other 3) |
 | Jharkhand | 4 | 0 | ✅ Fully real — closed 2026-08-21, was zero coverage (Ranchi, via Smart Ranchi) |
 | Uttarakhand | 4 | 0 | ✅ Fully real — closed 2026-08-21, was zero coverage (Dehradun; Roads/Potholes added same day via the Public Work Department) |
-| *(15 other states/UTs)* | 0 | 0 | ⚫ No data at all — not a "replace synthetic" case, a "start from zero" case |
+| Himachal Pradesh | 4 | 0 | ✅ Fully real — closed 2026-08-21, was zero coverage (Shimla, via its own Citizen Charter) |
+| Chhattisgarh | 3 | 0 | 🟢 3 of 4 categories real, Streetlights genuinely not found — closed 2026-08-21, was zero coverage |
+| Puducherry (UT) | 2 | 0 | 🟢 2 of 4 categories real (Waste, Water), Roads/Streetlights genuinely not found — closed 2026-08-21, was zero coverage |
+| *(12 other states/UTs)* | 0 | 0 | ⚫ No data at all — not a "replace synthetic" case, a "start from zero" case |
+
+**Fifth update, 2026-08-21:** 3 more states researched, picking larger/more nationally-visible
+ones first per explicit request. Himachal Pradesh (Shimla) closed to full 4/4 via its own Citizen
+Charter (a real government document naming each department's function) plus a verbatim-confirmed
+Street Light toll-free number. Chhattisgarh (Raipur) and Puducherry (Oulgaret) both moved from
+zero to partial coverage, each with an honestly-disclosed remaining gap (Streetlights for
+Chhattisgarh; Roads/Potholes and Streetlights for Puducherry). 158 verified records total, 270
+overall. See `candidate_urls.md` Round 17.
 
 **Fourth update, 2026-08-21:** Uttarakhand's Roads/Potholes gap closed too (Nagar Nigam Dehradun's
 Public Work Department, a named Executive Engineer with direct contact). Uttarakhand now full
-4/4. 149 verified records total, 261 overall. See `candidate_urls.md` Round 16.
+4/4. See `candidate_urls.md` Round 16.
 
 **Third update, 2026-08-21:** Goa's Streetlights gap closed (Electricity Department, a genuinely
 different department from the ULB portal used for its other 3 categories), plus Jharkhand (4/4,

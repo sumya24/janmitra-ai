@@ -1,5 +1,24 @@
 # RAG Knowledge Base — Source Research Log
 
+## Round 17 (2026-08-21, session 12 continued): 3 more zero-coverage states -- Chhattisgarh (3/4), Himachal Pradesh (4/4), Puducherry (2/4)
+
+Continued down the zero-coverage list, picking states with likely-larger populations/more national
+visibility per explicit instruction to prioritize "popular" ones first.
+
+| Gap | Angle tried | Result | Notes |
+|---|---|---|---|
+| **Raipur, Chhattisgarh — 3 of 4 (previously 0 coverage)** | nagarnigamraipur.nic.in's own Contact Us page | **PROMOTED TO VERIFIED (3 of 4 -- Streetlights explicitly NOT found)** | **[PROMOTED TO VERIFIED — see knowledge_records/verified/chhattisgarh/raipur.json. Real main line (+91-771-2535780-2535790), named Additional Commissioners, and 10 zones each with a named Zone Commissioner + Executive Engineer with direct mobile numbers. Waste/Water used the general channel (same tier as Chandigarh); Roads/Potholes used the zone Executive Engineers (same PWD-equivalent reasoning as Uttarakhand's record). The official state grievance portal (nidaan.cg.gov.in, "NIDAAN 1100") and Smart City Raipur (smartcityraipur.cgstate.gov.in) were both checked but are JS-rendered SPA shells with nothing fetchable beyond a phone number -- not used. No Streetlight-specific department or number found anywhere.]** |
+| **Shimla, Himachal Pradesh — all 4 categories (previously 0 coverage)** | MC Shimla's own Citizen Charter (shimlamc.hp.gov.in/CitizenCharter/Index) plus its homepage flash-news | **PROMOTED TO VERIFIED (all 4)** | **[PROMOTED TO VERIFIED — see knowledge_records/verified/himachal_pradesh/shimla.json. The Citizen Charter is a real government document (same tier as Odisha's HUDD Citizen Charter) explicitly describing each department's function in its own words: Road & Building Department, Water System & Sewerage Department, and Health Branch (explicitly "door to door garbage collection, Street Sweeping"). Separately, the homepage's own flash-news carousel verbatim states "Street Light Complaint Toll Free Number 1800-180-3580" -- independently re-confirmed on the official domain (not just trusted from a third-party aggregator that first surfaced the claim). No numeric SLA found for any department -- the Charter itself says so.]** |
+| **Oulgaret, Puducherry — 2 of 4 (previously 0 coverage)** | oulmun.in's own Grievance Redressal page | **PROMOTED TO VERIFIED (2 of 4 -- Roads/Potholes and Streetlights explicitly NOT found)** | **[PROMOTED TO VERIFIED — see knowledge_records/verified/puducherry/oulgaret.json. Genuinely category-specific contacts, not one general line reused: "Garbage & Side drain Complaints" (91183 83911, 10 AM-6 PM) and "Underground Drainage Complaints (PWD)" (0413-2336076/2336068, office hours). Explicitly searched the full page text for "road"/"pothole"/"street light" -- only an unrelated "Road Classification" government-order document link found, no complaint channel for either category. Pondicherry Municipality's own equivalent page only links to a bare login-gated portal (lgredressal.py.gov.in/pgrs/) with no category detail visible.]** |
+
+### Net result of Round 17
+
+9 new VERIFIED records (149 -> 158; 261 -> 270 total records; 926 -> 953 chunks in the live
+ChromaDB index). Himachal Pradesh reaches full 4/4 (the 4th state fully closed this session,
+alongside Chandigarh, Jharkhand, and Uttarakhand). Chhattisgarh and Puducherry move from 0 to
+partial coverage, each with an honestly-disclosed remaining gap. 12 states remain at zero coverage
+(down from 15 at the start of this round).
+
 ## Round 16 (2026-08-21, session 12 continued): Uttarakhand's Roads/Potholes closed -- Dehradun reaches 4/4
 
 Explicit follow-up on Round 15's one open thread for Dehradun.

@@ -80,13 +80,13 @@ of the four service columns for that row is ✅.
 | Assam | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ 1V+1S | ✅ 1V+1S | ✅ 1V+1S | ✅ 1V+1S | ✅ | ✅ | ✅ |
 | Bihar | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ 1V+2S | ✅ | ✅ | ✅ |
 | Chandigarh (UT) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ | ✅ | ✅ |
-| Chhattisgarh | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
+| Chhattisgarh | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ❌ | ✅ | ✅ | ✅ |
 | Dadra and Nagar Haveli and Daman and Diu (UT) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
 | Delhi (UT) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ 3V+1S | ✅ 2V+1S | ✅ 2V+1S | ✅ 1V+1S | ✅ | ✅ | ✅ |
 | Goa | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ | ✅ | ✅ |
 | Gujarat | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
 | Haryana | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
-| Himachal Pradesh | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
+| Himachal Pradesh | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ | ✅ | ✅ |
 | Jammu and Kashmir (UT) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
 | Jharkhand | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ | ✅ | ✅ |
 | Karnataka | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ 2V+2S | ✅ 2V+2S | ✅ 1V+2S | ✅ 1V+2S | ✅ | ✅ | ✅ |
@@ -100,7 +100,7 @@ of the four service columns for that row is ✅.
 | Mizoram | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
 | Nagaland | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
 | Odisha | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ 1V+0S | ✅ 3V+0S | ✅ 2V+0S | ✅ 1V+0S | ✅ | ✅ | ✅ |
-| Puducherry (UT) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
+| Puducherry (UT) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ 1V+0S | ✅ 1V+0S | ❌ | ❌ | ✅ | ✅ | ✅ |
 | Punjab | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ 2V+0S | ✅ 6V+0S | ✅ 2V+0S | ✅ 2V+0S | ✅ | ✅ | ✅ |
 | Rajasthan | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
 | Sikkim | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
@@ -113,9 +113,10 @@ of the four service columns for that row is ✅.
 
 **Reading it in one line:** a row that's all ❌ except TYPE_A/TYPE_C means that state can still
 *take* a complaint and *track* it, but Ask Sarthi has nothing real to say if someone asks a
-civic question about it — 15 of 36 rows are in exactly that state today (down from 19 as of
-2026-08-21 — Chandigarh, Goa, Jharkhand, and Uttarakhand were closed this session, see
-`data/rag_knowledge_base/sources/candidate_urls.md` Rounds 14–15).
+civic question about it — 12 of 36 rows are in exactly that state today (down from 19 as of
+2026-08-21 — Chandigarh, Goa, Jharkhand, Uttarakhand, Chhattisgarh, Himachal Pradesh, and
+Puducherry were closed or partially closed this session, see
+`data/rag_knowledge_base/sources/candidate_urls.md` Rounds 14–17).
 
 *(Re-generate this table from live data any time — see the SQL/Python snippets in §8.)*
 
@@ -246,10 +247,10 @@ Checked directly against the files on disk and the live vector database (not doc
 
 | Stage | Count | Notes |
 |---|---:|---|
-| Raw knowledge records | 261 | 149 verified + 112 synthetic (as of 2026-08-21 — see `data/rag_knowledge_base/sources/candidate_urls.md` Rounds 12, 14–16) |
-| Built documents | 261 | Records rendered into full articles |
-| Retrieval chunks | 926 | Documents split into search-sized pieces |
-| Embeddings in ChromaDB | 926 | Matches chunk count exactly — fully built, nothing stale |
+| Raw knowledge records | 270 | 158 verified + 112 synthetic (as of 2026-08-21 — see `data/rag_knowledge_base/sources/candidate_urls.md` Rounds 12, 14–17) |
+| Built documents | 270 | Records rendered into full articles |
+| Retrieval chunks | 953 | Documents split into search-sized pieces |
+| Embeddings in ChromaDB | 953 | Matches chunk count exactly — fully built, nothing stale |
 | Embedding model | `intfloat/multilingual-e5-small` | Real, pretrained, multilingual |
 
 **Where §4's location columns and §2's service columns already sit next to each other
