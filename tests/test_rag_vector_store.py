@@ -128,7 +128,18 @@ def test_chroma_collection_opens_and_reports_expected_size():
     # knowledge_records/verified/himachal_pradesh/shimla.json,
     # knowledge_records/verified/puducherry/oulgaret.json, and sources/inventory.json's
     # corresponding entries.
-    assert store.size == 953
+    # 971, not the earlier 953 -- Puducherry's remaining Roads/Streetlights gap closed (Oulgaret
+    # Municipality's own "Engineering" services page explicitly names "Street Lighting" and
+    # "Construction and maintenance of public streets" -- both now 4/4), plus Jammu and Kashmir
+    # added (Srinagar, all 4 categories, via Srinagar Municipal Corporation's own homepage
+    # description of its Grievance Redressal/JK SAMADHAN portal, verbatim-confirmed via 2
+    # independent fetches). Chhattisgarh's Streetlights gap was also explicitly retried this round
+    # (checked the district electricity utility listing, the power company's own site, and a
+    # since-dead RMC domain) and remains genuinely open -- no source found, not claimed.
+    # See knowledge_records/verified/puducherry/oulgaret.json (now 4 records),
+    # knowledge_records/verified/jammu_and_kashmir/srinagar.json, and sources/inventory.json's
+    # corresponding entries.
+    assert store.size == 971
 
 
 def test_chroma_persist_dir_is_configurable_not_hardcoded():

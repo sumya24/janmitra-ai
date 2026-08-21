@@ -1,5 +1,23 @@
 # RAG Knowledge Base — Source Research Log
 
+## Round 18 (2026-08-21, session 12 continued): Puducherry closed to 4/4; Chhattisgarh Streetlights retried (still open); Jammu and Kashmir added (4/4)
+
+Explicit follow-up on Round 17's 2 open threads (Puducherry, Chhattisgarh), then continued to a
+new state.
+
+| Gap | Angle tried | Result | Notes |
+|---|---|---|---|
+| **Oulgaret, Puducherry — Roads/Potholes and Streetlights (Round 17's open threads)** | oulmun.in's own "Engineering" services page (oulmun.in/engineering.php), not previously checked (only the Grievance Redressal page was checked in Round 17) | **PROMOTED TO VERIFIED (both)** | **[PROMOTED TO VERIFIED — see knowledge_records/verified/puducherry/oulgaret.json (PY_OULMUN_ROADS_POTHOLES, PY_OULMUN_STREETLIGHTS). Fetched directly. Explicitly, verbatim lists 'Construction and maintenance of public streets and drains' and 'Street Lighting' as named Engineering Section services -- direct confirmation, not inferred. Named contact: Web Information Manager S. Paramesvary, dpa-om@py.gov.in, 0413 2200812. Puducherry (Oulgaret) now full 4/4.]** |
+| **Raipur, Chhattisgarh — Streetlights (Round 17's open thread)** | raipur.gov.in's district electricity public-utility listing; CSPDCL's (Chhattisgarh's power company) own site; rmc.nic.in/streetLight.html (a differently-titled page surfaced via search) | **CONFIRMED DEAD END (this round's angles)** | **[CHECKED — raipur.gov.in/en/public-utility-category/electricity/ names only a general CSPDCL contact (0771-2574166, webadmin@cspc.co.in), with no streetlight-specific text. cspdcl.co.in itself was searched explicitly for "street light"/"streetlight" and found zero matches -- it's a bare redirect shell. rmc.nic.in/streetLight.html (a real-looking, specifically-titled page) was confirmed dead via direct curl (connection refused), independent of WebFetch. No Raipur-specific streetlight department or number was found. Streetlights remains open for Chhattisgarh.]** |
+| **Srinagar, Jammu and Kashmir — all 4 categories (previously 0 coverage)** | Srinagar Municipal Corporation's own homepage (smcsrinagar.jk.gov.in), specifically its Grievance Redressal/JK SAMADHAN description | **PROMOTED TO VERIFIED (all 4)** | **[PROMOTED TO VERIFIED — see knowledge_records/verified/jammu_and_kashmir/srinagar.json (JK_SMC_* x4). Fetched directly, twice (once for navigation, once re-checking the exact wording before trusting it) -- both agree verbatim: "Register and track grievances related to civic services, sanitation, water supply, roads, street lighting, and other municipal issues," linking to the state's unified grievance system JK SAMADHAN (samadhan.jk.gov.in/login, login-gated beyond this point). SMC's own separate "Sanitation Services" and "Drinking Water" menu items independently corroborate 2 of the 4 categories as real administered services. No dedicated Roads/PWD-equivalent contact found separately (unlike Uttarakhand/Chhattisgarh's Executive Engineer pattern) -- Roads and Streetlights rely on the general description alone, disclosed honestly in both records.]** |
+
+### Net result of Round 18
+
+6 new VERIFIED records (158 -> 164; 270 -> 276 total records; 953 -> 971 chunks in the live
+ChromaDB index). Puducherry reaches full 4/4 (the 5th state fully closed this session). Jammu and
+Kashmir moves from 0 to full 4/4. Chhattisgarh's Streetlights gap remains genuinely open after a
+real, logged attempt. 11 states remain at zero coverage (down from 12 at the start of this round).
+
 ## Round 17 (2026-08-21, session 12 continued): 3 more zero-coverage states -- Chhattisgarh (3/4), Himachal Pradesh (4/4), Puducherry (2/4)
 
 Continued down the zero-coverage list, picking states with likely-larger populations/more national

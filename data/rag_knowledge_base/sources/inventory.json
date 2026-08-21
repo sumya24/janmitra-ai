@@ -947,5 +947,31 @@
     "retrieved_at": "2026-08-21T04:20:00Z",
     "geographic_scope": "CITY",
     "notes": "Confirmed live via 2 direct fetches (once for category/contact detail, once explicitly searching for road/pothole/streetlight mentions). Genuinely category-specific contacts: \"Garbage & Side drain Complaints\" (91183 83911, 10 AM-6 PM) and \"Underground Drainage Complaints (PWD)\" (0413-2336076/2336068, office hours) -- distinct numbers per category, not one general line reused. Roads/Potholes and Streetlights have NO corresponding category anywhere on this page (only an unrelated \"Road Classification\" government order document link) -- left open, not claimed. Pondicherry Municipality's own equivalent page (pdymun.in) only links out to lgredressal.py.gov.in/pgrs/, a bare landing page with no category detail visible without logging in."
+  },
+  {
+    "source_id": "PY_OULMUN_ENGINEERING_PAGE",
+    "source_title": "Oulgaret Municipality -- Engineering Services Page",
+    "source_organization": "Oulgaret Municipality, Union Territory of Puducherry",
+    "source_url": "https://oulmun.in/engineering.php",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-21T04:45:00Z",
+    "geographic_scope": "CITY",
+    "notes": "Confirmed live via direct fetch. Explicitly, verbatim lists \"Construction and maintenance of public streets and drains\" and \"Street Lighting\" as named services -- direct confirmation, not inferred, closing both of Oulgaret's remaining category gaps from the earlier grievance-redressal-page-only pass. Named contact: Web Information Manager S. Paramesvary (Data Processing Assistant i/c), dpa-om@py.gov.in, 0413 2200812."
+  },
+  {
+    "source_id": "JK_SMC_HOMEPAGE_GRIEVANCE_SECTION",
+    "source_title": "Srinagar Municipal Corporation -- Homepage (Grievance Redressal Section)",
+    "source_organization": "Srinagar Municipal Corporation, Government of Jammu and Kashmir",
+    "source_url": "https://smcsrinagar.jk.gov.in/Home/Index",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-21T05:00:00Z",
+    "geographic_scope": "CITY",
+    "notes": "Confirmed live via 2 independent direct fetches (once for general navigation, once re-checking the exact Grievance Redressal wording before trusting it). Both agree verbatim: \"Register and track grievances related to civic services, sanitation, water supply, roads, street lighting, and other municipal issues,\" linking to the state's unified grievance system JK SAMADHAN (samadhan.jk.gov.in/login) -- login-gated, so category-level detail beyond this description could not be confirmed further. SMC's own separate \"Sanitation Services\" and \"Drinking Water\" menu items independently confirm those 2 are actively administered municipal services, not just portal copy. No dedicated Roads/PWD-equivalent contact found separately (unlike Uttarakhand/Chhattisgarh's Executive Engineer pattern) -- Roads and Streetlights rely on this general description alone."
   }
 ]
