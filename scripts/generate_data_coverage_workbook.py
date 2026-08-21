@@ -81,9 +81,23 @@ def main() -> None:
     )
     district_ulb_counts = {name: (dcount, ucount) for name, dcount, ucount in cur.fetchall()}
 
-    # The 6 original example wards/localities (UNVERIFIED_APP_SEED_DATA) -- still the only rows
-    # at those 2 levels; kept separate from the district/ULB counts above since ward-level import
-    # is a deliberately separate, not-yet-done step (see DATA_COVERAGE_TRACKER.md §10).
+    # Real ward counts per state (90,172 real wards imported 2026-08-21, see
+    # DATA_COVERAGE_TRACKER.md §10 -- this is the level a citizen actually picks when filing a
+    # complaint, so it's the one that matters most for real usefulness, not just district/ULB).
+    cur.execute(
+        """
+        SELECT s.name, COUNT(DISTINCT w.id)
+        FROM states s
+        LEFT JOIN districts d ON d.state_id = s.id
+        LEFT JOIN ulbs u ON u.district_id = d.id
+        LEFT JOIN wards w ON w.ulb_id = u.id
+        GROUP BY s.id
+        """
+    )
+    ward_counts = dict(cur.fetchall())
+
+    # Localities: still only the 6 original example rows -- not part of this pass (the ward
+    # source file has no locality-level breakdown; that's an even deeper future step).
     cur.execute(
         """
         SELECT s.name, d.name, u.name, w.name, l.name
@@ -160,6 +174,8 @@ def main() -> None:
     total_districts = sum(d for d, u in district_ulb_counts.values())
     total_ulbs = sum(u for d, u in district_ulb_counts.values())
     states_with_districts = sum(1 for d, u in district_ulb_counts.values() if d > 0)
+    total_wards = sum(ward_counts.values())
+    states_with_wards = sum(1 for v in ward_counts.values() if v > 0)
 
     overview_rows = [
         ("Metric", "Value"),
@@ -171,7 +187,9 @@ def main() -> None:
         ("States/UTs with real District/ULB data (2026-08-21 LGD import)", states_with_districts),
         ("Real districts imported", total_districts),
         ("Real ULBs (cities/towns) imported", total_ulbs),
-        ("Cities with a structured Ward→Locality example", len(seeded)),
+        ("States/UTs with real Ward data (2026-08-21 LGD import)", states_with_wards),
+        ("Real wards imported", total_wards),
+        ("Cities with a structured Locality example", len(seeded)),
         ("Workers with a ward value set", len(worker_wards)),
         ("Workers whose ward is clean production data", clean_worker_count),
         ("Workers whose ward is leftover test-fixture junk", len(worker_wards) - clean_worker_count),
@@ -203,11 +221,11 @@ def main() -> None:
     style_header_row(ws2, 1, len(headers))
     for name, code, is_ut in all_states:
         dcount, ucount = district_ulb_counts.get(name, (0, 0))
+        wcount = ward_counts.get(name, 0)
         has_ward_example = name in seeded
         _dist, _ulb, ward, loc = seeded.get(name, (None, None, None, None))
         row = [
-            name, dcount, "No", ucount, "No",
-            "Yes" if (has_ward_example and ward) else "No",
+            name, dcount, "No", ucount, "No", wcount,
             "Yes" if (has_ward_example and loc) else "No",
         ]
         rag_any = False
@@ -228,7 +246,13 @@ def main() -> None:
     for row in ws2.iter_rows(min_row=2, max_row=ws2.max_row, min_col=4, max_col=4):
         for cell in row:
             cell.fill = GREEN_FILL if (cell.value or 0) > 0 else RED_FILL
-    for row in ws2.iter_rows(min_row=2, max_row=ws2.max_row, min_col=5, max_col=7):
+    for row in ws2.iter_rows(min_row=2, max_row=ws2.max_row, min_col=5, max_col=5):
+        for cell in row:
+            cell.fill = GREEN_FILL if cell.value == "Yes" else RED_FILL
+    for row in ws2.iter_rows(min_row=2, max_row=ws2.max_row, min_col=6, max_col=6):
+        for cell in row:
+            cell.fill = GREEN_FILL if (cell.value or 0) > 0 else RED_FILL
+    for row in ws2.iter_rows(min_row=2, max_row=ws2.max_row, min_col=7, max_col=7):
         for cell in row:
             cell.fill = GREEN_FILL if cell.value == "Yes" else RED_FILL
     for row in ws2.iter_rows(min_row=2, max_row=ws2.max_row, min_col=16, max_col=18):
