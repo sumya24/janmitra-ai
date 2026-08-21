@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, type LocationOption } from "../lib/api";
 import { t, type LangCode } from "../lib/i18n";
 
@@ -37,9 +37,17 @@ export interface HomeLocationValue {
  * as the citizen picks each level (a second real, reported layout-shift bug this also fixes). */
 const OTHER_STATE = "other";
 export default function HomeLocationPicker({
-  lang, onChange, hasError,
+  lang, onChange, hasError, initial,
 }: {
   lang: LangCode; onChange: (value: HomeLocationValue) => void; hasError?: boolean;
+  // Pre-fills the cascade from an EXISTING selection (editing a citizen's saved location in
+  // Settings) instead of always starting blank (signup, where there's nothing to pre-fill yet).
+  // Only the deepest id needs to be given, same convention `onChange` itself already uses --
+  // each shallower level's dropdown is fetched and set automatically as the chain below it
+  // resolves. Read once, on mount, via useRef below -- deliberately NOT reactive to `initial`
+  // changing later (e.g. a parent re-render after its own unrelated state update), since that
+  // would silently stomp on whatever the citizen has already picked mid-edit.
+  initial?: { stateId?: number; districtId?: number; wardId?: number; localityId?: number };
 }) {
   const [states, setStates] = useState<LocationOption[]>([]);
   const [stateId, setStateId] = useState<number | "">("");
@@ -62,9 +70,50 @@ export default function HomeLocationPicker({
   const [localityText, setLocalityText] = useState("");
   const [localitiesLoaded, setLocalitiesLoaded] = useState(false);
 
+  // Captured once, on mount -- see the `initial` prop's own comment above for why this
+  // deliberately doesn't track later prop changes.
+  const initialRef = useRef(initial).current;
+
   useEffect(() => {
     api.listStates().then((s) => { setStates(s); setStatesLoaded(true); }).catch(() => setStatesLoaded(true));
   }, []);
+
+  // Pre-fill cascade: each stage below fires once its own prerequisite data has loaded, and in
+  // turn kicks off the fetch the next stage down needs -- the exact same one-level-at-a-time
+  // fetch chain a real citizen clicking through the dropdowns would trigger, just driven by
+  // `initialRef` instead of onChange handlers. Guards on `stateId === ""` etc. so this never
+  // fires again after the citizen (or an earlier run of this same effect) has already set that
+  // level -- each stage runs at most once.
+  useEffect(() => {
+    if (!statesLoaded || !initialRef?.stateId || stateId !== "") return;
+    if (!states.some((s) => s.id === initialRef.stateId)) return; // state no longer exists/listed
+    setStateId(initialRef.stateId);
+    api.listCitiesForState(initialRef.stateId).then((c) => { setCities(c); setCitiesLoaded(true); }).catch(() => setCitiesLoaded(true));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statesLoaded, states]);
+
+  useEffect(() => {
+    if (!citiesLoaded || !initialRef?.districtId || cityId !== "") return;
+    if (!cities.some((c) => c.id === initialRef.districtId)) return;
+    setCityId(initialRef.districtId);
+    api.listWardsForCity(initialRef.districtId).then((w) => { setWardOptions(w); setWardsLoaded(true); }).catch(() => setWardsLoaded(true));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [citiesLoaded, cities]);
+
+  useEffect(() => {
+    if (!wardsLoaded || !initialRef?.wardId || wardId !== "") return;
+    if (!wardOptions.some((w) => w.id === initialRef.wardId)) return;
+    setWardId(initialRef.wardId);
+    api.listLocalitiesForWard(initialRef.wardId).then((l) => { setLocalities(l); setLocalitiesLoaded(true); }).catch(() => setLocalitiesLoaded(true));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wardsLoaded, wardOptions]);
+
+  useEffect(() => {
+    if (!localitiesLoaded || !initialRef?.localityId || localityId !== "") return;
+    if (!localities.some((l) => l.id === initialRef.localityId)) return;
+    setLocalityId(initialRef.localityId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localitiesLoaded, localities]);
 
   const cityName = cityId !== "" ? cities.find((c) => c.id === cityId)?.name ?? "" : cityText.trim();
   const wardName = wardId !== "" ? wardOptions.find((w) => w.id === wardId)?.name ?? "" : wardText.trim();

@@ -210,10 +210,31 @@ class ResetPasswordRequest(BaseModel):
 
 
 class MeUpdateRequest(BaseModel):
-    """Request body for updating the current user's own profile."""
+    """Request body for updating the current user's own profile.
+
+    ward/state_id/district_id/ward_id/locality_id: a citizen's residence -- previously fixed
+    forever at signup (see SignupRequest.ward's own docstring); now editable, since citizens
+    genuinely move. `ward` is the free-text label (same "{ward} — {locality}, {city}" format
+    Signup composes -- see HomeLocationPicker.tsx's composeWard()), backing "My Area" and any
+    free-text worker matching. The structured `..._id` fields are the same cascading state/city/
+    ward/area picker signup uses (see routes/locations.py); only the deepest one reached needs
+    to be sent, the rest of the parent chain is derived server-side the same way signup does
+    (see _resolve_location_chain). assignment_service.py already prefers these structured ids
+    over the free-text `ward` match whenever they're set, so updating them here immediately
+    changes which worker team this citizen's FUTURE complaints route to -- already-filed
+    complaints keep whatever ward/location they were actually filed under, untouched. Sent
+    together as one field group (never partially -- see update_me): a half-updated location
+    (e.g. new ward_id but stale free-text ward) would silently desync "My Area" from the
+    structured routing it's supposed to mirror.
+    """
 
     full_name: str | None = None
     preferred_language: str | None = None
+    ward: str | None = None
+    state_id: int | None = None
+    district_id: int | None = None
+    ward_id: int | None = None
+    locality_id: int | None = None
 
 
 class UserResponse(BaseModel):
@@ -227,6 +248,14 @@ class UserResponse(BaseModel):
     role: str
     preferred_language: str
     ward: str | None
+    # The structured counterpart of `ward` -- exposed so a citizen's current residence can be
+    # pre-filled back into the cascading state/city/ward/area picker when editing it in Settings
+    # (see MeUpdateRequest's own docstring). Always null for workers/admins, same as `ward_id`
+    # itself (see User.state_id's own model docstring).
+    state_id: int | None = None
+    district_id: int | None = None
+    ward_id: int | None = None
+    locality_id: int | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -255,24 +284,35 @@ def _validate_password_strength(password: str) -> None:
         raise HTTPException(status_code=400, detail="Password must include at least one special character.")
 
 
-def _resolve_home_location(db: Session, body: SignupRequest) -> dict[str, int | None]:
-    """Derives the full home_state_id -> home_locality_id chain from whichever ID the citizen's
-    optional cascading picker actually reached (see routes/locations.py and SignupRequest's own
-    docstring) -- only the deepest selection needs to be sent; every ancestor is looked up from
-    it here, authoritatively, rather than trusted from separate client-supplied IDs that could in
-    principle disagree with each other. Returns an all-None dict when nothing was provided (the
-    common case today, since only 6 of 36 states have real city/ward/locality data). Raises 400
-    if a given ID doesn't exist -- the same honest-validation standard as the rest of this
-    handler, never silently ignored."""
+def _resolve_location_chain(
+    db: Session,
+    *,
+    state_id: int | None,
+    district_id: int | None,
+    ward_id: int | None,
+    locality_id: int | None,
+) -> dict[str, int | None]:
+    """Derives the full state -> locality chain from whichever ID a cascading state/city/ward/
+    area picker (see routes/locations.py) actually reached -- only the deepest selection needs
+    to be passed in; every ancestor is looked up from it here, authoritatively, rather than
+    trusted from separate caller-supplied IDs that could in principle disagree with each other.
+    Returns an all-None dict when nothing was provided (the common case today, since only 6 of
+    36 states have real city/ward/locality data). Raises 400 if a given ID doesn't exist -- the
+    same honest-validation standard as the rest of this handler, never silently ignored.
+
+    Bare `state_id`/`district_id`/`ward_id`/`locality_id` keys -- callers needing the `home_`-
+    prefixed columns (signup, see _resolve_home_location below) or the plain operational-area
+    columns (update_me) re-key the result themselves rather than this function assuming either
+    target."""
     ward: Ward | None = None
     locality: Locality | None = None
-    if body.home_locality_id is not None:
-        locality = db.query(Locality).filter(Locality.id == body.home_locality_id).first()
+    if locality_id is not None:
+        locality = db.query(Locality).filter(Locality.id == locality_id).first()
         if locality is None:
             raise HTTPException(status_code=400, detail="Selected area not found.")
         ward = db.query(Ward).filter(Ward.id == locality.ward_id).first()
-    elif body.home_ward_id is not None:
-        ward = db.query(Ward).filter(Ward.id == body.home_ward_id).first()
+    elif ward_id is not None:
+        ward = db.query(Ward).filter(Ward.id == ward_id).first()
         if ward is None:
             raise HTTPException(status_code=400, detail="Selected ward not found.")
 
@@ -281,26 +321,39 @@ def _resolve_home_location(db: Session, body: SignupRequest) -> dict[str, int | 
     if ward is not None:
         ulb = db.query(ULB).filter(ULB.id == ward.ulb_id).first()
         district = db.query(District).filter(District.id == ulb.district_id).first() if ulb else None
-    elif body.home_district_id is not None:
-        district = db.query(District).filter(District.id == body.home_district_id).first()
+    elif district_id is not None:
+        district = db.query(District).filter(District.id == district_id).first()
         if district is None:
             raise HTTPException(status_code=400, detail="Selected city not found.")
 
-    state_id: int | None = None
+    resolved_state_id: int | None = None
     if district is not None:
-        state_id = district.state_id
-    elif body.home_state_id is not None:
-        if db.query(State).filter(State.id == body.home_state_id).first() is None:
+        resolved_state_id = district.state_id
+    elif state_id is not None:
+        if db.query(State).filter(State.id == state_id).first() is None:
             raise HTTPException(status_code=400, detail="Selected state not found.")
-        state_id = body.home_state_id
+        resolved_state_id = state_id
 
     return {
-        "home_state_id": state_id,
-        "home_district_id": district.id if district else None,
-        "home_ulb_id": ulb.id if ulb else None,
-        "home_ward_id": ward.id if ward else None,
-        "home_locality_id": locality.id if locality else None,
+        "state_id": resolved_state_id,
+        "district_id": district.id if district else None,
+        "ulb_id": ulb.id if ulb else None,
+        "ward_id": ward.id if ward else None,
+        "locality_id": locality.id if locality else None,
     }
+
+
+def _resolve_home_location(db: Session, body: SignupRequest) -> dict[str, int | None]:
+    """Thin re-keying wrapper around _resolve_location_chain for signup's home_* columns --
+    see that function for the actual derivation logic."""
+    chain = _resolve_location_chain(
+        db,
+        state_id=body.home_state_id,
+        district_id=body.home_district_id,
+        ward_id=body.home_ward_id,
+        locality_id=body.home_locality_id,
+    )
+    return {f"home_{key}": value for key, value in chain.items()}
 
 
 @router.get("/_dev/otp-code", include_in_schema=False)
@@ -631,7 +684,9 @@ def update_me(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> UserResponse:
-    """Update the current user's own display name and/or preferred language."""
+    """Update the current user's own display name, preferred language, and/or (citizens only)
+    residence location -- see MeUpdateRequest's own docstring for why location is a single
+    all-or-nothing group, not four independently-settable ids."""
     if body.preferred_language is not None:
         _validate_language(body.preferred_language)
         current_user.preferred_language = body.preferred_language
@@ -640,6 +695,28 @@ def update_me(
         if not full_name:
             raise HTTPException(status_code=400, detail="Full name cannot be empty.")
         current_user.full_name = full_name
+
+    # `ward` (the free-text label) is the group's signal that a location update was actually
+    # requested -- workers/admins have no residence location to edit at all (see User.ward's own
+    # docstring: ward means something entirely different for a worker), so this is silently a
+    # no-op for them even if a client somehow sent these fields anyway.
+    if body.ward is not None and current_user.role == "citizen":
+        ward = body.ward.strip()
+        if not ward:
+            raise HTTPException(status_code=400, detail="Area / ward cannot be empty.")
+        chain = _resolve_location_chain(
+            db,
+            state_id=body.state_id,
+            district_id=body.district_id,
+            ward_id=body.ward_id,
+            locality_id=body.locality_id,
+        )
+        current_user.ward = ward
+        current_user.state_id = chain["state_id"]
+        current_user.district_id = chain["district_id"]
+        current_user.ulb_id = chain["ulb_id"]
+        current_user.ward_id = chain["ward_id"]
+        current_user.locality_id = chain["locality_id"]
 
     db.commit()
     db.refresh(current_user)

@@ -182,6 +182,14 @@ export interface UserProfile {
   role: "citizen" | "worker" | "admin";
   preferred_language: string;
   ward: string | null;
+  // Structured counterpart of `ward` -- always null for a worker/admin, only ever set for a
+  // citizen who's gone through the cascading state/city/ward/area picker (signup, or editing it
+  // later in Settings). Lets that picker be pre-filled with the citizen's current selection
+  // instead of always starting blank -- see HomeLocationPicker.tsx's `initial` prop.
+  state_id: number | null;
+  district_id: number | null;
+  ward_id: number | null;
+  locality_id: number | null;
 }
 
 // One selectable node at any level of the State/City/Ward/Area hierarchy (backend/routes/
@@ -428,10 +436,11 @@ export const api = {
 
   // Creates the account directly, in one call -- but only succeeds if email_verification_token
   // proves verifySignupEmailCode above already succeeded for this email (see backend/routes/
-  // auth.py's signup()). ward is mandatory, one-time-at-signup -- see SignupRequest.ward's
-  // docstring. Not present on updateMe below: it's deliberately not editable later. The four
-  // home_*_id fields are optional and additive (see the same docstring) -- only the deepest one
-  // the citizen's cascading picker actually reached needs to be sent.
+  // auth.py's signup()). ward is mandatory at signup, but -- unlike the four home_*_id fields
+  // below it -- editable again later via updateMe's own ward/state_id/.../locality_id group
+  // (citizens genuinely move; see MeUpdateRequest's own docstring). The four home_*_id fields
+  // here are optional and additive (see the same docstring) -- only the deepest one the
+  // citizen's cascading picker actually reached needs to be sent.
   signup: (body: {
     full_name: string; phone: string; email: string; email_verification_token: string; password: string;
     preferred_language: string; ward: string;
@@ -445,8 +454,17 @@ export const api = {
 
   me: (token: string) => request<UserProfile>("/auth/me", { token }),
 
-  updateMe: (token: string, body: { full_name?: string; preferred_language?: string }) =>
-    request<UserProfile>("/auth/me", { method: "PATCH", token, body }),
+  // ward/state_id/district_id/ward_id/locality_id are a single all-or-nothing group -- either
+  // omit all of them (leaves the citizen's residence untouched), or send `ward` (required within
+  // the group) plus whichever `..._id` is the deepest level their picker actually reached; see
+  // backend/routes/auth.py's MeUpdateRequest docstring for why they can't be sent partially.
+  updateMe: (
+    token: string,
+    body: {
+      full_name?: string; preferred_language?: string;
+      ward?: string; state_id?: number; district_id?: number; ward_id?: number; locality_id?: number;
+    }
+  ) => request<UserProfile>("/auth/me", { method: "PATCH", token, body }),
 
   // Send a 6-digit OTP to a candidate email; it isn't attached to the account until verifyEmail
   // below confirms it (see backend/routes/auth.py's send_email_verification docstring).
