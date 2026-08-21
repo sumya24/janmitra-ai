@@ -1,4 +1,4 @@
-import type { AskJanMitraConversationTurn, AskJanMitraResponse, AskVoiceResponse } from "./ragTypes";
+import type { AskJanMitraConversationTurn, AskJanMitraResponse, AskVoiceResponse, ServiceCategory } from "./ragTypes";
 
 // Falls back to "" (same-origin, relative requests) when unset -- the production Docker build
 // deliberately leaves VITE_API_URL unset so requests go through Caddy's same-origin reverse
@@ -521,6 +521,18 @@ export const api = {
 
   createComplaint: (token: string, form: FormData) =>
     request<Complaint>("/complaints", { method: "POST", token, formData: form }),
+
+  // First layer of the Report an Issue wizard's 3-layer category classification (real model ->
+  // client-side keyword match -> manual picker, see ReportIssue.tsx). `category` is null
+  // whenever the model layer couldn't classify with confidence for ANY reason (not configured,
+  // network failure, timeout, genuine uncertainty) -- the caller falls through to its own next
+  // layer exactly as if this call was never made; never throws for a low-confidence result.
+  classifyComplaintCategory: (token: string, text: string) =>
+    request<{ category: ServiceCategory | null }>("/complaints/classify-category", {
+      method: "POST",
+      token,
+      body: { text },
+    }),
 
   // Full detail view (complaint + status timeline + worker-authored updates) -- the data source
   // for the worker task-detail page and the citizen-facing timeline alike. Same authorization
