@@ -1,5 +1,24 @@
 # RAG Knowledge Base — Source Research Log
 
+## Round 12 (2026-08-21, session 12): Andhra Pradesh's worst-ratio state, 1 new state-wide general channel found
+
+Targeted Andhra Pradesh specifically (the state with the worst verified:synthetic ratio, 4V+8S
+across all 4 categories -- see DATA_COVERAGE_TRACKER.md). Vijayawada (0 VERIFIED, previously
+confirmed a fully exhausted dead end in Round 11) and Visakhapatnam (4 VERIFIED already, via GVMC)
+were the 2 cities in scope.
+
+| Gap | Angle tried | Result | Notes |
+|---|---|---|---|
+| **Andhra Pradesh — all 4 categories (state-wide)** | cdma.ap.gov.in (the Commissioner & Director of Municipal Administration's own state portal) -- a genuinely different domain from every Vijayawada-specific angle tried in Round 11 | **PROMOTED TO VERIFIED (general channel, all 4, state-wide)** | **[PROMOTED TO VERIFIED — see knowledge_records/verified/andhra_pradesh/cdma_statewide.json (AP_CDMA_STATEWIDE_GRIEVANCE_* x4), sources/inventory.json. cdma.ap.gov.in/services/grievances/ is real and live; fetched twice independently (once for a summary, once explicitly asking for verbatim raw text with no paraphrasing) to guard against a misread, per the project's own standing caution about not overclaiming -- both fetches agree exactly. The page names 5 grievance categories with sub-items (Sanitation: Garbage Not Collected/Street Cleaning/Public Toilet Maintenance; Water Supply: Disruption/Leakage/Quality; Roads: Potholes/Road Damage/Speed Breakers; Parks & Greenery -- not one of ours; Street Lighting: Not Working/Electrical Hazards/New Installation) and states submission is via "the Puramithra App or Citizen Portal". No numeric SLA: the page's own sibling "Grievance SLAs" sub-page (cdma.ap.gov.in/resources/grievance-sla/) was checked directly and returned "Showing 0 of 0 SLA items" -- a genuinely empty results table, not a fetch failure. 3 documents linked from a third CDMA page (others/portal-info/citizen-charter/) -- G.O Ms.No.198, the Citizen's Charter .doc, and the Puraseva Centre User Manual -- were each checked directly via curl (not just WebFetch) and are dead links (HTTP 404, 400, 404 respectively). The ULB Web Directory page (cdma.ap.gov.in/ulb-web-directory) was also checked for a direct VMC link -- it's a client-side/AJAX-loaded shell ("Loading ULB data...") that static fetching can't populate, the same SPA-shell failure class documented for other AP/Karnataka domains in earlier rounds. Recorded as city=null/geographic_scope=STATE (NOT attributed to Vijayawada specifically) since the source page itself makes no Vijayawada-specific claim -- applies generally to every ULB under CDMA. Vijayawada's own city-specific 0-VERIFIED gap is therefore still open; this closes a different, real gap (AP had no state-wide general channel at all before this).]** |
+
+### Net result of Round 12
+
+4 new VERIFIED records (129 -> 133; 241 -> 245 total records; 866 -> 878 chunks in the live
+ChromaDB index after re-running `scripts/build_rag_embeddings.py`). Andhra Pradesh's ratio
+improves from 4V+8S to 8V+8S across the state. Vijayawada's own city-specific gap (0 VERIFIED)
+remains open and is still a confirmed dead end per Round 11 -- closing it specifically would need
+a genuinely new angle beyond cdma.ap.gov.in (already used here) and everything tried in Round 11.
+
 ## Round 11 (2026-08-16, session 11): 3 zero-coverage cities from early rounds, 2 closed via general channels
 
 Targeted 3 cities with 0 VERIFIED records each, last touched in rounds 2/3 before later rounds'

@@ -92,20 +92,19 @@ def test_embedding_batch_matches_individual_embeddings():
 def test_chroma_collection_opens_and_reports_expected_size():
     store = _real_store()
     assert store.is_loaded
-    # 866, not the earlier 842 -- round 11 closed 2 of 3 zero-coverage cities left over from early
-    # rounds. Howrah (West Bengal) and Jodhpur (Rajasthan) both moved from 0 to full 4-category
-    # coverage via general (SLA-not-found) channels: Howrah via howrah.gov.in's own Public Utility
-    # listing (a genuinely different, working domain from the 403-blocked myhmc.in), Jodhpur via
-    # Rajasthan's statewide LSG portal naming a real Commissioner as nodal officer (jodhpurmc.org
-    # itself stayed unretried, confirmed dead in an earlier round). Vijayawada (Andhra Pradesh)
-    # stayed at 0 VERIFIED -- its last plausible angle, 2 services.india.gov.in URLs, were
-    # confirmed to redirect to a generic landing page (the whole detail-page URL structure is
-    # retired), joining its already-confirmed-dead client-rendered shell and connection-refused
-    # domains -- see data/rag_knowledge_base/sources/candidate_urls.md's "Round 11" section for
-    # the full log. Confirmed by actually running `scripts/build_rag_embeddings.py` against the
-    # real embedding model (intfloat/multilingual-e5-small) and reading the resulting ChromaDB
-    # collection size directly -- not counted by hand.
-    assert store.size == 866
+    # 878, not the earlier 866 -- 4 new VERIFIED, state-wide Andhra Pradesh records added (all 4
+    # service categories), sourced from cdma.ap.gov.in/services/grievances/ (the Commissioner &
+    # Director of Municipal Administration's own live grievance page, confirmed via 2 independent
+    # fetches asking for verbatim raw text). This does NOT close Vijayawada's own 0-VERIFIED gap
+    # specifically (that city stays at 0 -- see candidate_urls.md's Round 11, still a confirmed
+    # dead end for city-specific sources) -- these new records are deliberately city=null,
+    # geographic_scope=STATE, since the source page applies to every AP ULB generally, not to
+    # Vijayawada by name. See knowledge_records/verified/andhra_pradesh/cdma_statewide.json and
+    # sources/inventory.json's AP_CDMA_GRIEVANCES_PAGE entry. Confirmed by actually running
+    # `scripts/build_rag_embeddings.py` against the real embedding model
+    # (intfloat/multilingual-e5-small) and reading the resulting ChromaDB collection size
+    # directly -- not counted by hand.
+    assert store.size == 878
 
 
 def test_chroma_persist_dir_is_configurable_not_hardcoded():

@@ -791,5 +791,18 @@
     "retrieved_at": "2026-08-15T19:16:02.667545Z",
     "geographic_scope": "CITY",
     "notes": "Closes Jodhpur's zero-coverage gap with a general (non-category-specific) real channel -- same pattern as Howrah this round, Lucknow (round 8), Gaya/Gurugram/Warangal/Mysuru (round 7). Unlike Jaipur's rich SLA-table citizen charter (found on JMC's own working domain), Jodhpur's equivalent page on Rajasthan's statewide LSG portal is a real, reachable, but genuinely unpopulated template (page literally titled 'Citizen Charter' contains only a static nodal-officer contact box, last site update 28/03/2016) -- confirmed by raw HTML inspection, not a WebFetch rendering failure. jodhpurmc.org (confirmed dead in a prior round), urban.rajasthan.gov.in/mcjs (bare page fragment), and Jodhpur Development Authority/jdajodhpur.org (expired TLS cert; also statutorily out-of-scope for routine civic complaints) were also checked this round and add nothing further."
+  },
+  {
+    "source_id": "AP_CDMA_GRIEVANCES_PAGE",
+    "source_title": "Commissioner & Director of Municipal Administration, Andhra Pradesh -- Grievance Redressal",
+    "source_organization": "Commissioner & Director of Municipal Administration (CDMA), Government of Andhra Pradesh",
+    "source_url": "https://cdma.ap.gov.in/services/grievances/",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-21T00:05:00Z",
+    "geographic_scope": "STATE",
+    "notes": "Confirmed live via direct fetch on 2026-08-21, re-fetched a second time asking for verbatim raw text (not a summary) to guard against a misread -- both fetches agree. The page explicitly names 5 grievance categories (Sanitation, Water Supply, Roads, Parks & Greenery, Street Lighting) with sub-items and states submission is through \"the Puramithra App or Citizen Portal\". This is a state-wide CDMA page, not tied to any one ULB, so city=null/geographic_scope=STATE on every KnowledgeRecord citing it -- applies generally to every AP city including Vijayawada and Visakhapatnam. No numeric SLA is published on this page. A sibling page, cdma.ap.gov.in/resources/grievance-sla/, exists specifically for SLAs but returned \"Showing 0 of 0 SLA items\" on direct fetch -- a genuinely empty results table, not a broken page. Three linked documents from a third CDMA page (others/portal-info/citizen-charter/) -- G.O Ms.No.198, the Citizen's Charter .doc, and the Puraseva Centre User Manual -- were each checked directly via curl and are dead links (HTTP 404, 400, 404 respectively), so none of those could be used as a source."
   }
 ]
