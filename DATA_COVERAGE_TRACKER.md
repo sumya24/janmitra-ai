@@ -3,8 +3,8 @@
 **What this file is:** one master table, per state/UT, showing exactly what data exists and what's
 missing across the full location chain, the four civic services, and Ask Sarthi's three service
 types — so a single glance tells you what's usable today, what's missing, and how to go get it.
-Checked directly against the live database and the real data files, most recently **2026-08-21**
-after the real Ward import (§11) — nothing here is estimated.
+Checked directly against the live database and the real data files on **2026-08-20** — nothing
+here is estimated.
 
 **How to keep it updatable:** when new data is added, re-run the checks noted at the bottom of
 each section and flip the affected cells from ❌ to ✅ in place. Edit this file directly — it is
@@ -23,14 +23,14 @@ State/UT → District → Sub-District → ULB (Municipal Corporation) → Zone 
 Each level is a real database table, linked to the one above it by a foreign key
 (`backend/models.py`: `State`, `District`, `SubDistrict`, `Ulb`, `Zone`, `Ward`, `Locality`).
 
-**As of 2026-08-21: District, ULB, and Ward are all populated with real government data for the 25
-states that already have RAG civic-service coverage** (671 real districts, 4,489 real ULBs, 90,172
-real wards — see §10 and §11). Deliberately scoped that way, not to all 36 states — a
-precisely-named ward in a state Ask Sarthi has no civic-service content for wouldn't actually help
-anyone. **Sub-District and Zone still have zero rows anywhere, for any state** — not part of either
-import, nothing entered there yet. **Locality still only has the original 6 example rows** (one per
-seeded city) — the ward source file has no locality-level breakdown, so a real locality import is a
-separate, even-deeper future step. See §11 for the full account of the ward import.
+**As of 2026-08-21: District and ULB are populated with real government data for the 25 states
+that already have RAG civic-service coverage** (671 real districts, 4,495 real ULBs — see §10).
+Deliberately scoped that way, not to all 36 states — a precisely-named ward in a state Ask Sarthi
+has no civic-service content for wouldn't actually help anyone. **Sub-District and Zone still have
+zero rows anywhere, for any state** — not part of this import, nothing entered there yet. **Ward
+and Locality still only have the original 6 example rows** (one per seeded city) — a real,
+comprehensive ward-level import (~90,000 rows nationally for these 25 states) is a deliberately
+separate next step, not done in this pass. See §10 for the full account.
 
 ## 2. The four civic services — what each column means
 
@@ -80,46 +80,45 @@ of the four service columns for that row is ✅.
 | State/UT | District | Sub-District | ULB | Zone | Ward | Locality | Waste/Sanitation | Water/Drainage | Roads/Potholes | Streetlights | TYPE_A | TYPE_B | TYPE_C |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Andaman and Nicobar Islands (UT) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
-| Andhra Pradesh | ✅ 26 | ❌ | ✅ 119 | ❌ | ✅ 3786 | ❌ | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
+| Andhra Pradesh | ✅ 26 | ❌ | ✅ 119 | ❌ | ❌ | ❌ | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
 | Arunachal Pradesh | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
-| Assam | ✅ 35 | ❌ | ✅ 97 | ❌ | ✅ 1014 | ❌ | ✅ 1V+1S | ✅ 1V+1S | ✅ 1V+1S | ✅ 1V+1S | ✅ | ✅ | ✅ |
-| Bihar | ✅ 38 | ❌ | ✅ 231 | ❌ | ✅ 5017 | ❌ | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ 1V+2S | ✅ | ✅ | ✅ |
-| Chandigarh (UT) | ✅ 1 | ❌ | ✅ 1 | ❌ | ✅ 35 | ❌ | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ | ✅ | ✅ |
-| Chhattisgarh | ✅ 33 | ❌ | ✅ 168 | ❌ | ✅ 3251 | ❌ | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ❌ | ✅ | ✅ | ✅ |
+| Assam | ✅ 35 | ❌ | ✅ 97 | ❌ | ❌ | ❌ | ✅ 1V+1S | ✅ 1V+1S | ✅ 1V+1S | ✅ 1V+1S | ✅ | ✅ | ✅ |
+| Bihar | ✅ 38 | ❌ | ✅ 231 | ❌ | ❌ | ❌ | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ 1V+2S | ✅ | ✅ | ✅ |
+| Chandigarh (UT) | ✅ 1 | ❌ | ✅ 1 | ❌ | ❌ | ❌ | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ | ✅ | ✅ |
+| Chhattisgarh | ✅ 33 | ❌ | ✅ 168 | ❌ | ❌ | ❌ | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ❌ | ✅ | ✅ | ✅ |
 | Dadra and Nagar Haveli and Daman and Diu (UT) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
-| Delhi (UT) | ✅ 11 | ❌ | ✅ 4 | ❌ | ✅ 272 | ❌ | ✅ 3V+1S | ✅ 2V+1S | ✅ 2V+1S | ✅ 1V+1S | ✅ | ✅ | ✅ |
-| Goa | ✅ 2 | ❌ | ✅ 14 | ❌ | ✅ 226 | ❌ | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ | ✅ | ✅ |
-| Gujarat | ✅ 33 | ❌ | ✅ 163 | ❌ | ✅ 1367 | ✅ | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
-| Haryana | ✅ 22 | ❌ | ✅ 87 | ❌ | ✅ 1686 | ❌ | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
-| Himachal Pradesh | ✅ 12 | ❌ | ✅ 60 | ❌ | ✅ 553 | ❌ | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ | ✅ | ✅ |
-| Jammu and Kashmir (UT) | ✅ 20 | ❌ | ✅ 78 | ❌ | ✅ 1124 | ❌ | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ | ✅ | ✅ |
-| Jharkhand | ✅ 24 | ❌ | ✅ 46 | ❌ | ✅ 1054 | ❌ | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ | ✅ | ✅ |
-| Karnataka | ✅ 31 | ❌ | ✅ 300 | ❌ | ✅ 7040 | ✅ | ✅ 2V+2S | ✅ 2V+2S | ✅ 1V+2S | ✅ 1V+2S | ✅ | ✅ | ✅ |
-| Kerala | ✅ 14 | ❌ | ✅ 93 | ❌ | ✅ 3538 | ❌ | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
+| Delhi (UT) | ✅ 11 | ❌ | ✅ 4 | ❌ | ❌ | ❌ | ✅ 3V+1S | ✅ 2V+1S | ✅ 2V+1S | ✅ 1V+1S | ✅ | ✅ | ✅ |
+| Goa | ✅ 2 | ❌ | ✅ 14 | ❌ | ❌ | ❌ | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ | ✅ | ✅ |
+| Gujarat | ✅ 33 | ❌ | ✅ 163 | ❌ | ✅ 1 | ✅ | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
+| Haryana | ✅ 22 | ❌ | ✅ 87 | ❌ | ❌ | ❌ | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
+| Himachal Pradesh | ✅ 12 | ❌ | ✅ 60 | ❌ | ❌ | ❌ | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ | ✅ | ✅ |
+| Jammu and Kashmir (UT) | ✅ 20 | ❌ | ✅ 78 | ❌ | ❌ | ❌ | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ | ✅ | ✅ |
+| Jharkhand | ✅ 24 | ❌ | ✅ 46 | ❌ | ❌ | ❌ | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ | ✅ | ✅ |
+| Karnataka | ✅ 31 | ❌ | ✅ 300 | ❌ | ✅ 1 | ✅ | ✅ 2V+2S | ✅ 2V+2S | ✅ 1V+2S | ✅ 1V+2S | ✅ | ✅ | ✅ |
+| Kerala | ✅ 14 | ❌ | ✅ 93 | ❌ | ❌ | ❌ | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
 | Ladakh (UT) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
 | Lakshadweep (UT) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
-| Madhya Pradesh | ✅ 55 | ❌ | ✅ 406 | ❌ | ✅ 7599 | ❌ | ✅ 2V+2S | ✅ 1V+2S | ✅ 1V+2S | ✅ 1V+2S | ✅ | ✅ | ✅ |
-| Maharashtra | ✅ 36 | ❌ | ✅ 400 | ❌ | ✅ 6944 | ✅ | ✅ 3V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
+| Madhya Pradesh | ✅ 55 | ❌ | ✅ 406 | ❌ | ❌ | ❌ | ✅ 2V+2S | ✅ 1V+2S | ✅ 1V+2S | ✅ 1V+2S | ✅ | ✅ | ✅ |
+| Maharashtra | ✅ 36 | ❌ | ✅ 400 | ❌ | ✅ 1 | ✅ | ✅ 3V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
 | Manipur | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
 | Meghalaya | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
 | Mizoram | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
 | Nagaland | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
-| Odisha | ✅ 30 | ❌ | ✅ 115 | ❌ | ✅ 2107 | ✅ | ✅ 1V+0S | ✅ 3V+0S | ✅ 2V+0S | ✅ 1V+0S | ✅ | ✅ | ✅ |
-| Puducherry (UT) | ✅ 2 | ❌ | ✅ 3 | ❌ | ✅ 92 | ❌ | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ | ✅ | ✅ |
-| Punjab | ✅ 23 | ❌ | ✅ 166 | ❌ | ✅ 3200 | ❌ | ✅ 2V+0S | ✅ 6V+0S | ✅ 2V+0S | ✅ 2V+0S | ✅ | ✅ | ✅ |
-| Rajasthan | ✅ 41 | ❌ | ✅ 207 | ❌ | ✅ 7615 | ❌ | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
+| Odisha | ✅ 30 | ❌ | ✅ 115 | ❌ | ✅ 1 | ✅ | ✅ 1V+0S | ✅ 3V+0S | ✅ 2V+0S | ✅ 1V+0S | ✅ | ✅ | ✅ |
+| Puducherry (UT) | ✅ 2 | ❌ | ✅ 3 | ❌ | ❌ | ❌ | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ | ✅ | ✅ |
+| Punjab | ✅ 23 | ❌ | ✅ 166 | ❌ | ❌ | ❌ | ✅ 2V+0S | ✅ 6V+0S | ✅ 2V+0S | ✅ 2V+0S | ✅ | ✅ | ✅ |
+| Rajasthan | ✅ 41 | ❌ | ✅ 207 | ❌ | ❌ | ❌ | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
 | Sikkim | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
-| Tamil Nadu | ✅ 38 | ❌ | ✅ 647 | ❌ | ✅ 12684 | ❌ | ✅ 2V+2S | ✅ 3V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
-| Telangana | ✅ 33 | ❌ | ✅ 137 | ❌ | ✅ 3451 | ❌ | ✅ 2V+2S | ✅ 3V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
+| Tamil Nadu | ✅ 38 | ❌ | ✅ 647 | ❌ | ❌ | ❌ | ✅ 2V+2S | ✅ 3V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
+| Telangana | ✅ 33 | ❌ | ✅ 137 | ❌ | ❌ | ❌ | ✅ 2V+2S | ✅ 3V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
 | Tripura | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
-| Uttar Pradesh | ✅ 75 | ❌ | ✅ 725 | ❌ | ✅ 12398 | ✅ | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
-| Uttarakhand | ✅ 13 | ❌ | ✅ 99 | ❌ | ✅ 1120 | ❌ | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ | ✅ | ✅ |
-| West Bengal | ✅ 23 | ❌ | ✅ 127 | ❌ | ✅ 2999 | ✅ | ✅ 2V+2S | ✅ 2V+2S | ✅ 3V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
+| Uttar Pradesh | ✅ 75 | ❌ | ✅ 725 | ❌ | ✅ 1 | ✅ | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
+| Uttarakhand | ✅ 13 | ❌ | ✅ 99 | ❌ | ❌ | ❌ | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ | ✅ | ✅ |
+| West Bengal | ✅ 23 | ❌ | ✅ 127 | ❌ | ✅ 1 | ✅ | ✅ 2V+2S | ✅ 2V+2S | ✅ 3V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
 
-*(District/ULB/Ward counts as of 2026-08-21 — real data imported from India's official Local
-Government Directory, see §10 for District/ULB and §11 for Ward. The Locality column still
-reflects only the original 6 example rows — the ward source file has no locality-level breakdown,
-so a real locality import remains a separate future step.)*
+*(District/ULB counts as of 2026-08-21 — real data imported from India's official Local
+Government Directory, see §10. Ward/Locality columns still reflect only the
+original 6 example rows — wards are a deliberately separate, not-yet-done next step, also §10.)*
 
 **Reading it in one line:** a row that's all ❌ except TYPE_A/TYPE_C means that state can still
 *take* a complaint and *track* it, but Ask Sarthi has nothing real to say if someone asks a
@@ -134,9 +133,8 @@ Puducherry, and Jammu and Kashmir were closed or partially closed, see
 
 ## 5. Drill-down: what the chain actually looks like for one state (Maharashtra)
 
-**Updated 2026-08-21, twice: first after the real District/ULB import (§10) — Maharashtra went
-from 1 seeded district/ULB to 36 real districts and 400 real ULBs — then again after the real Ward
-import (§11), which took it from 1 example ward to 6,944 real wards.**
+**Updated 2026-08-21 after the real District/ULB import (§10) — this section was written when
+Maharashtra had exactly one seeded district/ULB; it now has 36 real districts and 400 real ULBs.**
 The master table in §4 only shows ✅/❌ + a count per level — it doesn't show *what the actual
 data is*. Here's Maharashtra, walked one level at a time:
 
@@ -156,51 +154,49 @@ ULB:           400 real ULBs across those districts (e.g. Pune Municipal Corpora
 Zone:          — nothing stored —                     ❌ (this level is empty for EVERY state,
                                                             not just Maharashtra — see §1)
   ↓
-Ward:          6,944 real wards across those 400 ULBs (e.g. Pune Municipal Corporation alone has
-               43 real wards — Ward 22, Kothrud is one of them; Kolhapur, Nashik, Nagpur, Thane,
-               ... each have their own full real ward list too)
-                                                      ✅ (up from 1 example ward, see §11)
+Ward:          Ward 22                                ✅ (still only this ONE example ward —
+                                                            Pune Municipal Corporation really has
+                                                            ~160 wards; ward-level import is a
+                                                            separate next step, see §10)
   ↓
-Locality:      Kothrud                                ✅ (still only this ONE example locality —
-                                                            the ward source file has no
-                                                            locality-level breakdown, see §11)
+Locality:      Kothrud                                ✅ (still only this ONE example locality)
 ```
 
 **What this means in practice today:** a citizen in Maharashtra now has their *city* (ULB) chosen
-from a real, complete list — all 400 real Maharashtra ULBs — and, within that city, a real,
-complete list of *wards* too (Pune Municipal Corporation's real 43 wards, not just one example).
-Only the *locality* (neighborhood-within-ward) level still has just the one seeded example per
-flagship city — that's the one gap left in this chain, see §11.
+from a real, complete list — not just "Pune" as the only option, but all 400 real Maharashtra
+ULBs. Picking a specific *ward* within that city still only offers the one example ward per
+originally-seeded city ("Ward 22" for Pune) — the ward-level import (§10) is what would fix that
+next.
 
-### The same drill-down for the 25 states with real district/ULB/ward data (see §4 for the full table)
+### The same drill-down for the 25 states with real district/ULB data (district/ULB counts only — see §4 for the full table)
 
-| State | Real districts | Real ULBs | Real wards |
-|---|---:|---:|---:|
-| Uttar Pradesh | 75 | 725 | 12,398 |
-| Tamil Nadu | 38 | 647 | 12,684 |
-| Madhya Pradesh | 55 | 406 | 7,599 |
-| Rajasthan | 41 | 207 | 7,615 |
-| Karnataka | 31 | 300 | 7,040 |
-| Maharashtra | 36 | 400 | 6,944 |
-| Bihar | 38 | 231 | 5,017 |
-| Andhra Pradesh | 26 | 119 | 3,786 |
-| Kerala | 14 | 93 | 3,538 |
-| Telangana | 33 | 137 | 3,451 |
-| Chhattisgarh | 33 | 168 | 3,251 |
-| Punjab | 23 | 166 | 3,200 |
-| West Bengal | 23 | 127 | 2,999 |
-| Odisha | 30 | 115 | 2,107 |
-| Haryana | 22 | 87 | 1,686 |
-| Gujarat | 33 | 163 | 1,367 |
-| Jammu and Kashmir | 20 | 78 | 1,124 |
-| Uttarakhand | 13 | 99 | 1,120 |
-| Jharkhand | 24 | 46 | 1,054 |
-| Assam | 35 | 97 | 1,014 |
-| Himachal Pradesh | 12 | 60 | 553 |
-| Delhi | 11 | 4 | 272 |
-| Goa | 2 | 14 | 226 |
-| Puducherry | 2 | 3 | 92 |
-| Chandigarh | 1 | 1 | 35 |
+| State | Real districts | Real ULBs |
+|---|---:|---:|
+| Uttar Pradesh | 75 | 725 |
+| Tamil Nadu | 38 | 647 |
+| Madhya Pradesh | 55 | 406 |
+| Maharashtra | 36 | 400 |
+| Karnataka | 31 | 300 |
+| Rajasthan | 41 | 207 |
+| Bihar | 38 | 231 |
+| Punjab | 23 | 166 |
+| Chhattisgarh | 33 | 168 |
+| Gujarat | 33 | 163 |
+| Telangana | 33 | 137 |
+| West Bengal | 23 | 127 |
+| Odisha | 30 | 115 |
+| Andhra Pradesh | 26 | 119 |
+| Kerala | 14 | 93 |
+| Haryana | 22 | 87 |
+| Uttarakhand | 13 | 99 |
+| Assam | 35 | 97 |
+| Jharkhand | 24 | 46 |
+| Himachal Pradesh | 12 | 60 |
+| Delhi | 11 | 4 |
+| Goa | 2 | 14 |
+| Puducherry | 2 | 3 |
+| Chandigarh | 1 | 1 |
+| Jammu and Kashmir | 20 | 78 |
 
 **All other 11 states/UTs:** zero RAG coverage (§4), deliberately excluded from this import — see
 §10 for why.
@@ -352,56 +348,7 @@ tests) still passes unchanged.
 
 ---
 
-## 11. Real Ward import (2026-08-21) — what was done and how
-
-**Why this was the next priority:** a citizen doesn't file a complaint by picking a district or
-even a city — they pick their **ward**, the level `assignment_service.py` actually routes work
-orders on. District/ULB data (§10) fixed the city picker; this pass fixes the level citizens
-actually interact with.
-
-**Source:** the same LGD community mirror as §10 —
-`github.com/ramSeraph/opendata`'s `urban_local_body_wards` dataset (current as of 30 Apr 2026),
-Government Open Data License – India. Kept at `data/lgd_import/urban_local_body_wards.30Apr2026.csv`.
-Labeled `source_type="OFFICIAL_LGD_MIRROR_DATASET"`, same tier as the district/ULB rows. Run via
-`scripts/import_lgd_wards.py` (idempotent, matches each ward row to a ULB by LGD code, skips
-anything already present).
-
-**What was imported:** 90,166 new real wards, matched against every ULB in the database that has a
-known LGD `code` (both the 4,489 §10-imported ULBs and the 6 original hand-seeded ones — see below).
-Combined with the 6 original example wards, the database now has 90,172 ward rows total across the
-25 covered states.
-
-**A real bug found and fixed mid-pass — 6 duplicate ULB rows:** the 6 original hand-seeded ULBs
-(Pune, Kanpur, Bhubaneswar, Ahmedabad, Kolkata, Bengaluru/BBMP) didn't have an LGD `code` on them
-originally, since they predate the LGD import entirely. LGD's own dataset independently lists each
-of these same 6 real cities too, but under a plainer name — "Pune" vs. our
-"Pune Municipal Corporation", "Ahmadabad" vs. our "Ahmedabad Municipal Corporation", "Bbmp" vs. our
-"Bruhat Bengaluru Mahanagara Palike (BBMP)", etc. — so the §10 import created 6 *duplicate* ULB
-rows for cities that already existed under a different name. The real LGD codes for the 6 seeded
-ULBs were looked up and backfilled (Pune `251530`, Kanpur `249286`, Bhubaneswar `250520`, Ahmedabad
-`251096`, Kolkata `250299`, BBMP `276600`), which let the ward import match them correctly — but it
-initially attached each city's real wards to the *duplicate* ULB row instead of the actual seeded
-one that workers are assigned to, so the 6 flagship cities appeared to still have only 1 ward each
-even after the import ran. Caught by checking `SELECT code, COUNT(*) FROM ulbs GROUP BY code HAVING
-COUNT(*) > 1`, which showed all 6 codes duplicated. Fixed via `scripts/merge_duplicate_seed_ulbs.py`
-— re-points any wards on a duplicate ULB onto the correct seed ULB (checked for ward-name
-collisions first: found 0), then deletes the now-empty duplicate. Verified per-city ward totals
-after the fix: Pune 43, Kanpur 113, Bhubaneswar 68, Ahmedabad 49, Kolkata 145, BBMP 226.
-
-**Honest gaps in this pass:**
-- Localities are **not** part of this import — the ward source file has no locality-level
-  breakdown at all, so a real locality import (even deeper than wards) remains a separate future
-  step. The 6 original example localities are untouched.
-- Sub-Districts and Zones remain empty for every state — unrelated to this pass, same as §10.
-- Ward `zone_id` is left **null** on every imported row — there's no Zone data to link it to yet
-  (see above).
-
-**Verified after:** `PRAGMA integrity_check` → `ok`. Full `test_location_system.py` suite (27
-tests) passes unchanged.
-
----
-
-## 12. Bottom line
+## 11. Bottom line
 
 Every system here (location tables, the 4-category knowledge base, Ask Sarthi's 3 service types)
 is real, working engineering — nothing is a stub. Every ❌ in the master table above is a **data**
