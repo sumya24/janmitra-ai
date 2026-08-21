@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import TopBar from "../components/TopBar";
+import MicWaveform from "../components/MicWaveform";
 import MultiPhotoUpload from "../components/MultiPhotoUpload";
 import LocationPicker, { type LocationValue } from "../components/LocationPicker";
 import { useAuth } from "../lib/auth";
@@ -8,6 +9,7 @@ import { useUiLang } from "../lib/uiLang";
 import { t } from "../lib/i18n";
 import { api, ApiError, type Complaint } from "../lib/api";
 import { useAudioRecorder } from "../lib/useAudioRecorder";
+import { useSpeechToText } from "../lib/useSpeechToText";
 import { useToast } from "../lib/toast";
 import { SERVICE_CATEGORY_DEFS, guessServiceCategory, type ServiceCategoryDef } from "../lib/serviceCategories";
 import type { ServiceCategory } from "../lib/ragTypes";
@@ -35,6 +37,7 @@ export default function ReportIssue() {
   const navigate = useNavigate();
   const toast = useToast();
   const recorder = useAudioRecorder();
+  const speech = useSpeechToText(lang);
 
   const preselected = params.get("service") as ServiceCategory | null;
 
@@ -56,6 +59,14 @@ export default function ReportIssue() {
     if (!token) return;
     api.listWards(token).then(setWards).catch(() => setWards([]));
   }, [token]);
+
+  const descriptionTextareaRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    const el = descriptionTextareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+  }, [text]);
 
   const stepIndex = STEPS.indexOf(step);
 
@@ -199,54 +210,128 @@ export default function ReportIssue() {
             <>
               <h2>{t(lang, "wizard.description.title")}</h2>
               <p className="wizard-hint">{t(lang, "wizard.description.hint")}</p>
-              <div className="langpills" style={{ marginBottom: 10 }}>
-                <button type="button" className={`langpill ${inputMode === "text" ? "active" : ""}`} onClick={() => setInputMode("text")}>
+
+              <div className="ask-chat-composer" style={{ margin: 0, padding: 0, border: "none", background: "none" }}>
+                {recorder.error && <p className="ask-chat-composer-error">{recorder.error}</p>}
+
+                <div className="ask-chat-composer-row">
+                  {inputMode === "voice" && recorder.isRecording ? (
+                    <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, minWidth: 0, padding: "0 6px" }}>
+                      <span style={{ color: "var(--status-critical)" }}>
+                        <MicWaveform />
+                      </span>
+                      <span className="mono" style={{ fontSize: 13 }}>{formatSeconds(recorder.seconds)}</span>
+                    </div>
+                  ) : inputMode === "voice" && recorder.audioSegments.length > 0 ? (
+                    <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, minWidth: 0, padding: "0 6px" }}>
+                      {recorder.audioUrl ? (
+                        <audio controls src={recorder.audioUrl} style={{ width: "100%", height: 32 }} />
+                      ) : (
+                        <span className="mono" style={{ fontSize: 13 }}>
+                          {t(lang, "citizen.voiceRecorded")} {formatSeconds(recorder.seconds)}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      <label htmlFor="complaint-text" className="sr-only">{t(lang, "citizen.describe")}</label>
+                      <textarea
+                        ref={descriptionTextareaRef}
+                        id="complaint-text"
+                        rows={1}
+                        value={text}
+                        onChange={(e) => setText(e.target.value)}
+                        placeholder={t(lang, "citizen.textPlaceholder")}
+                        className="ask-chat-textarea"
+                      />
+                    </>
+                  )}
+
+                  {/* One control, three states -- start recording, stop recording, or (once a
+                      take exists) record over it. Deliberately not a second button next to this
+                      one for "record again": a control that's disabled-looking-but-clickable
+                      here previously did nothing on click, which is exactly the dead-button bug
+                      this was rebuilt to fix. */}
+                  <button
+                    type="button"
+                    className={`ask-chat-icon-btn ask-chat-mic1-btn${recorder.isRecording ? " active" : ""}`}
+                    onClick={() => {
+                      if (recorder.isRecording) {
+                        recorder.stop();
+                        speech.stop();
+                        return;
+                      }
+                      recorder.reset();
+                      speech.reset();
+                      setInputMode("voice");
+                      recorder.start();
+                      if (speech.supported) speech.start();
+                    }}
+                    aria-label={t(
+                      lang,
+                      recorder.isRecording
+                        ? "citizen.stopRecording"
+                        : inputMode === "voice" && recorder.audioSegments.length > 0
+                          ? "citizen.recordAgain"
+                          : "citizen.startRecording"
+                    )}
+                    aria-pressed={recorder.isRecording}
+                    title={t(
+                      lang,
+                      recorder.isRecording
+                        ? "citizen.stopRecording"
+                        : inputMode === "voice" && recorder.audioSegments.length > 0
+                          ? "citizen.recordAgain"
+                          : "citizen.startRecording"
+                    )}
+                  >
+                    {recorder.isRecording ? (
+                      <MicWaveform />
+                    ) : inputMode === "voice" && recorder.audioSegments.length > 0 ? (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M20 12a8 8 0 1 1-2.34-5.66" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                        <path d="M20 4v5h-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    ) : (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <rect x="9" y="3" width="6" height="12" rx="3" stroke="currentColor" strokeWidth="1.8" />
+                        <path d="M5 11a7 7 0 0 0 14 0M12 18v3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+
+                {/* Best-effort live transcript, purely a "here's what we're hearing" preview --
+                    the real transcription that actually gets submitted still runs server-side
+                    on the recorded audio (see useAudioRecorder.ts's docstring on why: better
+                    accuracy across regional languages than the browser's own recognizer). This
+                    is the browser's own SpeechRecognition running alongside, silently absent
+                    wherever it isn't supported (e.g. Firefox) rather than showing a dead/empty
+                    box -- same graceful-absence rule Ask Sarthi's own mic uses. */}
+                {speech.supported && inputMode === "voice" && (recorder.isRecording || recorder.audioSegments.length > 0) && speech.transcript && (
+                  <p style={{ margin: "6px 2px 0", fontSize: 13, color: "var(--ink-2)", fontStyle: "italic" }}>
+                    {speech.transcript}
+                  </p>
+                )}
+              </div>
+
+              {inputMode === "voice" && !recorder.isRecording && (
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  style={{ marginTop: 8, display: "inline-flex", alignItems: "center", gap: 6 }}
+                  onClick={() => {
+                    recorder.reset();
+                    speech.reset();
+                    setInputMode("text");
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="1.8" />
+                    <path d="M7 10h.01M11 10h.01M15 10h.01M17 10h.01M7 14h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  </svg>
                   {t(lang, "citizen.type")}
                 </button>
-                <button type="button" className={`langpill ${inputMode === "voice" ? "active" : ""}`} onClick={() => setInputMode("voice")}>
-                  {t(lang, "citizen.speak")}
-                </button>
-              </div>
-              {inputMode === "text" && (
-                <>
-                  <label htmlFor="complaint-text" className="sr-only">{t(lang, "citizen.describe")}</label>
-                  <textarea id="complaint-text" rows={4} value={text} onChange={(e) => setText(e.target.value)} placeholder={t(lang, "citizen.textPlaceholder")} />
-                </>
-              )}
-              {inputMode === "voice" && (
-                <div style={{ border: "1px solid var(--line)", borderRadius: 10, padding: 14, background: "var(--paper)" }}>
-                  {recorder.error && <div className="banner-error" style={{ marginBottom: 10 }}>{recorder.error}</div>}
-                  {!recorder.isRecording && recorder.audioSegments.length === 0 && (
-                    <button type="button" className="btn btn-primary btn-sm" onClick={recorder.start}>
-                      {t(lang, "citizen.startRecording")}
-                    </button>
-                  )}
-                  {recorder.isRecording && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <span style={{ width: 10, height: 10, borderRadius: "50%", background: "var(--status-critical)", display: "inline-block" }} />
-                      <span className="mono" style={{ fontSize: 13 }}>{formatSeconds(recorder.seconds)}</span>
-                      <button type="button" className="btn btn-primary btn-sm" onClick={recorder.stop}>
-                        {t(lang, "citizen.stopRecording")}
-                      </button>
-                    </div>
-                  )}
-                  {!recorder.isRecording && recorder.audioSegments.length > 0 && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                      {recorder.audioUrl ? (
-                        <audio controls src={recorder.audioUrl} style={{ width: "100%" }} />
-                      ) : (
-                        <div style={{ fontSize: 13 }}>
-                          {t(lang, "citizen.voiceRecorded")} <span className="mono">{formatSeconds(recorder.seconds)}</span>
-                        </div>
-                      )}
-                      <div>
-                        <button type="button" className="btn btn-ghost btn-sm" onClick={recorder.reset}>
-                          {t(lang, "citizen.recordAgain")}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
               )}
             </>
           )}
