@@ -77,7 +77,7 @@ export default function ReportIssue() {
     if (!el) return;
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
-  }, [text]);
+  }, [text, speech.transcript]);
 
   const stepIndex = STEPS.indexOf(step);
 
@@ -273,48 +273,28 @@ export default function ReportIssue() {
                 {recorder.error && <p className="ask-chat-composer-error">{recorder.error}</p>}
 
                 <div className="ask-chat-composer-row">
-                  {inputMode === "voice" && recorder.isRecording ? (
-                    <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, minWidth: 0, padding: "0 6px" }}>
-                      <span style={{ color: "var(--status-critical)", display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                        <MicWaveform />
-                        <span className="mono" style={{ fontSize: 12 }}>{formatSeconds(recorder.seconds)}</span>
-                      </span>
-                      {/* The live transcript sits right in the bar, in the same spot the typed
-                          text would be -- exactly how Ask Sarthi's own mic fills its box while
-                          you talk -- rather than as a separate line elsewhere on the page. */}
-                      <span
-                        style={{
-                          flex: 1, minWidth: 0, fontSize: 14.5, lineHeight: 1.5,
-                          color: speech.transcript ? "var(--ink)" : "var(--ink-3)",
-                          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                        }}
-                      >
-                        {speech.transcript || t(lang, "citizen.textPlaceholder")}
-                      </span>
-                    </div>
-                  ) : inputMode === "voice" && recorder.audioSegments.length > 0 ? (
-                    <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, minWidth: 0, padding: "0 6px" }}>
-                      {recorder.audioUrl ? (
-                        <audio controls src={recorder.audioUrl} style={{ width: "100%", height: 32 }} />
-                      ) : (
-                        <span className="mono" style={{ fontSize: 13 }}>
-                          {t(lang, "citizen.voiceRecorded")} {formatSeconds(recorder.seconds)}
-                        </span>
-                      )}
-                    </div>
-                  ) : (
-                    <>
-                      <label htmlFor="complaint-text" className="sr-only">{t(lang, "citizen.describe")}</label>
-                      <textarea
-                        ref={descriptionTextareaRef}
-                        id="complaint-text"
-                        rows={1}
-                        value={text}
-                        onChange={(e) => setText(e.target.value)}
-                        placeholder={t(lang, "citizen.textPlaceholder")}
-                        className="ask-chat-textarea"
-                      />
-                    </>
+                  <label htmlFor="complaint-text" className="sr-only">{t(lang, "citizen.describe")}</label>
+                  {/* One textarea, always -- exactly like Ask Sarthi's own bar, not a different
+                      layout swapped in for voice mode. While recording, it just shows the live
+                      transcript (read-only preview); once stopped, that transcript stays put as
+                      a starting point. What actually gets submitted for voice input is still the
+                      real recorded audio (see handleSubmit below), transcribed server-side --
+                      this box is a live preview, not the source of truth. */}
+                  <textarea
+                    ref={descriptionTextareaRef}
+                    id="complaint-text"
+                    rows={1}
+                    value={inputMode === "voice" ? speech.transcript : text}
+                    onChange={(e) => setText(e.target.value)}
+                    readOnly={inputMode === "voice"}
+                    placeholder={t(lang, "citizen.textPlaceholder")}
+                    className="ask-chat-textarea"
+                  />
+
+                  {recorder.isRecording && (
+                    <span className="mono" style={{ fontSize: 12, color: "var(--status-critical)", flexShrink: 0 }}>
+                      {formatSeconds(recorder.seconds)}
+                    </span>
                   )}
 
                   {/* One control, three states -- start recording, stop recording, or (once a
