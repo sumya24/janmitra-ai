@@ -108,7 +108,7 @@ of the four service columns for that row is ✅.
 | Telangana | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ 2V+2S | ✅ 3V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
 | Tripura | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
 | Uttar Pradesh | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
-| Uttarakhand | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ 1V+0S | ✅ 1V+0S | ❌ | ✅ 1V+0S | ✅ | ✅ | ✅ |
+| Uttarakhand | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ | ✅ | ✅ |
 | West Bengal | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ 2V+2S | ✅ 2V+2S | ✅ 3V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
 
 **Reading it in one line:** a row that's all ❌ except TYPE_A/TYPE_C means that state can still
@@ -246,10 +246,10 @@ Checked directly against the files on disk and the live vector database (not doc
 
 | Stage | Count | Notes |
 |---|---:|---|
-| Raw knowledge records | 260 | 148 verified + 112 synthetic (as of 2026-08-21 — see `data/rag_knowledge_base/sources/candidate_urls.md` Rounds 12, 14 & 15) |
-| Built documents | 260 | Records rendered into full articles |
-| Retrieval chunks | 923 | Documents split into search-sized pieces |
-| Embeddings in ChromaDB | 923 | Matches chunk count exactly — fully built, nothing stale |
+| Raw knowledge records | 261 | 149 verified + 112 synthetic (as of 2026-08-21 — see `data/rag_knowledge_base/sources/candidate_urls.md` Rounds 12, 14–16) |
+| Built documents | 261 | Records rendered into full articles |
+| Retrieval chunks | 926 | Documents split into search-sized pieces |
+| Embeddings in ChromaDB | 926 | Matches chunk count exactly — fully built, nothing stale |
 | Embedding model | `intfloat/multilingual-e5-small` | Real, pretrained, multilingual |
 
 **Where §4's location columns and §2's service columns already sit next to each other

@@ -111,7 +111,12 @@ def test_chroma_collection_opens_and_reports_expected_size():
     # corresponding entries. Confirmed by actually running `scripts/build_rag_embeddings.py`
     # against the real embedding model (intfloat/multilingual-e5-small) and reading the
     # resulting ChromaDB collection size directly -- not counted by hand.
-    assert store.size == 923
+    # 926, not the earlier 923 -- Uttarakhand's remaining Roads/Potholes gap closed via Nagar
+    # Nigam Dehradun's own "Public Work Department" contact page (nagarnigamdehradun.com), naming
+    # a real Executive Engineer with a direct phone number. Uttarakhand now has full 4/4 coverage.
+    # See knowledge_records/verified/uttarakhand/dehradun.json (UK_NNDDN_ROADS_POTHOLES) and
+    # sources/inventory.json's UK_NNDDN_PUBLIC_WORK_DEPARTMENT entry.
+    assert store.size == 926
 
 
 def test_chroma_persist_dir_is_configurable_not_hardcoded():

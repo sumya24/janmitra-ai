@@ -882,5 +882,18 @@
     "retrieved_at": "2026-08-21T02:45:00Z",
     "geographic_scope": "CITY",
     "notes": "Confirmed live via 4 direct fetches (Services listing, Street Light sub-page, Drainage Complaint sub-page context, Contact Us page). Services page verbatim lists Street Light, Drainage Complaint, Light Complaint, Sanitation, and Door to Door Waste Collection as named items -- confirming these department/service categories genuinely exist, even though the individual sub-pages are placeholder-only. Roads/Potholes has NO corresponding named item anywhere on this page (only a generic \"Public Works Department\" mention in the nav menu, not verified further) -- so this source was deliberately NOT used to build a ROADS_POTHOLES record, per the project rule against claiming coverage a source does not verbatim support. Contact Us page confirmed real phone (+91-135-2714074) and email (nagarnigam.ddn@gmail.com), matching what third-party aggregators separately reported, now independently confirmed on the official .uk.gov.in domain itself."
+  },
+  {
+    "source_id": "UK_NNDDN_PUBLIC_WORK_DEPARTMENT",
+    "source_title": "Nagar Nigam Dehradun -- Public Work Department Contact Page",
+    "source_organization": "Nagar Nigam Dehradun, Government of Uttarakhand",
+    "source_url": "https://nagarnigamdehradun.com/public-work-department.php",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-21T03:10:00Z",
+    "geographic_scope": "CITY",
+    "notes": "Confirmed live via 2 direct fetches. nagarnigamdehradun.com is Nagar Nigam Dehradun's own second official web presence -- linked directly from nndehradun.uk.gov.in's own Contact Us page as \"Website\", establishing its legitimacy. Names 3 real officers with direct contact info (Executive Engineer Rajit Kothyal, 9997943221; 2 Junior Engineers) under a \"Public Work Department\" heading. Honest caveat: the page has no explicit \"this department handles roads/potholes\" sentence -- the KnowledgeRecord citing this relies on \"Public Work Department\" (PWD) being standard, well-established Indian municipal terminology for the roads/civil-infrastructure department, the same evidentiary tier as other WELL_ESTABLISHED_PUBLIC_GEOGRAPHY-style facts already used in this project, not a stretch from unrelated wording."
   }
 ]

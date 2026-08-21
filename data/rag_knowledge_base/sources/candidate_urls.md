@@ -1,5 +1,19 @@
 # RAG Knowledge Base — Source Research Log
 
+## Round 16 (2026-08-21, session 12 continued): Uttarakhand's Roads/Potholes closed -- Dehradun reaches 4/4
+
+Explicit follow-up on Round 15's one open thread for Dehradun.
+
+| Gap | Angle tried | Result | Notes |
+|---|---|---|---|
+| **Dehradun, Uttarakhand — Roads/Potholes (the one category Round 15 left open)** | nagarnigamdehradun.com/public-work-department.php -- a second official Nagar Nigam Dehradun web presence, linked from nndehradun.uk.gov.in's own Contact Us page | **PROMOTED TO VERIFIED** | **[PROMOTED TO VERIFIED — see knowledge_records/verified/uttarakhand/dehradun.json (UK_NNDDN_ROADS_POTHOLES). Fetched directly, twice (once for contacts, once explicitly checking for a departmental-remit description). Names 3 real officers with direct contact: Executive Engineer Rajit Kothyal (9997943221), 2 Junior Engineers, department line +91-135-2653572. Honest caveat logged in the record itself: the page has no explicit "this department handles roads/potholes" sentence -- this record relies on "Public Work Department" (PWD) being standard, well-established Indian municipal terminology for the roads/civil-infrastructure department, the same evidentiary tier as WELL_ESTABLISHED_PUBLIC_GEOGRAPHY facts already used elsewhere in this project, not a stretch from unrelated wording the way NDMC's Round-10 case was found to be.]** |
+
+### Net result of Round 16
+
+1 new VERIFIED record (148 -> 149; 260 -> 261 total records; 923 -> 926 chunks in the live
+ChromaDB index). Uttarakhand reaches full 4/4 -- the 3rd state closed to completion this session
+(alongside Chandigarh and Goa; Jharkhand also already at 4/4).
+
 ## Round 15 (2026-08-21, session 12 continued): Goa's Streetlights closed; Jharkhand (4/4) and Uttarakhand (3/4) added
 
 Explicit follow-up on Round 14's one open thread (Goa Streetlights), then continued down the
