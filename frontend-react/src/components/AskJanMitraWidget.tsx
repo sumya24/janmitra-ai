@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useUiLang } from "../lib/uiLang";
 import { t } from "../lib/i18n";
-import { AskJanMitraContent } from "../pages/AskJanMitra";
+import { AskJanMitraContent, type AskJanMitraHandle } from "../pages/AskJanMitra";
 import Mascot from "./Mascot";
 import "./AskJanMitraWidget.css";
 
@@ -21,6 +21,7 @@ export default function AskJanMitraWidget() {
   const [everOpened, setEverOpened] = useState(false);
   const [showGreeting, setShowGreeting] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const contentRef = useRef<AskJanMitraHandle>(null);
 
   // Periodic nudge: show the greeting bubble a little after load, then again every so often --
   // but only until the widget's actually been used once this session, so it doesn't keep
@@ -83,6 +84,20 @@ export default function AskJanMitraWidget() {
 
       <div className={`ask-widget-panel ${open ? "open" : ""}`} role="dialog" aria-modal="true" aria-label={t(lang, "nav.askJanmitra")}>
         <div className="ask-widget-panel-head">
+          {/* Same row as the close button, not its own stacked bar underneath -- see
+              AskJanMitraHandle/hideNewChatBar's docstring in AskJanMitra.tsx for the "two
+              separate corner toolbars" problem this replaces. Always shown once the panel's ever
+              been opened, even on an empty conversation -- clicking it then is just a harmless
+              no-op, and a control that doesn't pop in/out as messages arrive is more predictable
+              in a compact panel than one that does. */}
+          {everOpened && (
+            <button type="button" className="ask-widget-newchat-btn" onClick={() => contentRef.current?.newChat()}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+              {t(lang, "ask.newChat")}
+            </button>
+          )}
           <button type="button" className="ask-widget-close" onClick={() => setOpen(false)} aria-label={t(lang, "common.close")}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -91,8 +106,9 @@ export default function AskJanMitraWidget() {
         </div>
         {/* Stays mounted once opened (rather than unmounting on close) so it doesn't visibly
             pop out from under the still-sliding panel -- it's just off-screen via the panel's
-            own transform when closed. */}
-        {everOpened && <AskJanMitraContent />}
+            own transform when closed. hideNewChatBar=true: this panel's head row above already
+            carries New Chat, so the content itself renders no second, internal one. */}
+        {everOpened && <AskJanMitraContent ref={contentRef} hideNewChatBar />}
       </div>
 
       {/* Hidden while the panel is open, not just visually behind it -- its z-index (96) sits

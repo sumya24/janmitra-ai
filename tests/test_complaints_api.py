@@ -683,3 +683,58 @@ def test_submit_feedback_rating_out_of_range_returns_422(client, make_citizen, d
         json={"rating": 7},
     )
     assert response.status_code == 422
+
+
+# --- POST /complaints/classify-category -- first layer of the wizard's 3-layer category
+# classification (real model -> keyword match -> manual picker, see ReportIssue.tsx). Mocked at
+# the _category_service level, same convention as _agent/_translation_service above -- these
+# tests are about the route's contract (auth, rate limiting, response shape), not
+# ComplaintCategoryService's own Sarvam-call behavior (see test_complaint_category_service.py
+# for that).
+
+
+def test_classify_category_returns_model_result(client, monkeypatch, make_citizen):
+    from backend.schemas.rag_knowledge import ServiceCategory
+
+    monkeypatch.setattr(complaints_module, "_category_service", Mock(classify=lambda text: ServiceCategory.ROADS_POTHOLES))
+    token, _user = make_citizen(phone="9000000001")
+
+    response = client.post(
+        "/complaints/classify-category",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"text": "There is a huge pothole outside my building."},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"category": "ROADS_POTHOLES"}
+
+
+def test_classify_category_returns_null_when_model_unsure(client, monkeypatch, make_citizen):
+    monkeypatch.setattr(complaints_module, "_category_service", Mock(classify=lambda text: None))
+    token, _user = make_citizen(phone="9000000001")
+
+    response = client.post(
+        "/complaints/classify-category",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"text": "Something is wrong."},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"category": None}
+
+
+def test_classify_category_requires_authentication(client):
+    response = client.post("/complaints/classify-category", json={"text": "Garbage everywhere."})
+    assert response.status_code == 401
+
+
+def test_classify_category_rejects_non_citizen(client, monkeypatch, make_worker):
+    monkeypatch.setattr(complaints_module, "_category_service", Mock(classify=lambda text: None))
+    worker_token, _worker = make_worker(phone="9000000002", ward="Ward 14")
+
+    response = client.post(
+        "/complaints/classify-category",
+        headers={"Authorization": f"Bearer {worker_token}"},
+        json={"text": "Garbage everywhere."},
+    )
+    assert response.status_code == 403

@@ -253,6 +253,93 @@ def test_patch_me_rejects_unsupported_language(client, make_citizen):
     assert response.status_code == 400
 
 
+# --- editable residence location (previously fixed forever at signup) -- see routes/auth.py's
+# MeUpdateRequest and update_me docstrings.
+
+
+def test_patch_me_updates_ward_and_structured_location(client, make_citizen, db_session):
+    token, _user = make_citizen(phone="9000000001")
+    db = db_session()
+    rows = _seed_full_hierarchy(db)
+
+    response = client.patch(
+        "/auth/me",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "ward": "Ward 99 — Testville, Test City",
+            "locality_id": rows["locality"].id,
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ward"] == "Ward 99 — Testville, Test City"
+    assert body["state_id"] == rows["state"].id
+    assert body["district_id"] == rows["district"].id
+    assert body["ward_id"] == rows["ward"].id
+    assert body["locality_id"] == rows["locality"].id
+
+    # Also actually persisted, not just echoed back in the response.
+    user = db.query(User).filter(User.phone == "9000000001").first()
+    assert user.ward == "Ward 99 — Testville, Test City"
+    assert user.ward_id == rows["ward"].id
+    assert user.ulb_id == rows["ulb"].id
+    db.close()
+
+
+def test_patch_me_location_rejects_unknown_locality_id(client, make_citizen):
+    token, _user = make_citizen(phone="9000000001")
+    response = client.patch(
+        "/auth/me",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"ward": "Somewhere", "locality_id": 999999},
+    )
+    assert response.status_code == 400
+
+
+def test_patch_me_location_rejects_empty_ward(client, make_citizen):
+    token, _user = make_citizen(phone="9000000001")
+    response = client.patch(
+        "/auth/me", headers={"Authorization": f"Bearer {token}"}, json={"ward": "   "}
+    )
+    assert response.status_code == 400
+
+
+def test_patch_me_without_ward_field_leaves_location_untouched(client, make_citizen):
+    """Omitting `ward` entirely (e.g. a plain name-only save) must not touch location at all --
+    see MeUpdateRequest's own docstring on why `ward` is the group's all-or-nothing signal."""
+    token, user = make_citizen(phone="9000000001")
+    original_ward = user["ward"]
+    response = client.patch(
+        "/auth/me", headers={"Authorization": f"Bearer {token}"}, json={"full_name": "New Name"}
+    )
+    assert response.status_code == 200
+    assert response.json()["ward"] == original_ward
+
+
+def test_patch_me_location_is_noop_for_workers(client, db_session):
+    """A worker's `ward` means their operational area, not a residence -- see User.ward's own
+    model docstring. Even if a client sent these fields for a worker, it must be silently
+    ignored, never reinterpreted as a residence update."""
+    from backend.services.auth_service import hash_password
+
+    db = db_session()
+    worker = User(
+        phone="9000000002", password_hash=hash_password("pass1234"),
+        full_name="A Worker", role="worker", preferred_language="en", ward="Ward 5",
+    )
+    db.add(worker)
+    db.commit()
+    db.close()
+    login = client.post("/auth/login", json={"identifier": "9000000002", "password": "pass1234"})
+    token = login.json()["access_token"]
+
+    response = client.patch(
+        "/auth/me", headers={"Authorization": f"Bearer {token}"}, json={"ward": "Somewhere Else"}
+    )
+    assert response.status_code == 200
+    assert response.json()["ward"] == "Ward 5"
+
+
 # --- optional structured home_*_id fields (the new State/City/Ward/Area picker) -- see
 # routes/auth.py's SignupRequest and _resolve_home_location, and routes/locations.py.
 # Deliberately additive: none of the tests above (which never send these fields) needed any

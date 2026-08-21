@@ -3,8 +3,19 @@
  * white-cap "जनमित्र" branded municipal assistant), not a hand-drawn placeholder. Background
  * removed (flood-filled from the image edges, so only the connected white backdrop goes
  * transparent -- the character's own white clothing stays intact) and each pose downscaled to
- * a sensible on-screen size (public/mascot/*.png, ~40-55KB each, well under the "don't load
- * huge character assets" guidance).
+ * a sensible on-screen size (public/mascot/*.png, ~130-180KB each, still well under the "don't
+ * load huge character assets" guidance).
+ *
+ * Two fixes applied directly to the 5 PNGs (not something this component's code can express):
+ * the edge-only flood fill above never reached the small enclosed gap between the legs on every
+ * standing pose -- not connected to the image's outer border, so it kept its original opaque
+ * off-white backdrop color instead of going transparent, a visible pale smudge between the feet.
+ * Fixed with a second, tightly-bounded pass scoped to just that pocket per pose. Separately,
+ * each source crop was only ~240px tall, under-resolved for common 2-3x device-pixel-ratio
+ * screens even at this component's largest real usage (WelcomeMascot's size=130 in
+ * AskJanMitra.tsx) well before any user pinch-zoom -- upscaled 2x via Lanczos resampling for
+ * real headroom. Aspect ratios (and so the ASPECT table below) are unchanged -- both dimensions
+ * scaled by the same factor.
  *
  * Deliberately does NOT use the sheet's own baked-in speech-bubble poses (e.g. "नमस्कार! मैं
  * जनमित्र AI आपका स्वागत करता हूँ") -- this app supports 6 languages via i18n.ts, and a phrase
