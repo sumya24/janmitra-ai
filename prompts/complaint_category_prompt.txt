@@ -1,0 +1,12 @@
+Classify the following civic complaint into exactly one of these four categories, based on what it actually describes:
+
+WASTE_SANITATION — uncollected garbage, overflowing bins, litter, illegal dumping, public cleanliness
+WATER_DRAINAGE — water supply problems, leaking pipes, drainage blockages, sewage issues, flooding
+ROADS_POTHOLES — damaged roads, potholes, broken footpaths or pavements, traffic-related infrastructure
+STREETLIGHTS — non-functioning, flickering, or missing streetlights, damaged lamp posts
+
+If the complaint clearly matches exactly one of these four categories, respond with ONLY that category's exact name (for example: WASTE_SANITATION) and nothing else — no punctuation, no explanation.
+If the complaint does not clearly describe any of these four categories, or you are not confident which one it is, respond with exactly: UNSURE
+
+Complaint:
+{complaint_text}
