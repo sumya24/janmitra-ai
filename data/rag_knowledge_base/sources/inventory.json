@@ -843,5 +843,44 @@
     "retrieved_at": "2026-08-21T01:20:00Z",
     "geographic_scope": "STATE",
     "notes": "Confirmed live via 2 direct fetches -- names toll-free 1905 and explicitly lists \"Infrastructure issues (roads, electricity, water supply)\" with a verbatim pothole example (\"I need to report a pothole issue on Main Street\") and a sample \"Road Maintenance\" resolved case. A separate explicit search of the page for \"streetlight\"/\"street light\"/\"lamp\" found zero matches -- so this source is used ONLY for ROADS_POTHOLES, not Streetlights, per the project rule against claiming coverage a source does not verbatim support (see the NDMC lesson in Round 10)."
+  },
+  {
+    "source_id": "GA_ELECTRICITY_DEPT_STREETLIGHT_MATTERS",
+    "source_title": "Electricity Department, Government of Goa -- Open Access & Streetlight Matters / Contact Us",
+    "source_organization": "Electricity Department, Government of Goa",
+    "source_url": "https://www.goaelectricity.gov.in/general-information/open-access-streetlight-matters/",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-21T02:00:00Z",
+    "geographic_scope": "STATE",
+    "notes": "Confirmed live via 2 direct fetches. The Electricity Department own domain names a section specifically titled \"Open Access & Streetlight Matters\", confirming this department (not the municipal ULB portal) is responsible for streetlights in Goa -- the ULB complaint form (GA_ULB_SERVICE_COMPLAINTS_FORM) explicitly has no streetlight option, so this is a genuinely different, correct department, not a stretch. The page itself is legal/billing content (Public Lighting Duty Act) with no dedicated complaint form, so the department general contact channel (toll-free 1912, 91-832-2485500 from outside Goa, customersupport@goaelectricity.gov.in) is used instead, confirmed on the same domain's Contact Us page."
+  },
+  {
+    "source_id": "JH_SMART_RANCHI_CONNECT_CENTER",
+    "source_title": "RMC Connect Center -- Smart Ranchi 24x7 Grievance Portal",
+    "source_organization": "Ranchi Municipal Corporation (RMC) / Smart Ranchi",
+    "source_url": "https://smartranchi.in/Portal/View/Portal.aspx",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-21T02:20:00Z",
+    "geographic_scope": "CITY",
+    "notes": "Confirmed live via direct fetch. Linked directly from Ranchi Municipal Corporation's own official website (ranchimunicipal.com) as its grievance portal, establishing its official status despite the non-.gov.in domain. Names 4 real intake channels: online form, 24x7 phone (1800-570-1235), WhatsApp (+91 8141231235), email (support@smartranchi.in). Independently cross-checked against ranchi.nic.in (the district government site), which separately publishes RMC's own direct phone number (+91-651-2211215), confirming this is a real, currently-operating city administration, not a defunct/parked initiative. No category-specific SLA published."
+  },
+  {
+    "source_id": "UK_NNDDN_SERVICES_AND_CONTACT",
+    "source_title": "Nagar Nigam Dehradun -- Services and Contact Us Pages",
+    "source_organization": "Nagar Nigam Dehradun, Government of Uttarakhand",
+    "source_url": "https://nndehradun.uk.gov.in/services/",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-21T02:45:00Z",
+    "geographic_scope": "CITY",
+    "notes": "Confirmed live via 4 direct fetches (Services listing, Street Light sub-page, Drainage Complaint sub-page context, Contact Us page). Services page verbatim lists Street Light, Drainage Complaint, Light Complaint, Sanitation, and Door to Door Waste Collection as named items -- confirming these department/service categories genuinely exist, even though the individual sub-pages are placeholder-only. Roads/Potholes has NO corresponding named item anywhere on this page (only a generic \"Public Works Department\" mention in the nav menu, not verified further) -- so this source was deliberately NOT used to build a ROADS_POTHOLES record, per the project rule against claiming coverage a source does not verbatim support. Contact Us page confirmed real phone (+91-135-2714074) and email (nagarnigam.ddn@gmail.com), matching what third-party aggregators separately reported, now independently confirmed on the official .uk.gov.in domain itself."
   }
 ]

@@ -92,23 +92,26 @@ def test_embedding_batch_matches_individual_embeddings():
 def test_chroma_collection_opens_and_reports_expected_size():
     store = _real_store()
     assert store.is_loaded
-    # 899, not the earlier 878 -- 2 more states moved off the 19-state "zero coverage" list
-    # (see RAG_REAL_VS_SYNTHETIC_RESEARCH_PREP.md), each via a real, verified government source:
-    # - Chandigarh (4 categories, general channel): mcchandigarh.gov.in's own Complaints/
-    #   Grievance pages, naming a toll-free number (14420), a direct line (0172-2787200), and an
-    #   email (comm-mcc-chd@nic.in) -- confirmed via 2 independent fetches.
-    # - Goa (3 of 4 categories -- Streetlights explicitly NOT found, not claimed):
-    #   goaulbservice.gov.in's own working complaint form for Waste ("Garbage Related") and Water
-    #   ("Choked Gutters"), plus the CM Helpline 1905 (cmhelpline.dpg.goa.gov.in) for Roads/
-    #   Potholes, verbatim-confirmed via a real pothole example. The page was explicitly searched
-    #   for "streetlight"/"lamp" and found none, so Streetlights was left unclaimed rather than
-    #   assumed from the general "infrastructure" language.
-    # See knowledge_records/verified/chandigarh/mcc_general_channel.json,
-    # knowledge_records/verified/goa/statewide.json, and sources/inventory.json's corresponding
-    # entries. Confirmed by actually running `scripts/build_rag_embeddings.py` against the real
-    # embedding model (intfloat/multilingual-e5-small) and reading the resulting ChromaDB
-    # collection size directly -- not counted by hand.
-    assert store.size == 899
+    # 923, not the earlier 899 -- Goa's remaining Streetlights gap closed, plus 2 more states
+    # moved off the zero-coverage list (see RAG_REAL_VS_SYNTHETIC_RESEARCH_PREP.md):
+    # - Goa Streetlights: goaelectricity.gov.in's own "Open Access & Streetlight Matters" page
+    #   confirms the Electricity Department (not the municipal ULB) is responsible; used its
+    #   general contact channel (toll-free 1912) since the page itself is legal/billing content
+    #   with no dedicated complaint form.
+    # - Jharkhand (Ranchi, all 4 categories, general channel): Smart Ranchi's 24x7 connect
+    #   center (smartranchi.in), linked directly from Ranchi Municipal Corporation's own site --
+    #   phone, WhatsApp, and email all confirmed.
+    # - Uttarakhand (Dehradun, 3 of 4 -- Roads/Potholes explicitly NOT found): Nagar Nigam
+    #   Dehradun's own Services page names Street Light, Drainage Complaint, and Sanitation as
+    #   real service items; no Roads/Potholes item exists on that page, so it was left unclaimed
+    #   rather than assumed from a generic "Public Works Department" mention.
+    # See knowledge_records/verified/goa/statewide.json (now 4 records),
+    # knowledge_records/verified/jharkhand/ranchi.json,
+    # knowledge_records/verified/uttarakhand/dehradun.json, and sources/inventory.json's
+    # corresponding entries. Confirmed by actually running `scripts/build_rag_embeddings.py`
+    # against the real embedding model (intfloat/multilingual-e5-small) and reading the
+    # resulting ChromaDB collection size directly -- not counted by hand.
+    assert store.size == 923
 
 
 def test_chroma_persist_dir_is_configurable_not_hardcoded():

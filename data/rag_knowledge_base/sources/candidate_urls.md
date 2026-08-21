@@ -1,5 +1,23 @@
 # RAG Knowledge Base — Source Research Log
 
+## Round 15 (2026-08-21, session 12 continued): Goa's Streetlights closed; Jharkhand (4/4) and Uttarakhand (3/4) added
+
+Explicit follow-up on Round 14's one open thread (Goa Streetlights), then continued down the
+zero-coverage list.
+
+| Gap | Angle tried | Result | Notes |
+|---|---|---|---|
+| **Goa — Streetlights (the one category Round 14 left open)** | goaelectricity.gov.in (Electricity Department, Government of Goa) -- a genuinely different department from the municipal ULB portal used for Goa's other 3 categories | **PROMOTED TO VERIFIED** | **[PROMOTED TO VERIFIED — see knowledge_records/verified/goa/statewide.json (GA_ELECTRICITY_STREETLIGHTS, appended as a 4th record). The department's own site has a section literally titled "Open Access & Streetlight Matters", confirmed via direct fetch -- establishing this (not the ULB portal, which has no streetlight option) as the correct department. That specific page is legal/billing content (Public Lighting Duty Act) with no dedicated complaint form, so the department's general contact channel is used instead: toll-free 1912, 91-832-2485500 (outside Goa), customersupport@goaelectricity.gov.in -- all confirmed on the same domain's Contact Us page. Goa now has all 4 categories.]** |
+| **Ranchi, Jharkhand — all 4 categories (previously 0 coverage)** | Smart Ranchi 24x7 connect center (smartranchi.in), linked directly from Ranchi Municipal Corporation's own official site | **PROMOTED TO VERIFIED (general channel, all 4)** | **[PROMOTED TO VERIFIED — see knowledge_records/verified/jharkhand/ranchi.json (JH_SMART_RANCHI_* x4), sources/inventory.json. Fetched directly; names 4 real channels (online form, 24x7 phone 1800-570-1235, WhatsApp +91 8141231235, email support@smartranchi.in). Independently cross-checked against ranchi.nic.in (district government site), which separately publishes RMC's own phone number, confirming this is a real, currently-active city administration. No category-specific SLA published.]** |
+| **Dehradun, Uttarakhand — 3 of 4 categories (previously 0 coverage)** | Nagar Nigam Dehradun's own Services page (nndehradun.uk.gov.in) | **PROMOTED TO VERIFIED (3 of 4 -- Roads/Potholes explicitly NOT found)** | **[PROMOTED TO VERIFIED — see knowledge_records/verified/uttarakhand/dehradun.json (UK_NNDDN_WASTE_SANITATION, UK_NNDDN_WATER_DRAINAGE, UK_NNDDN_STREETLIGHTS). Services page fetched and reproduced verbatim: Street Light, Drainage Complaint, Light Complaint, Sanitation, and Door to Door Waste Collection are all explicitly named items (individual sub-pages are placeholder-only, but the category names and their own department navigation entries, e.g. "Departments > Street Light Department", confirm these are real administered services). Also used the Urban Development Department's separate, dedicated solid-waste complaint portal (vlts-udd.uk.gov.in) for Waste specifically -- confirmed live and functional (reached a real mobile-OTP verification step). No Roads/Potholes item exists anywhere on the Services page (only a generic "Public Works Department" nav mention, not pursued further) -- left open rather than assumed. General contact (+91-135-2714074, nagarnigam.ddn@gmail.com) independently confirmed on the official .uk.gov.in domain, matching what third-party aggregators had separately reported.]** |
+
+### Net result of Round 15
+
+8 new VERIFIED records (140 -> 148; 252 -> 260 total records; 899 -> 923 chunks in the live
+ChromaDB index). Goa reaches full 4/4. Jharkhand moves from 0 to full 4/4. Uttarakhand moves from
+0 to 3/4 (Roads/Potholes stays open, honestly -- no source found this round that names it). 15
+states remain at zero coverage (down from 17 at the start of this round).
+
 ## Round 14 (2026-08-21, session 12 continued): 2 zero-coverage states closed -- Chandigarh (4/4) and Goa (3/4)
 
 First attempt at the 19-state "zero coverage" list (states/UTs with no knowledge-base data at

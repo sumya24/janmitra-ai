@@ -75,13 +75,20 @@ Every other verified or synthetic record — all 235 of them — has no district
 | Karnataka | 6 | 8 | 🟠 More placeholder than real |
 | Madhya Pradesh | 5 | 8 | 🟠 More placeholder than real |
 | Chandigarh (UT) | 4 | 0 | ✅ Fully real — closed 2026-08-21, was zero coverage |
-| Goa | 3 | 0 | 🟢 3 of 4 categories real, Streetlights genuinely not found — closed 2026-08-21, was zero coverage |
-| *(17 other states/UTs)* | 0 | 0 | ⚫ No data at all — not a "replace synthetic" case, a "start from zero" case |
+| Goa | 4 | 0 | ✅ Fully real — closed 2026-08-21, was zero coverage (Streetlights added same day via the Electricity Department, a different department from the other 3) |
+| Jharkhand | 4 | 0 | ✅ Fully real — closed 2026-08-21, was zero coverage (Ranchi, via Smart Ranchi) |
+| Uttarakhand | 3 | 0 | 🟢 3 of 4 categories real, Roads/Potholes genuinely not found — closed 2026-08-21, was zero coverage (Dehradun) |
+| *(15 other states/UTs)* | 0 | 0 | ⚫ No data at all — not a "replace synthetic" case, a "start from zero" case |
+
+**Third update, 2026-08-21:** Goa's Streetlights gap closed (Electricity Department, a genuinely
+different department from the ULB portal used for its other 3 categories), plus Jharkhand (4/4,
+Ranchi) and Uttarakhand (3/4, Dehradun — Roads/Potholes still genuinely missing) moved off the
+zero-coverage list. 148 verified records total now, 260 overall, 15 states still at zero (down
+from 19 at session start). See `candidate_urls.md` Round 15.
 
 **Second update, 2026-08-21:** 2 states moved off the zero-coverage list entirely — Chandigarh
-(4/4 categories, general channel via mcchandigarh.gov.in) and Goa (3/4 — Streetlights genuinely
-not found, left open rather than assumed). 140 verified records total now, 252 overall, 17 states
-still at zero (down from 19). See `candidate_urls.md` Round 14 and §3's checklist below.
+(4/4 categories, general channel via mcchandigarh.gov.in) and Goa (3/4 at the time — Streetlights
+genuinely not found yet, see the update above). See `candidate_urls.md` Round 14.
 
 **First update, 2026-08-21:** Andhra Pradesh (then the single worst-ratio state) was researched —
 `cdma.ap.gov.in` (the state Commissioner & Director of Municipal Administration's own live
