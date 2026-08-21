@@ -347,6 +347,12 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
 .service-card {
   display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
   padding: 20px; text-decoration: none; color: inherit; cursor: pointer;
+  /* .service-grid is a CSS grid, which stretches its direct items (the .enter wrapper divs) to
+     match the tallest card in each row by default -- but that stretch stops one level up from
+     here unless this element is also told to fill it, so a short one-line description (Roads/
+     Streetlights) previously left the card itself shorter than a two-line one (Waste/Water),
+     even though their grid cells were already the same height. */
+  height: 100%;
 }
 .service-card-icon {
   width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
@@ -374,7 +380,10 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
 .service-card h3 { font-size: 15px; font-weight: 700; margin: 0; color: var(--ink); }
 .service-card p { font-size: 12.5px; color: var(--ink-2); margin: 0; line-height: 1.4; }
 .service-card-action {
-  margin-top: 10px; display: inline-flex; align-items: center; gap: 5px;
+  /* auto, not a fixed 10px, so it's pushed to the bottom of the now-equal-height card (see
+     .service-card's height: 100% above) -- "Report" lines up at the same vertical position on
+     every card regardless of how many lines its description wrapped to. */
+  margin-top: auto; padding-top: 10px; display: inline-flex; align-items: center; gap: 5px;
   font-size: 12.5px; font-weight: 700; color: var(--accent-fg);
 }
 .service-card-action svg { transition: transform var(--dur-fast) var(--ease-out); }
