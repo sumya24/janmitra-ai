@@ -804,5 +804,44 @@
     "retrieved_at": "2026-08-21T00:05:00Z",
     "geographic_scope": "STATE",
     "notes": "Confirmed live via direct fetch on 2026-08-21, re-fetched a second time asking for verbatim raw text (not a summary) to guard against a misread -- both fetches agree. The page explicitly names 5 grievance categories (Sanitation, Water Supply, Roads, Parks & Greenery, Street Lighting) with sub-items and states submission is through \"the Puramithra App or Citizen Portal\". This is a state-wide CDMA page, not tied to any one ULB, so city=null/geographic_scope=STATE on every KnowledgeRecord citing it -- applies generally to every AP city including Vijayawada and Visakhapatnam. No numeric SLA is published on this page. A sibling page, cdma.ap.gov.in/resources/grievance-sla/, exists specifically for SLAs but returned \"Showing 0 of 0 SLA items\" on direct fetch -- a genuinely empty results table, not a broken page. Three linked documents from a third CDMA page (others/portal-info/citizen-charter/) -- G.O Ms.No.198, the Citizen's Charter .doc, and the Puraseva Centre User Manual -- were each checked directly via curl and are dead links (HTTP 404, 400, 404 respectively), so none of those could be used as a source."
+  },
+  {
+    "source_id": "CH_MCC_COMPLAINTS_AND_GRIEVANCE_PAGES",
+    "source_title": "Municipal Corporation Chandigarh -- Complaints / Grievance Pages",
+    "source_organization": "Municipal Corporation Chandigarh (MCC), Chandigarh Administration",
+    "source_url": "https://mcchandigarh.gov.in/?q=complaints",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-21T01:00:00Z",
+    "geographic_scope": "CITY",
+    "notes": "Confirmed live via 2 independent direct fetches of mcchandigarh.gov.in/?q=complaints (the second explicitly asking for verbatim raw text, to guard against a misread), plus a separate fetch of the sibling Grievance.aspx page -- all 3 agree on the same toll-free number (14420, 8 AM-8 PM), direct line (0172-2787200), and email (comm-mcc-chd@nic.in). This is a real, live .gov.in municipal domain -- Chandigarh is a Union Territory with exactly one city, so city=Chandigarh/geographic_scope=CITY on every KnowledgeRecord citing it. No category-specific SLA found on either page for any of the 4 service categories -- general channel only, same quality tier as the Howrah/Jodhpur promotions."
+  },
+  {
+    "source_id": "GA_ULB_SERVICE_COMPLAINTS_FORM",
+    "source_title": "Goa Urban Local Body Directorate -- Online Complaint Registration Form",
+    "source_organization": "Directorate of Municipal Administration, Government of Goa",
+    "source_url": "https://goaulbservice.gov.in/Complaints.aspx",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-21T01:20:00Z",
+    "geographic_scope": "STATE",
+    "notes": "Confirmed live via direct fetch, asking for the raw text/dropdown options verbatim. A real, working complaint form covering every Goa Municipal Council (citizen selects theirs within the form) -- hence STATE scope, not one city. Nature of Complaints dropdown: Website Related, Misconduct of Employees, Garbage Related, Illegal Construction, Choked Gutters, Dead Animals, House Tax -- Roads/Potholes and Streetlights are NOT options on this specific form (confirmed absent, not just unmentioned), so this source is only used for WASTE_SANITATION (Garbage Related) and WATER_DRAINAGE (Choked Gutters)."
+  },
+  {
+    "source_id": "GA_DPG_CMHELPLINE_1905",
+    "source_title": "CM Helpline 1905 -- Directorate of Public Grievances, Government of Goa",
+    "source_organization": "Directorate of Public Grievances, Government of Goa",
+    "source_url": "https://cmhelpline.dpg.goa.gov.in/",
+    "source_type": "OFFICIAL_GOVERNMENT_WEBPAGE",
+    "verification_status": "VERIFIED",
+    "publication_date": null,
+    "last_updated": null,
+    "retrieved_at": "2026-08-21T01:20:00Z",
+    "geographic_scope": "STATE",
+    "notes": "Confirmed live via 2 direct fetches -- names toll-free 1905 and explicitly lists \"Infrastructure issues (roads, electricity, water supply)\" with a verbatim pothole example (\"I need to report a pothole issue on Main Street\") and a sample \"Road Maintenance\" resolved case. A separate explicit search of the page for \"streetlight\"/\"street light\"/\"lamp\" found zero matches -- so this source is used ONLY for ROADS_POTHOLES, not Streetlights, per the project rule against claiming coverage a source does not verbatim support (see the NDMC lesson in Round 10)."
   }
 ]

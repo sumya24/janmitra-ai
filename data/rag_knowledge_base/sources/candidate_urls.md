@@ -1,5 +1,47 @@
 # RAG Knowledge Base — Source Research Log
 
+## Round 14 (2026-08-21, session 12 continued): 2 zero-coverage states closed -- Chandigarh (4/4) and Goa (3/4)
+
+First attempt at the 19-state "zero coverage" list (states/UTs with no knowledge-base data at
+all, as opposed to a synthetic/verified ratio problem -- see
+RAG_REAL_VS_SYNTHETIC_RESEARCH_PREP.md). Picked 2 candidates likely to have solid municipal web
+presence (a Union Territory capital, and a tourism-economy state) rather than working the list in
+order.
+
+| Gap | Angle tried | Result | Notes |
+|---|---|---|---|
+| **Chandigarh (UT) — all 4 categories (previously 0 coverage)** | mcchandigarh.gov.in's own Complaints and Grievance.aspx pages | **PROMOTED TO VERIFIED (general channel, all 4)** | **[PROMOTED TO VERIFIED — see knowledge_records/verified/chandigarh/mcc_general_channel.json (CH_MCC_*_GRIEVANCE_CHANNEL x4), sources/inventory.json. Both pages fetched directly, the second time asking for verbatim raw text. Both name the same 3 real contact channels: toll-free 14420 (8 AM-8 PM), direct line 0172-2787200, and email comm-mcc-chd@nic.in. No category-specific SLA published on either page for any category -- general channel only, same quality tier as Howrah/Jodhpur's promotions.]** |
+| **Goa (state) — Waste & Water (previously 0 coverage)** | goaulbservice.gov.in/Complaints.aspx -- a real, working statewide complaint form | **PROMOTED TO VERIFIED (2 of 4 categories)** | **[PROMOTED TO VERIFIED — see knowledge_records/verified/goa/statewide.json (GA_ULB_SERVICE_WASTE_SANITATION, GA_ULB_SERVICE_WATER_DRAINAGE), sources/inventory.json. Fetched directly, dropdown options reproduced verbatim: Website Related, Misconduct of Employees, Garbage Related, Illegal Construction, Choked Gutters, Dead Animals, House Tax. "Garbage Related" and "Choked Gutters" map cleanly to WASTE_SANITATION/WATER_DRAINAGE. Roads/Potholes and Streetlights are genuinely absent from this specific form's category list -- not claimed here, covered separately below/left open respectively.]** |
+| **Goa (state) — Roads/Potholes (previously 0 coverage)** | cmhelpline.dpg.goa.gov.in -- Government of Goa's CM Helpline 1905 | **PROMOTED TO VERIFIED (1 category)** | **[PROMOTED TO VERIFIED — see knowledge_records/verified/goa/statewide.json (GA_CMHELPLINE_ROADS_POTHOLES). Fetched directly, named toll-free 1905 and verbatim-quoted "Infrastructure issues (roads, electricity, water supply)" plus a live example ("I need to report a pothole issue on Main Street") and a sample "Road Maintenance" resolved case. A second, explicit fetch searched the page for the words "streetlight"/"street light"/"lamp" and found zero matches -- so this source was NOT used to also claim Streetlights, even though "infrastructure"/"electricity" could plausibly be stretched to cover it. Goa's Streetlights gap remains open, honestly.]** |
+
+### Net result of Round 14
+
+7 new VERIFIED records (133 -> 140; 245 -> 252 total records; 878 -> 899 chunks in the live
+ChromaDB index after re-running `scripts/build_rag_embeddings.py`). Chandigarh moves from 0 to
+full 4-category coverage. Goa moves from 0 to 3-of-4 (Streetlights still open -- no source found
+this round that verbatim supports it). 17 states remain at zero coverage (down from 19).
+
+## Round 13 (2026-08-21, session 12 continued): 2 next-worst states targeted, 0 new records -- honest negative round
+
+Targeted the 2 states with the next-worst verified:synthetic ratio after Round 12's Andhra Pradesh
+fix: Karnataka (Bengaluru's Roads/Streetlights specifically) and Madhya Pradesh (Bhopal, 0
+VERIFIED). Both gaps were already-confirmed dead ends from earlier rounds (Round 10 for both) --
+this round tried only genuinely new angles, not a re-hit of anything already logged dead.
+
+| Gap | New angle tried | Result | Notes |
+|---|---|---|---|
+| **Bengaluru, Karnataka — Roads & Streetlights** | BBMP's own "Sahaaya" citizen-grievance portal (bbmp.sahaaya.in / nammabengaluru.org.in), surfaced fresh via WebSearch, not a domain tried in Rounds 4/9/10; BESCOM (Bangalore Electricity Supply Co.) as a genuinely different department for streetlights specifically | **CONFIRMED DEAD END (both new angles exhausted)** | **[CHECKED — bbmp.sahaaya.in's TLS certificate doesn't match its own hostname (cert is for *.nammabengaluru.org.in), and following that redirect lands on a bare client-rendered shell with no fetchable content (same SPA-shell failure class as bbmp.gov.in-family domains in earlier rounds). BESCOM was checked as a genuinely different angle since streetlights could plausibly be an electricity-company matter, not a municipal one -- but BESCOM's own official account, responding to a citizen, states streetlight issues are BBMP's remit, not BESCOM's ("street light issues pertains to BBMP please contact the BBMP customer care number 080-22660000/22221188"), routing back to BBMP rather than opening a new department. That phone number could not be independently confirmed on a fetchable BBMP-family webpage (bbmp.gov.in/en/contact-us returns HTTP 404, confirmed via direct curl, not just WebFetch) -- the project's schema has no source_type for a social-media post, so it wasn't used as a citable source per the established evidentiary bar. Bengaluru Roads/Streetlights remains open; this is now the 4th round (4, 9, 10, 13) to confirm every angle tried is exhausted.]** |
+| **Bhopal, Madhya Pradesh — all 4 categories (still 0 VERIFIED)** | Madhya Pradesh's Directorate of Urban Administration & Development's own GIS/geoportal presence (geoportal.mp.gov.in/UADD_New/), surfaced fresh via a targeted site-scoped search, genuinely different from smartbhopal.city/mpenagarpalika.gov.in/bhopal.nic.in (all confirmed dead in Round 10) | **CONFIRMED DEAD END (this round's angle)** | **[CHECKED — geoportal.mp.gov.in's root domain is live (HTTP 200, confirmed via direct curl), but the specific UADD_New path returns HTTP 404 -- a stale/incorrect path, not a working page. mpenagarpalika.gov.in was independently re-checked via direct curl this round (not just re-trusting Round 10's finding) and is still unreachable (connection timeout), confirming it's a durable outage, not a one-time fluke. A toll-free number (18002335522) and Bhopal address for the Directorate surfaced via WebSearch, but only through third-party aggregator sites (complainthub.org-style pages), never confirmed on an actual official .gov.in page reachable by direct fetch -- per the project's standing rule against citing anything not independently checked, this was not used to build a record. Bhopal remains at 0 VERIFIED, still exhausted per Round 10 plus this round's new angle.]** |
+
+### Net result of Round 13
+
+0 new VERIFIED records (133 unchanged, 245 total records unchanged). Both gaps remain open, each
+now backed by a 4th (Bengaluru) or 2nd (Bhopal, new-angle) round of genuinely different attempts,
+not just repeated guesses. Per the project's honesty rule, a negative round is still logged in
+full -- no record was forced to close these gaps, and the accumulated close-but-not-quite leads
+(BESCOM's phone number, the toll-free DUAD number) are recorded here for whoever picks this up
+next, rather than silently dropped.
+
 ## Round 12 (2026-08-21, session 12): Andhra Pradesh's worst-ratio state, 1 new state-wide general channel found
 
 Targeted Andhra Pradesh specifically (the state with the worst verified:synthetic ratio, 4V+8S

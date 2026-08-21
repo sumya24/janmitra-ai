@@ -79,11 +79,11 @@ of the four service columns for that row is ✅.
 | Arunachal Pradesh | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
 | Assam | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ 1V+1S | ✅ 1V+1S | ✅ 1V+1S | ✅ 1V+1S | ✅ | ✅ | ✅ |
 | Bihar | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ 1V+2S | ✅ | ✅ | ✅ |
-| Chandigarh (UT) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
+| Chandigarh (UT) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ✅ | ✅ | ✅ |
 | Chhattisgarh | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
 | Dadra and Nagar Haveli and Daman and Diu (UT) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
 | Delhi (UT) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ 3V+1S | ✅ 2V+1S | ✅ 2V+1S | ✅ 1V+1S | ✅ | ✅ | ✅ |
-| Goa | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
+| Goa | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ 1V+0S | ✅ 1V+0S | ✅ 1V+0S | ❌ | ✅ | ✅ | ✅ |
 | Gujarat | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
 | Haryana | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ 2V+2S | ✅ | ✅ | ✅ |
 | Himachal Pradesh | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
@@ -113,7 +113,9 @@ of the four service columns for that row is ✅.
 
 **Reading it in one line:** a row that's all ❌ except TYPE_A/TYPE_C means that state can still
 *take* a complaint and *track* it, but Ask Sarthi has nothing real to say if someone asks a
-civic question about it — 19 of 36 rows are in exactly that state today.
+civic question about it — 17 of 36 rows are in exactly that state today (down from 19 as of
+2026-08-21 — Chandigarh and Goa were closed this session, see
+`data/rag_knowledge_base/sources/candidate_urls.md` Round 14).
 
 *(Re-generate this table from live data any time — see the SQL/Python snippets in §8.)*
 
@@ -244,10 +246,10 @@ Checked directly against the files on disk and the live vector database (not doc
 
 | Stage | Count | Notes |
 |---|---:|---|
-| Raw knowledge records | 245 | 133 verified + 112 synthetic (as of 2026-08-21 — see `data/rag_knowledge_base/sources/candidate_urls.md` Round 12) |
-| Built documents | 245 | Records rendered into full articles |
-| Retrieval chunks | 878 | Documents split into search-sized pieces |
-| Embeddings in ChromaDB | 878 | Matches chunk count exactly — fully built, nothing stale |
+| Raw knowledge records | 252 | 140 verified + 112 synthetic (as of 2026-08-21 — see `data/rag_knowledge_base/sources/candidate_urls.md` Rounds 12 & 14) |
+| Built documents | 252 | Records rendered into full articles |
+| Retrieval chunks | 899 | Documents split into search-sized pieces |
+| Embeddings in ChromaDB | 899 | Matches chunk count exactly — fully built, nothing stale |
 | Embedding model | `intfloat/multilingual-e5-small` | Real, pretrained, multilingual |
 
 **Where §4's location columns and §2's service columns already sit next to each other

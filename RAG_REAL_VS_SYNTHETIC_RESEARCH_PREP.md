@@ -74,9 +74,16 @@ Every other verified or synthetic record — all 235 of them — has no district
 | Assam | 4 | 4 | 🟡 About half real |
 | Karnataka | 6 | 8 | 🟠 More placeholder than real |
 | Madhya Pradesh | 5 | 8 | 🟠 More placeholder than real |
-| *(19 other states/UTs)* | 0 | 0 | ⚫ No data at all — not a "replace synthetic" case, a "start from zero" case |
+| Chandigarh (UT) | 4 | 0 | ✅ Fully real — closed 2026-08-21, was zero coverage |
+| Goa | 3 | 0 | 🟢 3 of 4 categories real, Streetlights genuinely not found — closed 2026-08-21, was zero coverage |
+| *(17 other states/UTs)* | 0 | 0 | ⚫ No data at all — not a "replace synthetic" case, a "start from zero" case |
 
-**Update, 2026-08-21:** Andhra Pradesh (then the single worst-ratio state) was researched —
+**Second update, 2026-08-21:** 2 states moved off the zero-coverage list entirely — Chandigarh
+(4/4 categories, general channel via mcchandigarh.gov.in) and Goa (3/4 — Streetlights genuinely
+not found, left open rather than assumed). 140 verified records total now, 252 overall, 17 states
+still at zero (down from 19). See `candidate_urls.md` Round 14 and §3's checklist below.
+
+**First update, 2026-08-21:** Andhra Pradesh (then the single worst-ratio state) was researched —
 `cdma.ap.gov.in` (the state Commissioner & Director of Municipal Administration's own live
 grievance page) named all 4 service categories with a real submission channel, verified via two
 independent fetches. Added as 4 new VERIFIED, state-wide records (not tied to any one city, since

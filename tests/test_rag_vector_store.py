@@ -92,19 +92,23 @@ def test_embedding_batch_matches_individual_embeddings():
 def test_chroma_collection_opens_and_reports_expected_size():
     store = _real_store()
     assert store.is_loaded
-    # 878, not the earlier 866 -- 4 new VERIFIED, state-wide Andhra Pradesh records added (all 4
-    # service categories), sourced from cdma.ap.gov.in/services/grievances/ (the Commissioner &
-    # Director of Municipal Administration's own live grievance page, confirmed via 2 independent
-    # fetches asking for verbatim raw text). This does NOT close Vijayawada's own 0-VERIFIED gap
-    # specifically (that city stays at 0 -- see candidate_urls.md's Round 11, still a confirmed
-    # dead end for city-specific sources) -- these new records are deliberately city=null,
-    # geographic_scope=STATE, since the source page applies to every AP ULB generally, not to
-    # Vijayawada by name. See knowledge_records/verified/andhra_pradesh/cdma_statewide.json and
-    # sources/inventory.json's AP_CDMA_GRIEVANCES_PAGE entry. Confirmed by actually running
-    # `scripts/build_rag_embeddings.py` against the real embedding model
-    # (intfloat/multilingual-e5-small) and reading the resulting ChromaDB collection size
-    # directly -- not counted by hand.
-    assert store.size == 878
+    # 899, not the earlier 878 -- 2 more states moved off the 19-state "zero coverage" list
+    # (see RAG_REAL_VS_SYNTHETIC_RESEARCH_PREP.md), each via a real, verified government source:
+    # - Chandigarh (4 categories, general channel): mcchandigarh.gov.in's own Complaints/
+    #   Grievance pages, naming a toll-free number (14420), a direct line (0172-2787200), and an
+    #   email (comm-mcc-chd@nic.in) -- confirmed via 2 independent fetches.
+    # - Goa (3 of 4 categories -- Streetlights explicitly NOT found, not claimed):
+    #   goaulbservice.gov.in's own working complaint form for Waste ("Garbage Related") and Water
+    #   ("Choked Gutters"), plus the CM Helpline 1905 (cmhelpline.dpg.goa.gov.in) for Roads/
+    #   Potholes, verbatim-confirmed via a real pothole example. The page was explicitly searched
+    #   for "streetlight"/"lamp" and found none, so Streetlights was left unclaimed rather than
+    #   assumed from the general "infrastructure" language.
+    # See knowledge_records/verified/chandigarh/mcc_general_channel.json,
+    # knowledge_records/verified/goa/statewide.json, and sources/inventory.json's corresponding
+    # entries. Confirmed by actually running `scripts/build_rag_embeddings.py` against the real
+    # embedding model (intfloat/multilingual-e5-small) and reading the resulting ChromaDB
+    # collection size directly -- not counted by hand.
+    assert store.size == 899
 
 
 def test_chroma_persist_dir_is_configurable_not_hardcoded():
