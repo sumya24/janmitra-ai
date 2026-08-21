@@ -4,6 +4,7 @@ import { useUiLang } from "../lib/uiLang";
 import { SUPPORTED_LANGUAGES, t, type LangCode } from "../lib/i18n";
 import { api, ApiError } from "../lib/api";
 import { useModalA11y } from "../lib/useModalA11y";
+import HomeLocationPicker, { type HomeLocationValue } from "./HomeLocationPicker";
 
 export default function SettingsModal({ onClose, onLogout }: { onClose: () => void; onLogout: () => void }) {
   const { user, token, updateUser } = useAuth();
@@ -13,12 +14,31 @@ export default function SettingsModal({ onClose, onLogout }: { onClose: () => vo
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  // Citizen-only -- see HomeLocationPicker.tsx's own docstring; workers/admins have no residence
+  // to edit (a worker's `ward` is their operational area, a different concept -- see User.ward's
+  // model docstring). Starts as `undefined`, meaning "unchanged" -- see handleSave below, which
+  // only includes location in the PATCH at all once this citizen has actually touched the
+  // picker, so a plain name/language save can never accidentally overwrite it via a stale
+  // pre-filled value the citizen never looked at.
+  const [location, setLocation] = useState<HomeLocationValue | undefined>(undefined);
+  const [showEditLocation, setShowEditLocation] = useState(false);
+
   async function handleSave() {
     if (!token) return;
     setSaving(true);
     setError(null);
     try {
-      const updated = await api.updateMe(token, { full_name: fullName.trim(), preferred_language: language });
+      const updated = await api.updateMe(token, {
+        full_name: fullName.trim(),
+        preferred_language: language,
+        ...(location && {
+          ward: location.ward,
+          state_id: location.home_state_id,
+          district_id: location.home_district_id,
+          ward_id: location.home_ward_id,
+          locality_id: location.home_locality_id,
+        }),
+      });
       updateUser(updated);
       setLang(language); // instant — dashboards/TopBar/complaint list follow immediately, no reload
       onClose();
@@ -137,7 +157,19 @@ export default function SettingsModal({ onClose, onLogout }: { onClose: () => vo
 
   return (
     <div className="overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div ref={modalRef} className="modal" role="dialog" aria-modal="true" aria-labelledby="jm-modal-title" tabIndex={-1}>
+      <div
+        ref={modalRef}
+        className="modal"
+        // Wider than the base .modal's 420px default (see TopBar.css) -- this modal grew a real
+        // 4-level cascading location picker (see HomeLocationPicker below) that reads as cramped,
+        // wrapping-heavy, and easy to misread at the base width; every other field here still
+        // reads comfortably wider too.
+        style={{ maxWidth: 560 }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="jm-modal-title"
+        tabIndex={-1}
+      >
         <div className="modal-head">
           <h3 className="display" id="jm-modal-title">{t(lang, "settings.title")}</h3>
           <button className="x" aria-label={t(lang, "common.close")} onClick={onClose}>
@@ -164,7 +196,30 @@ export default function SettingsModal({ onClose, onLogout }: { onClose: () => vo
         {user?.role === "citizen" && (
           <div className="field">
             <label htmlFor="settings-ward">{t(lang, "citizen.ward")}</label>
-            <input id="settings-ward" type="text" value={user?.ward || t(lang, "area.noWardSet")} disabled />
+            {!showEditLocation ? (
+              <>
+                <input id="settings-ward" type="text" value={user?.ward || t(lang, "area.noWardSet")} disabled />
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  style={{ marginTop: 8 }}
+                  onClick={() => setShowEditLocation(true)}
+                >
+                  {t(lang, "settings.editLocation")}
+                </button>
+              </>
+            ) : (
+              <HomeLocationPicker
+                lang={lang}
+                onChange={setLocation}
+                initial={{
+                  stateId: user?.state_id ?? undefined,
+                  districtId: user?.district_id ?? undefined,
+                  wardId: user?.ward_id ?? undefined,
+                  localityId: user?.locality_id ?? undefined,
+                }}
+              />
+            )}
           </div>
         )}
         <div className="field">
