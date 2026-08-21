@@ -275,10 +275,22 @@ export default function ReportIssue() {
                 <div className="ask-chat-composer-row">
                   {inputMode === "voice" && recorder.isRecording ? (
                     <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, minWidth: 0, padding: "0 6px" }}>
-                      <span style={{ color: "var(--status-critical)" }}>
+                      <span style={{ color: "var(--status-critical)", display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                         <MicWaveform />
+                        <span className="mono" style={{ fontSize: 12 }}>{formatSeconds(recorder.seconds)}</span>
                       </span>
-                      <span className="mono" style={{ fontSize: 13 }}>{formatSeconds(recorder.seconds)}</span>
+                      {/* The live transcript sits right in the bar, in the same spot the typed
+                          text would be -- exactly how Ask Sarthi's own mic fills its box while
+                          you talk -- rather than as a separate line elsewhere on the page. */}
+                      <span
+                        style={{
+                          flex: 1, minWidth: 0, fontSize: 14.5, lineHeight: 1.5,
+                          color: speech.transcript ? "var(--ink)" : "var(--ink-3)",
+                          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                        }}
+                      >
+                        {speech.transcript || t(lang, "citizen.textPlaceholder")}
+                      </span>
                     </div>
                   ) : inputMode === "voice" && recorder.audioSegments.length > 0 ? (
                     <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, minWidth: 0, padding: "0 6px" }}>
@@ -358,36 +370,19 @@ export default function ReportIssue() {
                     )}
                   </button>
                 </div>
-
-                {/* Best-effort live transcript, purely a "here's what we're hearing" preview --
-                    the real transcription that actually gets submitted still runs server-side
-                    on the recorded audio (see useAudioRecorder.ts's docstring on why: better
-                    accuracy across regional languages than the browser's own recognizer). This
-                    is the browser's own SpeechRecognition running alongside, silently absent
-                    wherever it isn't supported (e.g. Firefox) rather than showing a dead/empty
-                    box -- same graceful-absence rule Ask Sarthi's own mic uses. */}
-                {speech.supported && inputMode === "voice" && (recorder.isRecording || recorder.audioSegments.length > 0) && speech.transcript && (
-                  <p style={{ margin: "6px 2px 0", fontSize: 13, color: "var(--ink-2)", fontStyle: "italic" }}>
-                    {speech.transcript}
-                  </p>
-                )}
               </div>
 
               {inputMode === "voice" && !recorder.isRecording && (
                 <button
                   type="button"
                   className="btn btn-ghost btn-sm"
-                  style={{ marginTop: 8, display: "inline-flex", alignItems: "center", gap: 6 }}
+                  style={{ marginTop: 8 }}
                   onClick={() => {
                     recorder.reset();
                     speech.reset();
                     setInputMode("text");
                   }}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                    <rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="1.8" />
-                    <path d="M7 10h.01M11 10h.01M15 10h.01M17 10h.01M7 14h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                  </svg>
                   {t(lang, "citizen.type")}
                 </button>
               )}
