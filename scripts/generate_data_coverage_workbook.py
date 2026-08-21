@@ -68,14 +68,31 @@ def main() -> None:
     cur.execute("SELECT name, code, is_union_territory FROM states ORDER BY name")
     all_states = cur.fetchall()
 
+    # Real per-state counts (665 districts / 4,489 ULBs imported 2026-08-21 from India's LGD --
+    # NOT the old 1-example-city assumption; a state can now have dozens/hundreds of real rows).
+    cur.execute(
+        """
+        SELECT s.name, COUNT(DISTINCT d.id), COUNT(DISTINCT u.id)
+        FROM states s
+        LEFT JOIN districts d ON d.state_id = s.id
+        LEFT JOIN ulbs u ON u.district_id = d.id
+        GROUP BY s.id
+        """
+    )
+    district_ulb_counts = {name: (dcount, ucount) for name, dcount, ucount in cur.fetchall()}
+
+    # The 6 original example wards/localities (UNVERIFIED_APP_SEED_DATA) -- still the only rows
+    # at those 2 levels; kept separate from the district/ULB counts above since ward-level import
+    # is a deliberately separate, not-yet-done step (see DATA_COVERAGE_TRACKER.md §10).
     cur.execute(
         """
         SELECT s.name, d.name, u.name, w.name, l.name
-        FROM districts d
+        FROM wards w
+        JOIN ulbs u ON w.ulb_id = u.id
+        JOIN districts d ON u.district_id = d.id
         JOIN states s ON d.state_id = s.id
-        LEFT JOIN ulbs u ON u.district_id = d.id
-        LEFT JOIN wards w ON w.ulb_id = u.id
         LEFT JOIN localities l ON l.ward_id = w.id
+        WHERE w.source_type = 'UNVERIFIED_APP_SEED_DATA'
         """
     )
     seeded = {row[0]: row[1:] for row in cur.fetchall()}
@@ -99,11 +116,23 @@ def main() -> None:
         city_totals[(st, city)][tier] += 1
 
     # ---- worker/complaint ward free-text quality check ----
+    # The real ward-text convention is "{ward} — {locality}, {city}", where {city} is a plain
+    # colloquial name (e.g. "Kanpur", "Bhubaneswar", "Bengaluru") that matches neither the
+    # district table's name (e.g. "Kanpur Nagar", "Khordha", "Bengaluru Urban") nor the ULB
+    # table's full official name (e.g. "Bruhat Bengaluru Mahanagara Palike (BBMP)") -- both were
+    # tried and both produced false "junk" readings for genuinely-clean ward text. That colloquial
+    # name only exists in the original seed script's own hardcoded strings
+    # (scripts/seed_multi_ward_data.py), not as a queryable column anywhere, so the known-correct
+    # 6 strings are used directly rather than re-derived from a join that can't reconstruct them.
     clean_wards = {v[2] for v in seeded.values() if v[2]}  # ward name e.g. "Ward 22"
-    clean_full_strings = set()
-    for state, (dist, ulb, ward, loc) in seeded.items():
-        if ward and loc and dist:
-            clean_full_strings.add(f"{ward} — {loc}, {dist}")
+    clean_full_strings = {
+        "Ward 22 — Kothrud, Pune",
+        "Ward 8 — Civil Lines, Kanpur",
+        "Ward 5 — Saheed Nagar, Bhubaneswar",
+        "Ward 11 — Navrangpura, Ahmedabad",
+        "Ward 6 — Salt Lake, Kolkata",
+        "Ward 3 — Indiranagar, Bengaluru",
+    }
 
     cur.execute("SELECT id, full_name, ward FROM users WHERE role='worker' AND ward IS NOT NULL")
     worker_wards = cur.fetchall()
@@ -128,6 +157,10 @@ def main() -> None:
     states_with_any_rag = sum(1 for v in state_totals.values() if v["verified"] + v["synthetic"] > 0)
     clean_worker_count = sum(1 for _, _, w in worker_wards if w in clean_full_strings)
 
+    total_districts = sum(d for d, u in district_ulb_counts.values())
+    total_ulbs = sum(u for d, u in district_ulb_counts.values())
+    states_with_districts = sum(1 for d, u in district_ulb_counts.values() if d > 0)
+
     overview_rows = [
         ("Metric", "Value"),
         ("States/UTs total (real, official list)", len(all_states)),
@@ -135,7 +168,10 @@ def main() -> None:
         ("States/UTs with ZERO knowledge-base content", len(all_states) - states_with_any_rag),
         ("Knowledge-base records — Verified (real source)", total_v),
         ("Knowledge-base records — Synthetic (placeholder)", total_s),
-        ("Cities with structured District→Locality hierarchy", len(seeded)),
+        ("States/UTs with real District/ULB data (2026-08-21 LGD import)", states_with_districts),
+        ("Real districts imported", total_districts),
+        ("Real ULBs (cities/towns) imported", total_ulbs),
+        ("Cities with a structured Ward→Locality example", len(seeded)),
         ("Workers with a ward value set", len(worker_wards)),
         ("Workers whose ward is clean production data", clean_worker_count),
         ("Workers whose ward is leftover test-fixture junk", len(worker_wards) - clean_worker_count),
@@ -158,7 +194,7 @@ def main() -> None:
     # ================= Sheet 2: State Coverage Matrix =================
     ws2 = wb.create_sheet("State_Coverage_Matrix")
     headers = [
-        "State/UT", "District", "Sub-District", "ULB", "Zone", "Ward", "Locality",
+        "State/UT", "District_Count", "Sub-District", "ULB_Count", "Zone", "Ward", "Locality",
         "Waste_Verified", "Waste_Synthetic", "Water_Verified", "Water_Synthetic",
         "Roads_Verified", "Roads_Synthetic", "Streetlights_Verified", "Streetlights_Synthetic",
         "TYPE_A_File_Complaint", "TYPE_B_Answer_Question", "TYPE_C_Check_Status",
@@ -166,12 +202,13 @@ def main() -> None:
     ws2.append(headers)
     style_header_row(ws2, 1, len(headers))
     for name, code, is_ut in all_states:
-        has_loc = name in seeded
-        dist, ulb, ward, loc = seeded.get(name, (None, None, None, None))
+        dcount, ucount = district_ulb_counts.get(name, (0, 0))
+        has_ward_example = name in seeded
+        _dist, _ulb, ward, loc = seeded.get(name, (None, None, None, None))
         row = [
-            name, "Yes" if has_loc else "No", "No",
-            "Yes" if (has_loc and ulb) else "No", "No",
-            "Yes" if (has_loc and ward) else "No", "Yes" if (has_loc and loc) else "No",
+            name, dcount, "No", ucount, "No",
+            "Yes" if (has_ward_example and ward) else "No",
+            "Yes" if (has_ward_example and loc) else "No",
         ]
         rag_any = False
         for c in cats:
@@ -182,7 +219,16 @@ def main() -> None:
             row += [v, s]
         row += ["Yes", "Yes" if rag_any else "No", "Yes"]
         ws2.append(row)
-    for row in ws2.iter_rows(min_row=2, max_row=ws2.max_row, min_col=2, max_col=7):
+    for row in ws2.iter_rows(min_row=2, max_row=ws2.max_row, min_col=2, max_col=2):
+        for cell in row:
+            cell.fill = GREEN_FILL if (cell.value or 0) > 0 else RED_FILL
+    for row in ws2.iter_rows(min_row=2, max_row=ws2.max_row, min_col=3, max_col=3):
+        for cell in row:
+            cell.fill = GREEN_FILL if cell.value == "Yes" else RED_FILL
+    for row in ws2.iter_rows(min_row=2, max_row=ws2.max_row, min_col=4, max_col=4):
+        for cell in row:
+            cell.fill = GREEN_FILL if (cell.value or 0) > 0 else RED_FILL
+    for row in ws2.iter_rows(min_row=2, max_row=ws2.max_row, min_col=5, max_col=7):
         for cell in row:
             cell.fill = GREEN_FILL if cell.value == "Yes" else RED_FILL
     for row in ws2.iter_rows(min_row=2, max_row=ws2.max_row, min_col=16, max_col=18):
