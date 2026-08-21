@@ -1,4 +1,12 @@
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type FormEvent,
+  type KeyboardEvent,
+} from "react";
 import { Link } from "react-router-dom";
 import TopBar from "../components/TopBar";
 import SourceCard from "../components/SourceCard";
@@ -92,11 +100,94 @@ function WelcomeMascot({ state, size }: { state: MascotState; size: number }) {
   );
 }
 
-export function AskJanMitraContent() {
+/** Chat persistence -- survives a page refresh/tab close, matching every other production chat
+ * UI (ChatGPT, WhatsApp Web, etc.) instead of the previous "gone the moment you reload" state.
+ * localStorage (not sessionStorage) so it also survives fully closing and reopening the browser,
+ * and keyed per logged-in citizen (`user.id`) so a shared/kiosk browser -- a real scenario for a
+ * civic-services app -- never bleeds one citizen's conversation into the next citizen who logs in
+ * on it. Versioned key (`v1`) so a future change to ChatMessage's shape can't crash on old,
+ * incompatible stored data -- corrupted/unexpected JSON is just treated as "no history", never
+ * thrown.
+ *
+ * Two ChatMessage fields deliberately do NOT round-trip through storage (see PersistedChatMessage
+ * below):
+ *  - `imagePreview` is a `URL.createObjectURL()` blob URL tied to this page load's memory -- it's
+ *    already invalid the instant the page reloads, so persisting it would just leave a broken
+ *    <img> behind. The photo itself was never kept anywhere retrievable even before this change
+ *    (the File object is dropped once the request completes) -- an inherent browser limitation,
+ *    not something a storage change can fix without also storing the raw image bytes, which isn't
+ *    worth it just to restore a thumbnail.
+ *  - `retry` is a live closure -- can't survive serialization. A restored error turn still shows
+ *    its message, just without a working "Try again" button (the existing render already checks
+ *    `msg.retry` before showing that button, so restoring it as `undefined` needs no extra guard).
+ */
+type PersistedChatMessage = Pick<ChatMessage, "id" | "role" | "text" | "response" | "originalQuestion" | "isError">;
+
+const CHAT_HISTORY_VERSION = "v1";
+const CHAT_HISTORY_MAX_MESSAGES = 200;
+
+function chatHistoryKey(userId: number) {
+  return `janmitra.askChatHistory.${CHAT_HISTORY_VERSION}.${userId}`;
+}
+
+function loadChatHistory(userId: number | undefined): ChatMessage[] {
+  if (userId == null) return [];
+  try {
+    const raw = localStorage.getItem(chatHistoryKey(userId));
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as ChatMessage[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveChatHistory(userId: number | undefined, messages: ChatMessage[]) {
+  if (userId == null) return;
+  const persisted: PersistedChatMessage[] = messages
+    .slice(-CHAT_HISTORY_MAX_MESSAGES)
+    .map(({ id, role, text, response, originalQuestion, isError }) => ({ id, role, text, response, originalQuestion, isError }));
+  try {
+    localStorage.setItem(chatHistoryKey(userId), JSON.stringify(persisted));
+  } catch {
+    // Storage full/unavailable (private browsing, quota) -- the conversation still works for this
+    // tab, it just won't survive a reload. Not worth surfacing as a user-facing error for that.
+  }
+}
+
+/** Imperative surface for the one action a parent legitimately needs to trigger from outside --
+ * see the `hideNewChatBar` prop below for why. Deliberately just one method, not a general
+ * escape hatch: everything else about this chat stays fully encapsulated. */
+export interface AskJanMitraHandle {
+  newChat: () => void;
+}
+
+interface AskJanMitraContentProps {
+  /** True only for AskJanMitraWidget.tsx's slide-out panel. The panel already has its own close
+   * (X) button sitting in its own top-right corner (AskJanMitraWidget.tsx's `.ask-widget-panel-
+   * head`); this component's own internal "New chat" bar is ALSO right-aligned at the very top,
+   * so inside the widget the two stacked into two separate corner toolbars instead of one clean
+   * row -- a real, reported "doesn't look clean" issue. When true, this component renders no
+   * internal bar at all and the caller is expected to place its own "New chat" control (wired to
+   * the `newChat` ref handle below) in the SAME row as its close button instead. The standalone
+   * /citizen/ask page has no close button to share a row with, so it's left false there and keeps
+   * the simple self-contained bar. */
+  hideNewChatBar?: boolean;
+}
+
+export const AskJanMitraContent = forwardRef<AskJanMitraHandle, AskJanMitraContentProps>(function AskJanMitraContent(
+  { hideNewChatBar },
+  ref
+) {
   const { lang } = useUiLang();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [question, setQuestion] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  // Lazily hydrated from localStorage on first render -- by the time this component can ever
+  // mount, `user` is already resolved and non-null (TopBar only renders the widget once
+  // `user.role === "citizen"`, and the standalone /citizen/ask route sits behind ProtectedRoute,
+  // which itself waits on `loading` and redirects if `!user`), so this reads the right citizen's
+  // history immediately rather than starting empty and "popping in" a moment later.
+  const [messages, setMessages] = useState<ChatMessage[]>(() => loadChatHistory(user?.id));
   const [loading, setLoading] = useState(false);
   // Real, worker-backed wards -- the SAME list/component ReportIssue.tsx's "Report an Issue"
   // wizard already uses (see LocationPicker.tsx's own docstring), reused here rather than a
@@ -116,15 +207,46 @@ export function AskJanMitraContent() {
   // changes what gets asked or how it's routed.
   const [questionFromVoice, setQuestionFromVoice] = useState(false);
 
-  const nextIdRef = useRef(0);
+  // Starts from the highest id already present in restored history, not 0 -- otherwise the very
+  // first new message after a reload would reuse an id already on screen (React key collision,
+  // and the two messages' state would get tangled together).
+  const nextIdRef = useRef<number | undefined>(undefined);
+  if (nextIdRef.current === undefined) {
+    nextIdRef.current = messages.reduce((max, m) => Math.max(max, m.id), 0);
+  }
   const imagePreviewUrlsRef = useRef<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   function nextId() {
-    nextIdRef.current += 1;
+    nextIdRef.current = (nextIdRef.current ?? 0) + 1;
     return nextIdRef.current;
   }
+
+  // Persist on every change -- a real chat, not a draft, so there's no explicit "save" moment to
+  // wait for; each new turn (or a New Chat reset) should already be safe by the time it renders.
+  useEffect(() => {
+    saveChatHistory(user?.id, messages);
+  }, [messages, user?.id]);
+
+  // "New chat" -- the explicit, discoverable way to start fresh now that history survives a
+  // reload (without this, closing the composer's only exit from an old conversation is gone).
+  // Revokes any still-live blob URLs from THIS session's own attachments the same way the unmount
+  // cleanup effect below does; revoking one twice is a harmless no-op, so no bookkeeping needed to
+  // avoid double-revoking on eventual unmount.
+  function handleNewChat() {
+    messages.forEach((m) => {
+      if (m.imagePreview) URL.revokeObjectURL(m.imagePreview);
+    });
+    setMessages([]);
+    setQuestion("");
+    setAttachedImage([]);
+    setShowAttach(false);
+  }
+
+  // The only thing AskJanMitraWidget.tsx needs to reach in from outside -- see
+  // AskJanMitraHandle's docstring above.
+  useImperativeHandle(ref, () => ({ newChat: handleNewChat }));
 
   // Live transcript -> the same editable composer text typed questions use, so by the time the
   // citizen hits Send it's an ordinary text request (see useSpeechToText.ts's docstring on why
@@ -328,6 +450,16 @@ export function AskJanMitraContent() {
 
   return (
     <div className="ask-chat-shell">
+      {!hideNewChatBar && messages.length > 0 && (
+        <div className="ask-chat-topbar">
+          <button type="button" className="ask-chat-newchat-btn" onClick={handleNewChat}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            {t(lang, "ask.newChat")}
+          </button>
+        </div>
+      )}
       <div className="ask-chat-messages">
         {messages.length === 0 && (
           <div className="ask-chat-empty">
@@ -568,7 +700,10 @@ export function AskJanMitraContent() {
           {/* "Mic 2" -- a genuinely separate control from the mic above (Mic 1, which just fills
               the composer for manual editing/sending). This one opens a dedicated
               spoken-conversation overlay instead -- see VoiceAssistantOverlay.tsx's docstring
-              for why the two are deliberately not the same button/hook. */}
+              for why the two are deliberately not the same button/hook. A waveform, not
+              headphones -- headphones read as "listen to audio," not "start a live back-and-forth
+              voice conversation," and sat too close to Mic 1's own capsule-mic glyph to read as a
+              clearly different action at a glance. */}
           <button
             type="button"
             className="ask-chat-icon-btn"
@@ -578,9 +713,7 @@ export function AskJanMitraContent() {
             title={t(lang, "ask.voiceAssistant.openLabel")}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M4 13a8 8 0 0 1 16 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-              <rect x="2.5" y="12" width="4" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.6" />
-              <rect x="17.5" y="12" width="4" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.6" />
+              <path d="M4 10v4M8 6v12M12 3v18M16 6v12M20 10v4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
             </svg>
           </button>
 
@@ -605,7 +738,7 @@ export function AskJanMitraContent() {
       {voiceOverlayOpen && <VoiceAssistantOverlay onClose={() => setVoiceOverlayOpen(false)} />}
     </div>
   );
-}
+});
 
 /** The standalone full-page route (/citizen/ask) -- TopBar + the same chat content the floating
  * widget renders, so a direct link/bookmark/browser-back still lands somewhere real. Gives

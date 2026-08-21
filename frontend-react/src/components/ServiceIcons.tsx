@@ -44,11 +44,20 @@ export function WaterIcon() {
 export function RoadsIcon() {
   return (
     <svg {...commonProps}>
-      <path d="M9 3 4 21M15 3l5 18" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M11.4 3h1.2l.4 4h-2l.4-4Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-      <path d="M12.4 11.5v3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M12 17.5v3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <circle cx="9.6" cy="15.2" r="1.4" stroke="currentColor" strokeWidth="1.4" />
+      {/* Road edges receding into the distance, closed at the top with a short horizon so the
+          shape doesn't read as two disconnected lines -- widened/heightened to match the visual
+          weight of WasteIcon/WaterIcon (verified via rendered bounding-box measurement, not
+          just eyeballed: previously 16x18 with a lot of empty interior, now ~17x19 with the
+          centerline filling that interior). */}
+      <path d="M8 3 3.5 21M16 3l4.5 18" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10.6 3h2.8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <path d="M12 7.5v2.8M12 13.5v2.8M12 19.3v1" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path
+        d="M7.6 16.6c-.5-1 .1-2.1 1.2-2.3 1-.2 2 .3 2.3 1.2.3.9-.3 1.9-1.3 2.2-.9.3-1.8-.1-2.2-1.1Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -56,10 +65,24 @@ export function RoadsIcon() {
 export function StreetlightIcon() {
   return (
     <svg {...commonProps}>
-      <path d="M8.5 5.5a3.5 3.5 0 0 1 7 0c0 2-1.6 2.8-3.5 4-1.9-1.2-3.5-2-3.5-4Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
-      <path d="M12 9.5v11.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M8.5 21h7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M9.3 3.6 8 2.3M14.7 3.6 16 2.3M8.3 6.3 6.8 6M15.7 6.3l1.5-.3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      {/* Widened lantern head + a wider base plate + longer light rays, same "lamp on a pole"
+          concept as before but rebalanced to match the other three icons' visual weight
+          (previously a 10.4-wide bounding box vs ~15-17 for the others -- confirmed via rendered
+          bounding-box measurement -- now ~15 wide). */}
+      <path
+        d="M7 6a5 5 0 0 1 10 0c0 2.6-2.1 3.6-5 5.2C9.1 9.6 7 8.6 7 6Z"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
+      <path d="M12 11.2V20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M7.5 20.5h9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path
+        d="M8.5 3 7 1.5M15.5 3 17 1.5M6.3 6.8 4.5 6.3M17.7 6.8l1.8-.5"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
