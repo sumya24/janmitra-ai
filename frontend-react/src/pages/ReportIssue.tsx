@@ -408,7 +408,11 @@ export default function ReportIssue() {
               <p className="wizard-hint">{t(lang, "wizard.ai.hint")}</p>
               {aiRunning ? (
                 <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "20px 0", color: "var(--ink-2)" }}>
-                  <span className="ai-dot active" />
+                  <span className="ask-chat-thinking-dots" aria-hidden="true">
+                    <span />
+                    <span />
+                    <span />
+                  </span>
                   {t(lang, "wizard.ai.analyzing")}
                 </div>
               ) : (
