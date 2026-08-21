@@ -50,10 +50,14 @@ export default function ReportIssue() {
   const [step, setStep] = useState<Step>("location");
   const [location, setLocation] = useState<LocationValue>({ ward: "", coords: null });
   const [wards, setWards] = useState<string[]>([]);
-  const [inputMode, setInputMode] = useState<"text" | "voice">("text");
   const [text, setText] = useState("");
+  // True once the citizen has typed over what the mic filled in -- at that point their own
+  // correction is what should be submitted, not a fresh server-side transcription of the raw
+  // audio that produced it. Set only by the textarea's own onChange (a real keystroke), never
+  // by the live-transcript sync effect below, so it's a reliable "a human actually edited this"
+  // signal, same idea as AskJanMitra.tsx's questionFromVoice.
+  const [textEditedManually, setTextEditedManually] = useState(false);
   const [photos, setPhotos] = useState<File[]>([]);
-  const [showAttach, setShowAttach] = useState(false);
   const [category, setCategory] = useState<ServiceCategoryDef | null>(
     SERVICE_CATEGORY_DEFS.find((d) => d.id === preselected) ?? null
   );
@@ -78,7 +82,17 @@ export default function ReportIssue() {
     if (!el) return;
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
-  }, [text, speech.transcript]);
+  }, [text]);
+
+  // Fills the same box a typed description would use, live, exactly like Ask Sarthi's own mic --
+  // see AskJanMitra.tsx's identical effect. Goes through setText directly rather than the
+  // textarea's onChange, so a real keystroke (which does go through onChange) is the only thing
+  // that ever sets textEditedManually.
+  useEffect(() => {
+    if (recorder.isRecording && speech.transcript) {
+      setText(speech.transcript);
+    }
+  }, [speech.transcript, recorder.isRecording]);
 
   const stepIndex = STEPS.indexOf(step);
 
@@ -87,9 +101,9 @@ export default function ReportIssue() {
   // genuine "I don't know" -- see backend/services/complaint_category_service.py), and finally
   // to the manual picker below if neither layer found anything. A category already set (from
   // the service-card preselection, or a prior visit to this step) is never re-classified over.
-  // Voice-mode complaints have no text to classify yet at this point (transcription only
-  // happens server-side on submit -- see complaint_agent.py), so both layers are skipped and
-  // this goes straight to the manual picker, same as it always has.
+  // `text` covers voice input too now (the live transcript, or a manual correction of it) -- if
+  // recognition wasn't available/didn't catch anything, text stays empty and both layers are
+  // skipped, going straight to the manual picker same as always.
   async function classifyIntoStep() {
     if (category) {
       setAiRunning(false);
@@ -104,7 +118,7 @@ export default function ReportIssue() {
     let resolved: ServiceCategoryDef | null = null;
     let source: "ai" | "keyword" | null = null;
 
-    if (inputMode === "text" && text.trim() && token) {
+    if (text.trim() && token) {
       try {
         const { category: aiCategory } = await api.classifyComplaintCategory(token, text.trim());
         if (aiCategory) {
@@ -140,15 +154,9 @@ export default function ReportIssue() {
       setError(t(lang, "citizen.errNoWard"));
       return;
     }
-    if (step === "description") {
-      if (inputMode === "text" && !text.trim()) {
-        setError(t(lang, "citizen.errNoText"));
-        return;
-      }
-      if (inputMode === "voice" && recorder.audioSegments.length === 0) {
-        setError(t(lang, "citizen.errNoAudio"));
-        return;
-      }
+    if (step === "description" && !text.trim() && recorder.audioSegments.length === 0) {
+      setError(t(lang, "citizen.errNoText"));
+      return;
     }
     if (step === "media") {
       setStep("ai");
@@ -172,13 +180,17 @@ export default function ReportIssue() {
     setError(null);
     const form = new FormData();
     form.append("language", lang);
-    if (inputMode === "text") {
-      form.append("text", text.trim());
-    } else {
+    // A real recorded take, not manually corrected afterward, goes through the more accurate
+    // server-side transcription (see complaint_agent.py) instead of the browser's own live
+    // preview. Any other case -- typed from the start, or the live transcript got edited -- the
+    // box's own text is what the citizen actually meant to say, so that's what's sent.
+    if (recorder.audioSegments.length > 0 && !textEditedManually) {
       recorder.audioSegments.forEach((segment, i) => {
         const extension = segment.type.includes("mp4") ? "m4a" : segment.type.includes("ogg") ? "ogg" : "webm";
         form.append("audio", segment, `complaint_part${i + 1}.${extension}`);
       });
+    } else {
+      form.append("text", text.trim());
     }
     if (location.ward.trim()) form.append("ward", location.ward.trim());
     // Sent whenever "use current location" succeeded, regardless of whether a ward was also
@@ -271,42 +283,23 @@ export default function ReportIssue() {
               <p className="wizard-hint">{t(lang, "wizard.description.hint")}</p>
 
               <div className="ask-chat-composer" style={{ margin: 0, padding: 0, border: "none", background: "none" }}>
-                {showAttach && (
-                  <div className="ask-chat-attach-panel">
-                    <MultiPhotoUpload photos={photos} onChange={setPhotos} />
-                  </div>
-                )}
-
                 {recorder.error && <p className="ask-chat-composer-error">{recorder.error}</p>}
 
                 <div className="ask-chat-composer-row">
-                  <button
-                    type="button"
-                    className={`ask-chat-icon-btn${showAttach || photos.length > 0 ? " active" : ""}`}
-                    onClick={() => setShowAttach((s) => !s)}
-                    aria-label={t(lang, "wizard.media.title")}
-                    title={t(lang, "wizard.media.title")}
-                    aria-pressed={showAttach || photos.length > 0}
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                    </svg>
-                  </button>
-
                   <label htmlFor="complaint-text" className="sr-only">{t(lang, "citizen.describe")}</label>
-                  {/* One textarea, always -- exactly like Ask Sarthi's own bar, not a different
-                      layout swapped in for voice mode. While recording, it just shows the live
-                      transcript (read-only preview); once stopped, that transcript stays put as
-                      a starting point. What actually gets submitted for voice input is still the
-                      real recorded audio (see handleSubmit below), transcribed server-side --
-                      this box is a live preview, not the source of truth. */}
+                  {/* One textarea, always editable -- exactly like Ask Sarthi's own bar. Voice
+                      fills it live while recording (see the effect above); typing over that (or
+                      typing from a blank box) is just as valid, no separate "switch to typing"
+                      control needed. */}
                   <textarea
                     ref={descriptionTextareaRef}
                     id="complaint-text"
                     rows={1}
-                    value={inputMode === "voice" ? speech.transcript : text}
-                    onChange={(e) => setText(e.target.value)}
-                    readOnly={inputMode === "voice"}
+                    value={text}
+                    onChange={(e) => {
+                      setText(e.target.value);
+                      setTextEditedManually(true);
+                    }}
                     placeholder={t(lang, "citizen.textPlaceholder")}
                     className="ask-chat-textarea"
                   />
@@ -317,11 +310,6 @@ export default function ReportIssue() {
                     </span>
                   )}
 
-                  {/* One control, three states -- start recording, stop recording, or (once a
-                      take exists) record over it. Deliberately not a second button next to this
-                      one for "record again": a control that's disabled-looking-but-clickable
-                      here previously did nothing on click, which is exactly the dead-button bug
-                      this was rebuilt to fix. */}
                   <button
                     type="button"
                     className={`ask-chat-icon-btn ask-chat-mic1-btn${recorder.isRecording ? " active" : ""}`}
@@ -331,43 +319,45 @@ export default function ReportIssue() {
                         speech.stop();
                         return;
                       }
-                      recorder.reset();
-                      speech.reset();
-                      setInputMode("voice");
                       recorder.start();
                       if (speech.supported) speech.start();
                     }}
-                    aria-label={t(
-                      lang,
-                      recorder.isRecording
-                        ? "citizen.stopRecording"
-                        : inputMode === "voice" && recorder.audioSegments.length > 0
-                          ? "citizen.recordAgain"
-                          : "citizen.startRecording"
-                    )}
+                    aria-label={t(lang, recorder.isRecording ? "citizen.stopRecording" : "citizen.startRecording")}
                     aria-pressed={recorder.isRecording}
-                    title={t(
-                      lang,
-                      recorder.isRecording
-                        ? "citizen.stopRecording"
-                        : inputMode === "voice" && recorder.audioSegments.length > 0
-                          ? "citizen.recordAgain"
-                          : "citizen.startRecording"
-                    )}
+                    title={t(lang, recorder.isRecording ? "citizen.stopRecording" : "citizen.startRecording")}
                   >
                     {recorder.isRecording ? (
                       <MicWaveform />
-                    ) : inputMode === "voice" && recorder.audioSegments.length > 0 ? (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                        <path d="M20 12a8 8 0 1 1-2.34-5.66" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                        <path d="M20 4v5h-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
                     ) : (
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                         <rect x="9" y="3" width="6" height="12" rx="3" stroke="currentColor" strokeWidth="1.8" />
                         <path d="M5 11a7 7 0 0 0 14 0M12 18v3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
                       </svg>
                     )}
+                  </button>
+
+                  {/* Same slot Ask Sarthi's own bar gives its "Mic 2" voice-assistant button --
+                      a refresh here instead, clearing the current take/text and starting clean,
+                      since a second voice-to-voice conversation opener doesn't belong on a
+                      single-field wizard step. */}
+                  <button
+                    type="button"
+                    className="ask-chat-icon-btn"
+                    onClick={() => {
+                      recorder.stop();
+                      speech.stop();
+                      recorder.reset();
+                      speech.reset();
+                      setText("");
+                      setTextEditedManually(false);
+                    }}
+                    aria-label={t(lang, "citizen.recordAgain")}
+                    title={t(lang, "citizen.recordAgain")}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path d="M20 12a8 8 0 1 1-2.34-5.66" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                      <path d="M20 4v5h-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
                   </button>
 
                   <button
@@ -384,21 +374,6 @@ export default function ReportIssue() {
                   </button>
                 </div>
               </div>
-
-              {inputMode === "voice" && !recorder.isRecording && (
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  style={{ marginTop: 8 }}
-                  onClick={() => {
-                    recorder.reset();
-                    speech.reset();
-                    setInputMode("text");
-                  }}
-                >
-                  {t(lang, "citizen.type")}
-                </button>
-              )}
             </>
           )}
 
@@ -479,7 +454,7 @@ export default function ReportIssue() {
                 </div>
                 <div className="wizard-summary-row">
                   <dt>{t(lang, "wizard.preview.description")}</dt>
-                  <dd>{inputMode === "text" ? text || "—" : t(lang, "citizen.voiceRecorded")}</dd>
+                  <dd>{text.trim() || (recorder.audioSegments.length > 0 ? t(lang, "citizen.voiceRecorded") : "—")}</dd>
                 </div>
                 <div className="wizard-summary-row">
                   <dt>{t(lang, "wizard.preview.photo")}</dt>
