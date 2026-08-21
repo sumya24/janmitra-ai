@@ -98,22 +98,24 @@ export default function LocationPicker({
           {t(lang, "location.gpsAttached")}
         </div>
       )}
-      <label htmlFor="wizard-ward">{wards.length === 0 ? t(lang, "citizen.wardOptional") : t(lang, "citizen.ward")}</label>
-      {wards.length > 0 ? (
-        <select id="wizard-ward" value={value.ward} onChange={(e) => onChange({ ...value, ward: e.target.value })} required>
-          <option value="" disabled>
-            {t(lang, "citizen.wardSelectPlaceholder")}
-          </option>
-          {wards.map((w) => (
-            <option key={w} value={w}>
-              {w}
+      <div className="field">
+        <label htmlFor="wizard-ward">{wards.length === 0 ? t(lang, "citizen.wardOptional") : t(lang, "citizen.ward")}</label>
+        {wards.length > 0 ? (
+          <select id="wizard-ward" value={value.ward} onChange={(e) => onChange({ ...value, ward: e.target.value })} required>
+            <option value="" disabled>
+              {t(lang, "citizen.wardSelectPlaceholder")}
             </option>
-          ))}
-        </select>
-      ) : (
-        <input id="wizard-ward" type="text" value={value.ward} onChange={(e) => onChange({ ...value, ward: e.target.value })} placeholder={t(lang, "citizen.wardPlaceholder")} />
-      )}
-      <button type="button" className="btn btn-ghost btn-sm" style={{ marginTop: 10 }} onClick={() => setMode("choose")}>
+            {wards.map((w) => (
+              <option key={w} value={w}>
+                {w}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input id="wizard-ward" type="text" value={value.ward} onChange={(e) => onChange({ ...value, ward: e.target.value })} placeholder={t(lang, "citizen.wardPlaceholder")} />
+        )}
+      </div>
+      <button type="button" className="btn btn-ghost btn-sm" onClick={() => setMode("choose")}>
         {t(lang, "location.backToOptions")}
       </button>
     </div>
