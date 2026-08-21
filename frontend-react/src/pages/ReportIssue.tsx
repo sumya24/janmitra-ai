@@ -53,6 +53,7 @@ export default function ReportIssue() {
   const [inputMode, setInputMode] = useState<"text" | "voice">("text");
   const [text, setText] = useState("");
   const [photos, setPhotos] = useState<File[]>([]);
+  const [showAttach, setShowAttach] = useState(false);
   const [category, setCategory] = useState<ServiceCategoryDef | null>(
     SERVICE_CATEGORY_DEFS.find((d) => d.id === preselected) ?? null
   );
@@ -270,9 +271,28 @@ export default function ReportIssue() {
               <p className="wizard-hint">{t(lang, "wizard.description.hint")}</p>
 
               <div className="ask-chat-composer" style={{ margin: 0, padding: 0, border: "none", background: "none" }}>
+                {showAttach && (
+                  <div className="ask-chat-attach-panel">
+                    <MultiPhotoUpload photos={photos} onChange={setPhotos} />
+                  </div>
+                )}
+
                 {recorder.error && <p className="ask-chat-composer-error">{recorder.error}</p>}
 
                 <div className="ask-chat-composer-row">
+                  <button
+                    type="button"
+                    className={`ask-chat-icon-btn${showAttach || photos.length > 0 ? " active" : ""}`}
+                    onClick={() => setShowAttach((s) => !s)}
+                    aria-label={t(lang, "wizard.media.title")}
+                    title={t(lang, "wizard.media.title")}
+                    aria-pressed={showAttach || photos.length > 0}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                    </svg>
+                  </button>
+
                   <label htmlFor="complaint-text" className="sr-only">{t(lang, "citizen.describe")}</label>
                   {/* One textarea, always -- exactly like Ask Sarthi's own bar, not a different
                       layout swapped in for voice mode. While recording, it just shows the live
@@ -348,6 +368,19 @@ export default function ReportIssue() {
                         <path d="M5 11a7 7 0 0 0 14 0M12 18v3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
                       </svg>
                     )}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="ask-chat-send-btn"
+                    onClick={goNext}
+                    disabled={aiRunning}
+                    aria-label={t(lang, "wizard.next")}
+                    title={t(lang, "wizard.next")}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path d="M4 12h15M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
                   </button>
                 </div>
               </div>
@@ -468,7 +501,10 @@ export default function ReportIssue() {
               <button type="button" className="btn btn-primary" onClick={handleSubmit} disabled={submitting}>
                 {submitting ? t(lang, "citizen.submitting") : t(lang, "citizen.submit")}
               </button>
-            ) : (
+            ) : step === "description" ? null : (
+              /* The description step's own composer bar has its own round arrow button that
+                 does the same thing -- a second "Next" here would just be a redundant copy of
+                 the same action, right below it. */
               <button type="button" className="btn btn-primary" onClick={goNext} disabled={aiRunning}>
                 {t(lang, "wizard.next")}
               </button>
